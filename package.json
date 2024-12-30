@@ -22,7 +22,33 @@
         "command": "awesome-projects.helloWorld",
         "title": "Hello World"
       }
-    ]
+    ],
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "awesome-projects.helloWorld",
+          "when": "view == awesome-projects",
+          "group": "navigation"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "awesomeProjects",
+          "title": "Awesome Projects",
+          "icon": "resources/icon-sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "awesomeProjects": [
+        {
+          "id": "awesomeProjectsView",
+          "name": "Projects"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
