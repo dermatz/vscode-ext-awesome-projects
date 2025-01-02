@@ -21,6 +21,20 @@
       {
         "command": "awesome-projects.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "awesome-projects.addProject",
+        "title": "Add Project",
+        "icon": "$(add)"
+      },
+      {
+        "command": "awesome-projects.openProject",
+        "title": "Open Project"
+      },
+      {
+        "command": "awesome-projects.refreshProjects",
+        "title": "Refresh Projects",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
@@ -28,6 +42,18 @@
         {
           "command": "awesome-projects.helloWorld",
           "when": "view == awesome-projects",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "awesome-projects.addProject",
+          "when": "view == awesomeProjectsView",
+          "group": "navigation"
+        },
+        {
+          "command": "awesome-projects.refreshProjects",
+          "when": "view == awesomeProjectsView",
           "group": "navigation"
         }
       ]
@@ -44,8 +70,11 @@
     "views": {
       "awesomeProjects": [
         {
+          "type": "webview",
           "id": "awesomeProjectsView",
-          "name": "Projects"
+          "name": "Projects",
+          "icon": "resources/icon-sidebar.svg",
+          "contextualTitle": "Awesome Projects"
         }
       ]
     }
