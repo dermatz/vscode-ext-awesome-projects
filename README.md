@@ -1,5 +1,9 @@
 # awesome-projects README
 
+## Note
+
+This project is under construction.
+
 ## Description
 
 The "awesome-projects" extension for Visual Studio Code helps you manage and organize your projects efficiently. With this extension, you can easily add, open, and refresh projects directly from the VS Code sidebar.
@@ -21,7 +25,3 @@ The "awesome-projects" extension for Visual Studio Code helps you manage and org
 2. Go to the Extensions view by clicking on the Extensions icon in the Activity Bar on the side of the window or by pressing `Ctrl+Shift+X`
 3. Search for "awesome-projects"
 4. Click Install
-
-## Note
-
-This project is under construction.
