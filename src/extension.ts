@@ -23,14 +23,21 @@ export function activate(context: vscode.ExtensionContext) {
         // Here you can implement the actual project adding logic
     });
 
-    context.subscriptions.push(addProjectCommand);
-
     const openProjectCommand = vscode.commands.registerCommand('awesome-projects.openProject', (projectName: string) => {
         vscode.window.showInformationMessage(`Opening project: ${projectName}`);
         // Add your logic to open the project here
     });
 
-    context.subscriptions.push(openProjectCommand);
+    // Add refresh command registration
+    const refreshProjectsCommand = vscode.commands.registerCommand('awesome-projects.refreshProjects', () => {
+        projectsProvider.refresh();
+    });
+
+    context.subscriptions.push(
+        addProjectCommand,
+        openProjectCommand,
+        refreshProjectsCommand  // Add the new command to subscriptions
+    );
 }
 
 export function deactivate() {}
