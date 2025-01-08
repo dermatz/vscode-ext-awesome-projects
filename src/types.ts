@@ -4,5 +4,4 @@ export interface Project {
     color?: string;
     icon?: string;
     url?: string;
-    createdAt: number;
 }

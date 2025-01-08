@@ -56,8 +56,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                     name: await vscode.window.showInputBox({
                                         prompt: 'Enter project name',
                                         value: projectPath.split('/').pop()
-                                    }) || projectPath.split('/').pop() || '',
-                                    createdAt: Date.now()
+                                    }) || projectPath.split('/').pop() || ''
                                 };
 
                                 // Update settings.json
