@@ -8,13 +8,14 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(disposable);
 
-    const provider = new ProjectsWebviewProvider(context.extensionUri);
+    const projectsProvider = new ProjectsWebviewProvider(context.extensionUri);
 
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             ProjectsWebviewProvider.viewType,
-            provider
-        )
+            projectsProvider
+        ),
+        projectsProvider // Add the provider to be disposed when deactivating
     );
 
     const addProjectCommand = vscode.commands.registerCommand('awesome-projects.addProject', () => {

@@ -1,12 +1,27 @@
 import * as vscode from 'vscode';
+import { Project } from './types';
 
 export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'awesomeProjectsView';
     private _view?: vscode.WebviewView;
+    private _disposables: vscode.Disposable[] = [];
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-    ) {}
+    ) {
+        // Add configuration change listener
+        this._disposables.push(
+            vscode.workspace.onDidChangeConfiguration(e => {
+                if (e.affectsConfiguration('awesomeProjects.projects')) {
+                    this.refresh();
+                }
+            })
+        );
+    }
+
+    public getView(): vscode.WebviewView | undefined {
+        return this._view;
+    }
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -25,10 +40,51 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case 'addProject':
-                    vscode.window.showInformationMessage('Add Project clicked!');
+                    vscode.window.showOpenDialog({
+                        canSelectFolders: true,
+                        canSelectMany: false
+                    }).then(async folderUri => {
+                        if (folderUri && folderUri[0]) {
+                            try {
+                                const projectPath = folderUri[0].fsPath;
+                                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                                const projects: Project[] = configuration.get('projects') || [];
+
+                                // Create new project object
+                                const newProject: Project = {
+                                    path: projectPath,
+                                    name: await vscode.window.showInputBox({
+                                        prompt: 'Enter project name',
+                                        value: projectPath.split('/').pop()
+                                    }) || projectPath.split('/').pop() || '',
+                                    createdAt: Date.now()
+                                };
+
+                                // Update settings.json
+                                await configuration.update(
+                                    'projects',
+                                    [...projects, newProject],
+                                    vscode.ConfigurationTarget.Global
+                                );
+
+                                // Verify the update
+                                const updatedProjects = configuration.get<Project[]>('projects');
+                                if (updatedProjects?.some(p => p.path === newProject.path)) {
+                                    this.refresh();
+                                } else {
+                                    throw new Error('Failed to save project to settings');
+                                }
+                            } catch (error) {
+                                vscode.window.showErrorMessage(`Failed to add project: ${error}`);
+                            }
+                        }
+                    });
                     break;
                 case 'openProject':
                     vscode.window.showInformationMessage(`Open Project: ${message.project}`);
+                    break;
+                case 'projectSelected':
+                    vscode.window.showInformationMessage(`Project selected: ${message.path}`);
                     break;
             }
         });
@@ -40,9 +96,20 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    public dispose() {
+        while (this._disposables.length) {
+            const disposable = this._disposables.pop();
+            if (disposable) {
+                disposable.dispose();
+            }
+        }
+    }
+
     private _getHtmlForWebview(webview: vscode.Webview) {
-        return `
-            <!DOCTYPE html>
+        const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+        const projects = configuration.get<Project[]>('projects') || [];
+
+        return `<!DOCTYPE html>
             <html>
             <head>
                 <style>
@@ -64,15 +131,21 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         align-items: center;
                         padding: 6px 8px;
                         cursor: pointer;
+                        transition: all 0.2s ease;
+                        border-radius: 4px;
+                        margin: 2px 4px;
                     }
                     .project-item:hover {
-                        background: var(--vscode-list-hoverBackground);
+                        filter: brightness(1.1);
                     }
                     .project-icon {
                         margin-right: 8px;
                     }
                     .project-info {
                         flex: 1;
+                    }
+                    .project-name {
+                        font-weight: 500;
                     }
                     .project-path {
                         font-size: 0.85em;
@@ -96,28 +169,26 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             </head>
             <body>
                 <div class="section">
-                    <div class="section-header">Recent Projects</div>
-                    <div class="project-item" onclick="openProject('project1')">
-                        <span class="project-icon">📁</span>
-                        <div class="project-info">
-                            <div>My Node Project</div>
-                            <div class="project-path">~/projects/node-project</div>
-                        </div>
+                    <div class="section-header">My Projects</div>
+                    <div id="projects-list">
+                        ${projects.map(project => {
+                            const bgColor = project.color || 'var(--vscode-list-activeSelectionBackground)';
+                            // Berechne Textfarbe basierend auf Hintergrundfarbe
+                            const textColor = bgColor.toLowerCase() === '#ffffff' ? '#000000' : '#ffffff';
+                            return `
+                                <div class="project-item"
+                                    onclick="openProject('${project.path.replace(/'/g, "\\'")}')"
+                                    style="background: ${bgColor};">
+                                    <span class="project-icon">${project.icon || '📁'}</span>
+                                    <div class="project-info">
+                                        <div class="project-name" style="color: ${textColor}">${project.name}</div>
+                                        <div class="project-path" style="color: ${textColor}">${project.path}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
-                    <button class="add-button" onclick="addProject()">
-                        <span style="margin-right: 4px">+</span> Add Project
-                    </button>
-                </div>
-
-                <div class="section">
-                    <div class="section-header">Favorites</div>
-                    <div class="project-item" onclick="openProject('project2')">
-                        <span class="project-icon">📁</span>
-                        <div class="project-info">
-                            <div>Docker Project</div>
-                            <div class="project-path">~/projects/docker</div>
-                        </div>
-                    </div>
+                    <button class="add-button" onclick="addProject()">Add Project</button>
                 </div>
 
                 <script>
@@ -132,7 +203,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     }
                 </script>
             </body>
-            </html>
-        `;
+            </html>`;
     }
 }

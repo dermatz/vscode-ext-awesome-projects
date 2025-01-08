@@ -77,6 +77,46 @@
           "contextualTitle": "Awesome Projects"
         }
       ]
+    },
+    "configuration": {
+      "title": "Awesome Projects",
+      "properties": {
+        "awesomeProjects.projects": {
+          "type": "array",
+          "default": [],
+          "description": "List of saved projects",
+          "items": {
+            "type": "object",
+            "required": ["path", "name", "createdAt"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Path to the project"
+              },
+              "name": {
+                "type": "string",
+                "description": "Display name of the project"
+              },
+              "color": {
+                "type": "string",
+                "description": "Custom color for the project"
+              },
+              "icon": {
+                "type": "string",
+                "description": "Custom icon for the project"
+              },
+              "url": {
+                "type": "string",
+                "description": "Associated URL for the project"
+              },
+              "createdAt": {
+                "type": "number",
+                "description": "Timestamp when the project was added"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "scripts": {

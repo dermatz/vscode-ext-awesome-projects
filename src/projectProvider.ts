@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { Project } from './types';
 
 enum ProjectItemType {
     Header,
@@ -71,42 +72,22 @@ export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
 
     getChildren(element?: ProjectItem): Thenable<ProjectItem[]> {
         if (element) {
-            // Return children for a specific header
-            switch(element.label) {
-                case 'Recent Projects':
-                    return Promise.resolve([
-                        new ProjectItem(
-                            'My Node Project',
-                            ProjectItemType.Project,
-                            vscode.TreeItemCollapsibleState.None,
-                            '/Users/melle/projects/node-project'
-                        ),
-                        new ProjectItem(
-                            'VS Code Extension',
-                            ProjectItemType.Project,
-                            vscode.TreeItemCollapsibleState.None,
-                            '/Users/melle/projects/vscode-ext-awesome-projects'
-                        ),
-                        new ProjectItem('Add Project...', ProjectItemType.AddButton, vscode.TreeItemCollapsibleState.None),
-                    ]);
-                case 'Favorites':
-                    return Promise.resolve([
-                        new ProjectItem(
-                            'Docker Project',
-                            ProjectItemType.Project,
-                            vscode.TreeItemCollapsibleState.None,
-                            '/Users/melle/projects/docker-compose'
-                        ),
-                        new ProjectItem('Add Project...', ProjectItemType.AddButton, vscode.TreeItemCollapsibleState.None),
-                    ]);
-                default:
-                    return Promise.resolve([]);
+            if (element.type === ProjectItemType.Header) {
+                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                const projects = configuration.get<Project[]>('projects') || [];
+                const projectItems = projects.map(project => new ProjectItem(
+                    project.name,
+                    ProjectItemType.Project,
+                    vscode.TreeItemCollapsibleState.None,
+                    project.path
+                ));
+                projectItems.push(new ProjectItem('Add Project...', ProjectItemType.AddButton, vscode.TreeItemCollapsibleState.None));
+                return Promise.resolve(projectItems);
             }
+            return Promise.resolve([]);
         } else {
-            // Return root items (headers)
             return Promise.resolve([
-                new ProjectItem('Recent Projects', ProjectItemType.Header, vscode.TreeItemCollapsibleState.Expanded),
-                new ProjectItem('Favorites', ProjectItemType.Header, vscode.TreeItemCollapsibleState.Expanded)
+                new ProjectItem('Projects', ProjectItemType.Header, vscode.TreeItemCollapsibleState.Expanded)
             ]);
         }
     }
