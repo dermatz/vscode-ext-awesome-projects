@@ -86,6 +86,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'openUrl':
                     vscode.env.openExternal(vscode.Uri.parse(message.url));
                     break;
+                case 'openInFinder':
+                    vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.path));
+                    break;
             }
         });
     }
