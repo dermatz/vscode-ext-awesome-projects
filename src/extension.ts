@@ -8,7 +8,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(disposable);
 
-    const projectsProvider = new ProjectsWebviewProvider(context.extensionUri);
+    const projectsProvider = new ProjectsWebviewProvider(context.extensionUri, context);
 
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
