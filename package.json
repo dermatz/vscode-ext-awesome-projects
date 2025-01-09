@@ -101,13 +101,21 @@
                 "type": "string",
                 "description": "Custom color for the project"
               },
-              "icon": {
+              "productionUrl": {
                 "type": "string",
-                "description": "Custom icon for the project"
+                "description": "Production URL of the project"
               },
-              "url": {
+              "stagingUrl": {
                 "type": "string",
-                "description": "Associated URL for the project"
+                "description": "Staging URL of the project"
+              },
+              "devUrl": {
+                "type": "string",
+                "description": "Development URL of the project"
+              },
+              "managementUrl": {
+                "type": "string",
+                "description": "Management URL of the project"
               }
             }
           }
