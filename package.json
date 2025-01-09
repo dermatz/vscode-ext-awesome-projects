@@ -157,9 +157,5 @@
     "webpack-cli": "^5.1.4",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1"
-  },
-  "files": [
-    "dist",
-    "src/css/webview.css"
-  ]
+  }
 }
