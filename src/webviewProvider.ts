@@ -150,6 +150,23 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             return `rgb(${darkerR}, ${darkerG}, ${darkerB})`;
         };
 
+        // Neue Funktion zur Berechnung der Textfarbe basierend auf Kontrast
+        const getContrastColor = (hexColor: string): string => {
+            // Entferne # wenn vorhanden
+            const color = hexColor.replace('#', '');
+
+            // Konvertiere zu RGB
+            const r = parseInt(color.substr(0, 2), 16);
+            const g = parseInt(color.substr(2, 2), 16);
+            const b = parseInt(color.substr(4, 2), 16);
+
+            // Berechne relative Luminanz nach WCAG 2.0
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+            // Wenn Luminanz > 0.5, ist der Hintergrund hell und braucht dunklen Text
+            return luminance > 0.5 ? '#000000' : '#ffffff';
+        };
+
         return `<!DOCTYPE html>
             <html>
             <head>
@@ -164,8 +181,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         animation: fadeIn 0.3s ease forwards;
                     }
                     @keyframes fadeIn {
-                        from { opacity: 0; transform: translateY(10px); }
-                        to { opacity: 1; transform: translateY(0); }
+                        from { opacity: 0; }
+                        to { opacity: 1; }
                     }
                     .section-header {
                         padding: 12px 16px;
@@ -246,7 +263,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     .project-item.active {
                         border-color: var(--vscode-input-border);
                         border-bottom-color: transparent;
-                        background: var(--vscode-menu-background);
                     }
                     .project-icon {
                         margin-right: 12px;
@@ -340,8 +356,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         display: block;
                     }
                     @keyframes slideDown {
-                        from { opacity: 0; transform: translateY(-10px); }
-                        to { opacity: 1; transform: translateY(0); }
+                        from { opacity: 0; }
+                        to { opacity: 1; }
                     }
                     .settings-item {
                         margin: 12px 0;
@@ -398,8 +414,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         animation: slideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
                     }
                     @keyframes slideUp {
-                        from { opacity: 0; transform: translateY(10px); }
-                        to { opacity: 1; transform: translateY(0); }
+                        from { opacity: 0; }
+                        to { opacity: 1; }
                     }
                     .project-url {
                         opacity: 0.7;
@@ -424,7 +440,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         ${projects.map(project => {
                             const bgColor = project.color || 'var(--vscode-list-activeSelectionBackground)';
                             const gradientColor = project.color ? generateGradient(project.color) : 'var(--vscode-list-activeSelectionBackground)';
-                            const textColor = bgColor.toLowerCase() === '#ffffff' ? '#000000' : '#ffffff';
+
+                            // Textfarbe basierend auf Kontrast berechnen
+                            const textColor = project.color ? getContrastColor(project.color) : '#ffffff';
 
                             // Funktion zum Extrahieren der Basis-URL
                             const getBaseUrl = (url?: string) => {
