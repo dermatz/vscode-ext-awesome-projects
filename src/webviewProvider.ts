@@ -75,7 +75,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     });
                     break;
                 case 'openProject':
-                    vscode.window.showInformationMessage(`Open Project: ${message.project}`);
+                    vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(message.project));
                     break;
                 case 'projectSelected':
                     vscode.window.showInformationMessage(`Project selected: ${message.path}`);
