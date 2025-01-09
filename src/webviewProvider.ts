@@ -250,8 +250,15 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     }
                     .project-icon {
                         margin-right: 12px;
-                        font-size: 1rem;
+                        width: 16px;
+                        height: 16px;
                         transition: transform 0.2s ease;
+                        display: flex;
+                        align-items: center;
+                    }
+                    .project-icon img {
+                        width: 16px;
+                        height: 16px;
                     }
                     .project-item:hover .project-icon {
                         transform: scale(1.1);
@@ -418,12 +425,40 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             const bgColor = project.color || 'var(--vscode-list-activeSelectionBackground)';
                             const gradientColor = project.color ? generateGradient(project.color) : 'var(--vscode-list-activeSelectionBackground)';
                             const textColor = bgColor.toLowerCase() === '#ffffff' ? '#000000' : '#ffffff';
+
+                            // Funktion zum Extrahieren der Basis-URL
+                            const getBaseUrl = (url?: string) => {
+                                if (!url) return null;
+                                try {
+                                    const urlObj = new URL(url);
+                                    return urlObj.protocol + '//' + urlObj.hostname;
+                                } catch (e) {
+                                    return null;
+                                }
+                            };
+
+                            // Erste verfügbare URL verwenden
+                            const baseUrl = getBaseUrl(project.url) ||
+                                          getBaseUrl(project.stagingUrl) ||
+                                          getBaseUrl(project.devUrl) ||
+                                          getBaseUrl(project.managementUrl);
+
+                            // Erst prüfen ob ein manuelles Icon existiert
+                            const hasCustomIcon = project.icon && project.icon !== '📁';
+
+                            // Favicon nur laden wenn kein eigenes Icon existiert
+                            const faviconHtml = hasCustomIcon
+                                ? project.icon
+                                : baseUrl
+                                    ? `<img src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">`
+                                    : '📁';
+
                             return `
                                 <div class="project-wrapper">
                                     <div class="project-item"
                                         style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"
                                         onclick="toggleInfo(event, '${project.path.replace(/'/g, "\\'")}')">
-                                        <span class="project-icon">${project.icon || '📁'}</span>
+                                        <span class="project-icon">${faviconHtml}</span>
                                         <div class="project-info">
                                             <div class="project-name" style="color: ${textColor}">${project.name}</div>
                                         </div>
