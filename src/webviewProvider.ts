@@ -89,6 +89,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
     private async _updateProject(projectPath: string, updates: Partial<Project>) {
         try {
+            // Validate color format if it exists in updates
+            if (updates.color) {
+                const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+                if (!isValidHex.test(updates.color)) {
+                    throw new Error('Invalid color format');
+                }
+            }
+
             const configuration = vscode.workspace.getConfiguration('awesomeProjects');
             const projects = [...(configuration.get<Project[]>('projects') || [])];
             const projectIndex = projects.findIndex(p => p.path === projectPath);
@@ -151,23 +159,31 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         z-index: 100;
                         backdrop-filter: blur(10px);
                     }
+                    .project-wrapper {
+                        margin: 4px 6px;
+                    }
                     .project-item {
                         display: flex;
                         align-items: center;
                         padding: 10px 12px;
                         cursor: pointer;
                         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                        border-radius: 6px;
-                        margin: 4px 6px;
+                        border-radius: 6px 6px 0 0;
                         position: relative;
-                        z-index: 1;
                         background: var(--vscode-editor-background);
                         border: 1px solid transparent;
                     }
+                    .project-item:not(.active) {
+                        border-radius: 6px;
+                    }
                     .project-item:hover {
-                        transform: translateY(-1px);
                         border-color: var(--vscode-input-border);
                         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    }
+                    .project-item.active {
+                        border-color: var(--vscode-input-border);
+                        border-bottom-color: transparent;
+                        background: var(--vscode-menu-background);
                     }
                     .project-icon {
                         margin-right: 12px;
@@ -230,7 +246,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                         padding: 6px;
                         border-radius: 4px;
-                        z-index: 10;
+                        z-index: 1;
                         display: flex;
                         align-items: center;
                         background: var(--vscode-editor-background);
@@ -241,26 +257,21 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         transform: translateY(-50%) scale(1);
                     }
                     .settings-dropdown {
-                        position: absolute;
-                        right: 110%;
-                        top: -20px;
+                        display: none;
                         background: var(--vscode-menu-background);
-                        border: 1px solid var(--vscode-menu-border);
-                        border-radius: 6px;
+                        border: 1px solid var(--vscode-input-border);
+                        border-top: none;
+                        border-radius: 0 0 6px 6px;
                         padding: 16px;
-                        opacity: 0;
-                        visibility: hidden;
-                        transform: translateX(10px);
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        z-index: 9999;
-                        min-width: 240px;
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                        margin-right: 8px;
+                        margin-top: -1px;
+                        animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                     }
                     .settings-dropdown.show {
-                        opacity: 1;
-                        visibility: visible;
-                        transform: translateX(0);
+                        display: block;
+                    }
+                    @keyframes slideDown {
+                        from { opacity: 0; transform: translateY(-10px); }
+                        to { opacity: 1; transform: translateY(0); }
                     }
                     .settings-item {
                         margin: 12px 0;
@@ -322,52 +333,51 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             const bgColor = project.color || 'var(--vscode-list-activeSelectionBackground)';
                             const textColor = bgColor.toLowerCase() === '#ffffff' ? '#000000' : '#ffffff';
                             return `
-                                <div class="project-item"
-                                    onclick="openProject('${project.path.replace(/'/g, "\\'")}')"
-                                    style="background: ${bgColor};position: relative;z-index: 1;">
-                                    <span class="project-icon">${project.icon || '📁'}</span>
-                                    <div class="project-info">
-                                        <div class="project-name" style="color: ${textColor}">${project.name}</div>
-                                        <div class="project-path" style="color: ${textColor}">${project.path}</div>
-                                    </div>
-                                    <div class="project-settings" onclick="toggleSettings(event, '${project.path.replace(/'/g, "\\'")}')">
-
-                                        Edit
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="1rem" width="1rem" style="margin-left: 0.25rem" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                                        </svg>
-
-                                        <div class="settings-dropdown" id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, '-')}">
-                                            <div class="settings-item">
-                                                <label>Name:</label>
-                                                <input type="text" value="${project.name}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <div class="settings-item">
-                                                <label>Color:</label>
-                                                <input type="color" value="${project.color || '#000000'}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <div class="settings-item">
-                                                <label>URL:</label>
-                                                <input type="url" value="${project.url || ''}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <div class="settings-item">
-                                                <label>Icon:</label>
-                                                <input type="text" value="${project.icon || '📁'}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <div class="settings-item">
-                                                <label>Path:</label>
-                                                <input type="text" value="${project.path}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <button class="save-button" id="save-${project.path.replace(/[^a-zA-Z0-9]/g, '-')}"
-                                                onclick="saveChanges('${project.path.replace(/'/g, "\\'")}')">
-                                                Save Changes
-                                            </button>
+                                <div class="project-wrapper">
+                                    <div class="project-item"
+                                        style="background: ${bgColor}">
+                                        <span class="project-icon">${project.icon || '📁'}</span>
+                                        <div class="project-info" onclick="openProject('${project.path.replace(/'/g, "\\'")}')">
+                                            <div class="project-name" style="color: ${textColor}">${project.name}</div>
+                                            <div class="project-path" style="color: ${textColor}">${project.path}</div>
                                         </div>
+                                        <div class="project-settings" onclick="toggleSettings(event, '${project.path.replace(/'/g, "\\'")}')">
+                                            Edit
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="1rem" width="1rem" style="margin-left: 0.25rem" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="settings-dropdown" id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, '-')}">
+                                        <div class="settings-item">
+                                            <label>Name:</label>
+                                            <input type="text" value="${project.name}"
+                                                oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                                        </div>
+                                        <div class="settings-item">
+                                            <label>Color:</label>
+                                            <input type="color" value="${project.color || '#000000'}"
+                                                oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                                        </div>
+                                        <div class="settings-item">
+                                            <label>URL:</label>
+                                            <input type="url" value="${project.url || ''}"
+                                                oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                                        </div>
+                                        <div class="settings-item">
+                                            <label>Icon:</label>
+                                            <input type="text" value="${project.icon || '📁'}"
+                                                oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                                        </div>
+                                        <div class="settings-item">
+                                            <label>Path:</label>
+                                            <input type="text" value="${project.path}"
+                                                oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                                        </div>
+                                        <button class="save-button" id="save-${project.path.replace(/[^a-zA-Z0-9]/g, '-')}"
+                                            onclick="saveChanges('${project.path.replace(/'/g, "\\'")}')">
+                                            Save Changes
+                                        </button>
                                     </div>
                                 </div>
                             `;
@@ -392,17 +402,37 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         event.stopPropagation();
                         const dropdownId = 'settings-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-');
                         const dropdown = document.getElementById(dropdownId);
+                        const projectItem = event.target.closest('.project-item');
 
+                        // Close all other dropdowns
                         document.querySelectorAll('.settings-dropdown.show').forEach(el => {
-                            if (el.id !== dropdownId) el.classList.remove('show');
+                            if (el.id !== dropdownId) {
+                                el.classList.remove('show');
+                                el.previousElementSibling.classList.remove('active');
+                            }
                         });
 
-                        dropdown.classList.toggle('show');
+                        if (dropdown) {
+                            dropdown.classList.toggle('show');
+                            projectItem.classList.toggle('active');
+                        }
                     }
 
                     function handleInput(event, projectPath) {
                         const field = event.target.closest('.settings-item').querySelector('label').textContent.toLowerCase().replace(':', '');
-                        const value = event.target.value;
+                        let value = event.target.value;
+
+                        // Validate and format color value
+                        if (field === 'color') {
+                            // Ensure color is a valid hex value
+                            const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+                            if (!value.startsWith('#')) {
+                                value = '#' + value;
+                            }
+                            if (!isValidHex.test(value)) {
+                                return; // Invalid color format
+                            }
+                        }
 
                         if (!pendingChanges[projectPath]) {
                             pendingChanges[projectPath] = {};
@@ -432,10 +462,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     }
 
                     document.addEventListener('click', (event) => {
-                        if (!event.target.closest('.project-settings') &&
-                            !event.target.closest('.settings-dropdown')) {
+                        if (!event.target.closest('.project-wrapper')) {
                             document.querySelectorAll('.settings-dropdown.show').forEach(el => {
                                 el.classList.remove('show');
+                                el.previousElementSibling.classList.remove('active');
                             });
                         }
                     });
