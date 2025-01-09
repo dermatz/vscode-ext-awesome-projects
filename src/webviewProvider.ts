@@ -89,6 +89,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'openInFinder':
                     vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.path));
                     break;
+                case 'deleteProject':
+                    vscode.window.showWarningMessage('Do you really want to delete this project?', 'Yes', 'No')
+                        .then(selection => {
+                            if (selection === 'Yes') {
+                                this._deleteProject(message.projectPath);
+                            }
+                        });
+                    break;
             }
         });
     }
@@ -114,6 +122,22 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to update project: ${error}`);
+        }
+    }
+
+    private async _deleteProject(projectPath: string) {
+        try {
+            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+            const projects = [...(configuration.get<Project[]>('projects') || [])];
+            const projectIndex = projects.findIndex(p => p.path === projectPath);
+
+            if (projectIndex !== -1) {
+                projects.splice(projectIndex, 1);
+                await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+                this.refresh();
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to delete project: ${error}`);
         }
     }
 
@@ -356,6 +380,7 @@ background: linear-gradient(135deg,
                         padding: 16px;
                         margin-top: -1px;
                         animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                        position: relative; /* Wichtig für absolute Positionierung des Delete-Links */
                     }
                     .settings-dropdown.show {
                         display: block;
@@ -435,6 +460,25 @@ background: linear-gradient(135deg,
                     .project-url:hover {
                         text-decoration: underline;
                         opacity: 1;
+                    }
+                    .delete-link {
+                        bottom: 16px;
+                        right: 16px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-end;
+                        gap: 6px;
+                        color: var(--vscode-Foreground);
+                        opacity: 0.7;
+                        font-size: 12px;
+                        cursor: pointer;
+                        transition: opacity 0.3s ease;
+                        z-index: 10;
+                        margin-top: 1rem;
+                    }
+                    .delete-link:hover {
+                        opacity: 1;
+                        color: var(--vscode-errorForeground);
                     }
                 </style>
             </head>
@@ -596,6 +640,12 @@ background: linear-gradient(135deg,
                                             onclick="saveChanges('${project.path.replace(/'/g, "\\'")}')">
                                             Save Changes
                                         </button>
+                                        <span class="delete-link" onclick="deleteProject('${project.path.replace(/'/g, "\\'")}')">
+                                            Delete
+                                            <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                                                <path fill-rule="evenodd" clip-rule="evenodd" d="M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z"/>
+                                            </svg>
+                                        </span>
                                     </div>
                                 </div>
                             `;
@@ -741,6 +791,13 @@ background: linear-gradient(135deg,
                         vscode.postMessage({
                             command: 'openUrl',
                             url: url
+                        });
+                    }
+
+                    function deleteProject(projectPath) {
+                        vscode.postMessage({
+                            command: 'deleteProject',
+                            projectPath: projectPath
                         });
                     }
 
