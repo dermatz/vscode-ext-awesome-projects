@@ -158,6 +158,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     private _getHtmlForWebview(webview: vscode.Webview) {
         const configuration = vscode.workspace.getConfiguration('awesomeProjects');
         const projects = configuration.get<Project[]>('projects') || [];
+        const useFavicons = configuration.get<boolean>('useFavicons') ?? true;
 
         const generateGradient = (baseColor: string): string => {
             const hex = baseColor.replace('#', '');
@@ -526,16 +527,17 @@ background: linear-gradient(135deg,
                                 }
                             };
 
-                            const baseUrl = getBaseUrl(project.productionUrl) ||
-                                          getBaseUrl(project.stagingUrl) ||
-                                          getBaseUrl(project.devUrl) ||
-                                          getBaseUrl(project.managementUrl);
-
                             const hasCustomIcon = project.icon && project.icon !== '📁';
+                            const baseUrl = useFavicons ? (
+                                getBaseUrl(project.productionUrl) ||
+                                getBaseUrl(project.stagingUrl) ||
+                                getBaseUrl(project.devUrl) ||
+                                getBaseUrl(project.managementUrl)
+                            ) : null;
 
                             const faviconHtml = hasCustomIcon
                                 ? project.icon
-                                : baseUrl
+                                : baseUrl && useFavicons
                                     ? `<img src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">`
                                     : '📁';
 
