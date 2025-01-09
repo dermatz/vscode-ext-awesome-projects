@@ -5,6 +5,10 @@
   "version": "0.0.1",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenForgeProject/vscode-ext-awesome-projects"
+  },
   "sponsor": {
     "url": "https://github.com/sponsors/dermatz"
   },
