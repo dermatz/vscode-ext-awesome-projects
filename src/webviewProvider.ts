@@ -103,7 +103,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
     private async _updateProject(projectPath: string, updates: Partial<Project>) {
         try {
-            // Validate color format if it exists in updates
             if (updates.color) {
                 const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
                 if (!isValidHex.test(updates.color)) {
@@ -160,14 +159,12 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         const configuration = vscode.workspace.getConfiguration('awesomeProjects');
         const projects = configuration.get<Project[]>('projects') || [];
 
-        // Gradient helper function
         const generateGradient = (baseColor: string): string => {
             const hex = baseColor.replace('#', '');
             const r = parseInt(hex.substring(0, 2), 16);
             const g = parseInt(hex.substring(2, 4), 16);
             const b = parseInt(hex.substring(4, 6), 16);
 
-            // Stärkerer Farbverlauf durch größere Differenz
             const darkerR = Math.max(0, r - 80);
             const darkerG = Math.max(0, g - 80);
             const darkerB = Math.max(0, b - 80);
@@ -175,20 +172,15 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             return `rgb(${darkerR}, ${darkerG}, ${darkerB})`;
         };
 
-        // Neue Funktion zur Berechnung der Textfarbe basierend auf Kontrast
         const getContrastColor = (hexColor: string): string => {
-            // Entferne # wenn vorhanden
             const color = hexColor.replace('#', '');
 
-            // Konvertiere zu RGB
             const r = parseInt(color.substr(0, 2), 16);
             const g = parseInt(color.substr(2, 2), 16);
             const b = parseInt(color.substr(4, 2), 16);
 
-            // Berechne relative Luminanz nach WCAG 2.0
             const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
-            // Wenn Luminanz > 0.5, ist der Hintergrund hell und braucht dunklen Text
             return luminance > 0.5 ? '#000000' : '#ffffff';
         };
 
@@ -246,10 +238,32 @@ background: linear-gradient(135deg,
                         border-radius: 0 0 6px 6px;
                         padding: 16px;
                         margin-top: -1px;
+                        margin-bottom: 10px;  /* Add this line */
                         animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                     }
                     .project-info-dropdown.show {
                         display: block;
+                    }
+                    .color-container {
+                        display: flex;
+                        gap: 4px;
+                        align-items: center;
+                    }
+                    .reset-color, .random-color {
+                        padding: 4px 8px;
+                        background: var(--vscode-button-secondaryBackground);
+                        color: var(--vscode-button-secondaryForeground);
+                        border: 1px solid var(--vscode-button-border);
+                        border-radius: 3px;
+                        cursor: pointer;
+                        font-size: 0.9em;
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                    }
+                    .reset-color:hover, .random-color:hover {
+                        background: var(--vscode-button-background);
+                        color: var(--vscode-button-foreground);
                     }
                     .info-section {
                         margin-bottom: 12px;
@@ -385,6 +399,7 @@ background: linear-gradient(135deg,
                         border-radius: 0 0 6px 6px;
                         padding: 16px;
                         margin-top: -1px;
+                        margin-bottom: 10px;  /* Add this line */
                         animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                         position: relative; /* Wichtig für absolute Positionierung des Delete-Links */
                     }
@@ -417,7 +432,10 @@ background: linear-gradient(135deg,
                     }
                     .settings-item input[type="color"] {
                         padding: 0;
-                        height: 40px;
+                        height: 30px;
+                        max-width: 30px;
+                        border-radius: 5px;
+                        margin-right: 6px;
                         cursor: pointer;
                     }
                     .settings-item input[type="color"]::-webkit-color-swatch-wrapper {
@@ -496,10 +514,8 @@ background: linear-gradient(135deg,
                             const bgColor = project.color || 'var(--vscode-list-activeSelectionBackground)';
                             const gradientColor = project.color ? generateGradient(project.color) : 'var(--vscode-list-activeSelectionBackground)';
 
-                            // Textfarbe basierend auf Kontrast berechnen
                             const textColor = project.color ? getContrastColor(project.color) : '#ffffff';
 
-                            // Funktion zum Extrahieren der Basis-URL
                             const getBaseUrl = (url?: string) => {
                                 if (!url) return null;
                                 try {
@@ -510,16 +526,13 @@ background: linear-gradient(135deg,
                                 }
                             };
 
-                            // Erste verfügbare URL verwenden
                             const baseUrl = getBaseUrl(project.productionUrl) ||
                                           getBaseUrl(project.stagingUrl) ||
                                           getBaseUrl(project.devUrl) ||
                                           getBaseUrl(project.managementUrl);
 
-                            // Erst prüfen ob ein manuelles Icon existiert
                             const hasCustomIcon = project.icon && project.icon !== '📁';
 
-                            // Favicon nur laden wenn kein eigenes Icon existiert
                             const faviconHtml = hasCustomIcon
                                 ? project.icon
                                 : baseUrl
@@ -609,8 +622,24 @@ background: linear-gradient(135deg,
                                         </div>
                                         <div class="settings-item">
                                             <label>Color:</label>
-                                            <input type="color" value="${project.color || '#000000'}"
-                                                oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                                            <div class="color-container">
+                                                <input type="color" value="${project.color || '#000000'}"
+                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                                                <button class="random-color" style="display:flex; items-align:center" onclick="setRandomColor(event, '${project.path.replace(/'/g, "\\'")}')">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                                        <path d="M18 4l3 3l-3 3" />
+                                                        <path d="M18 20l3 -3l-3 -3" />
+                                                        <path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" />
+                                                        <path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3" />
+                                                    </svg>
+                                                    Randomize
+                                                </button>
+                                                <button class="reset-color" onclick="resetColor(event, '${project.path.replace(/'/g, "\\'")}')">
+                                                    <svg  xmlns="http://www.w3.org/2000/svg"  width="16"  height="16"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-back-up"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" /></svg>
+                                                    Reset
+                                                </button>
+                                            </div>
                                         </div>
                                         <div class="settings-item">
                                             <label>Production URL:</label>
@@ -678,7 +707,6 @@ background: linear-gradient(135deg,
                         const dropdown = document.getElementById(dropdownId);
                         const projectItem = event.target.closest('.project-item');
 
-                        // Close all other dropdowns
                         document.querySelectorAll('.settings-dropdown.show').forEach(el => {
                             if (el.id !== dropdownId) {
                                 el.classList.remove('show');
@@ -758,7 +786,6 @@ background: linear-gradient(135deg,
                         const infoDropdown = document.getElementById(infoId);
                         const projectItem = event.currentTarget;
 
-                        // Close all other dropdowns
                         document.querySelectorAll('.project-info-dropdown.show, .settings-dropdown.show').forEach(el => {
                             if (el.id !== infoId) {
                                 el.classList.remove('show');
@@ -805,6 +832,49 @@ background: linear-gradient(135deg,
                             command: 'deleteProject',
                             projectPath: projectPath
                         });
+                    }
+
+                    function resetColor(event, projectPath) {
+                        event.preventDefault();
+                        const colorInput = event.target.closest('.color-container').querySelector('input[type="color"]');
+                        colorInput.value = '#000000';
+                        colorInput.removeAttribute('value');
+
+                        if (!pendingChanges[projectPath]) {
+                            pendingChanges[projectPath] = {};
+                        }
+                        pendingChanges[projectPath]['color'] = '';
+
+                        const projectItem = event.target.closest('.project-wrapper').querySelector('.project-item');
+                        projectItem.style.removeProperty('--bg-color');
+                        projectItem.style.removeProperty('--bg-gradient');
+
+                        const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
+                        if (saveButton) {
+                            saveButton.classList.add('show');
+                        }
+                    }
+
+                    function setRandomColor(event, projectPath) {
+                        event.preventDefault();
+                        const colorInput = event.target.previousElementSibling;
+                        const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+                        colorInput.value = randomColor;
+
+                        if (!pendingChanges[projectPath]) {
+                            pendingChanges[projectPath] = {};
+                        }
+                        pendingChanges[projectPath]['color'] = randomColor;
+
+                        const projectItem = event.target.closest('.project-wrapper').querySelector('.project-item');
+                        const gradientColor = generateGradient(randomColor);
+                        projectItem.style.setProperty('--bg-color', randomColor);
+                        projectItem.style.setProperty('--bg-gradient', gradientColor);
+
+                        const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
+                        if (saveButton) {
+                            saveButton.classList.add('show');
+                        }
                     }
 
                     document.addEventListener('click', (event) => {
