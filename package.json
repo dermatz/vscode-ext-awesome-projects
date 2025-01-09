@@ -1,7 +1,7 @@
 {
   "name": "awesome-projects",
   "displayName": "vscode-ext-awesome-projects",
-  "description": "",
+  "description": "Manage and organize your VS Code projects with ease. Quick access to project URLs, custom colors, and project shortcuts.",
   "version": "0.0.1",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
@@ -14,14 +14,15 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:awesomeProjectsView",
+    "onCommand:awesome-projects.addProject",
+    "onCommand:awesome-projects.openProject",
+    "onCommand:awesome-projects.refreshProjects"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "awesome-projects.helloWorld",
-        "title": "Hello World"
-      },
       {
         "command": "awesome-projects.addProject",
         "title": "Add Project",
