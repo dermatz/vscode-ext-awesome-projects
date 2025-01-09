@@ -511,7 +511,7 @@ background: linear-gradient(135deg,
                             };
 
                             // Erste verfügbare URL verwenden
-                            const baseUrl = getBaseUrl(project.url) ||
+                            const baseUrl = getBaseUrl(project.productionUrl) ||
                                           getBaseUrl(project.stagingUrl) ||
                                           getBaseUrl(project.devUrl) ||
                                           getBaseUrl(project.managementUrl);
@@ -547,12 +547,12 @@ background: linear-gradient(135deg,
                                             <div class="info-label">Path</div>
                                             <div class="info-value">${project.path}</div>
                                         </div>
-                                        ${project.url || project.devUrl || project.stagingUrl || project.managementUrl ? `
+                                        ${project.productionUrl || project.devUrl || project.stagingUrl || project.managementUrl ? `
                                         <div class="info-section">
                                             <div class="info-label">URLs</div>
                                             <div class="info-value">
-                                                ${project.url ? `
-                                                    <a href="#" class="project-url" onclick="openUrl(event, '${project.url.replace(/'/g, "\\'")}')">
+                                                ${project.productionUrl ? `
+                                                    <a href="#" class="project-url" onclick="openUrl(event, '${project.productionUrl.replace(/'/g, "\\'")}')">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9-3-9m-9 9a9 9 0 019-9"/>
                                                         </svg>
@@ -614,7 +614,7 @@ background: linear-gradient(135deg,
                                         </div>
                                         <div class="settings-item">
                                             <label>Production URL:</label>
-                                            <input type="url" value="${project.url || ''}"
+                                            <input type="url" value="${project.productionUrl || ''}"
                                                 oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                                         </div>
                                         <div class="settings-item">
@@ -694,7 +694,7 @@ background: linear-gradient(135deg,
 
                     function handleInput(event, projectPath) {
                         const labelMap = {
-                            'url': 'url',
+                            'production url': 'productionUrl',
                             'staging url': 'stagingUrl',
                             'development url': 'devUrl',
                             'management url': 'managementUrl',
@@ -709,7 +709,7 @@ background: linear-gradient(135deg,
                         let value = event.target.value;
 
                         if (field === 'color') {
-                            const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa6-f0-9]{3})$/;
+                            const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
                             if (!value.startsWith('#')) {
                                 value = '#' + value;
                             }

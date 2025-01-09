@@ -3,7 +3,7 @@ export interface Project {
     name: string;
     color?: string;
     icon?: string;
-    url?: string;
+    productionUrl?: string;
     devUrl?: string;
     stagingUrl?: string;
     managementUrl?: string;
