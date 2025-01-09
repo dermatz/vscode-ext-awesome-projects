@@ -2,7 +2,7 @@
   "name": "awesome-projects",
   "displayName": "Awesome Projects",
   "description": "Manage and organize your VS Code projects with ease. Quick access to project URLs, custom colors, and project shortcuts.",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "repository": {
@@ -89,7 +89,10 @@
           "description": "List of saved projects",
           "items": {
             "type": "object",
-            "required": ["path", "name"],
+            "required": [
+              "path",
+              "name"
+            ],
             "properties": {
               "path": {
                 "type": "string",
@@ -131,28 +134,37 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run package",
+    "vscode:prepublish": "webpack --mode production --devtool hidden-source-map && npm run copy-resources",
     "compile": "webpack",
     "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "copy-resources": "mkdir -p dist/css && cp -r src/css/* dist/css/",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
   },
+  "preview": true,
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/OpenForgeProject/vscode-ext-awesome-projects/issues"
+  },
+  "homepage": "https://github.com/OpenForgeProject/vscode-ext-awesome-projects#readme",
   "devDependencies": {
-    "@types/vscode": "^1.96.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
     "@typescript-eslint/parser": "^8.17.0",
-    "eslint": "^9.16.0",
-    "typescript": "^5.7.2",
-    "ts-loader": "^9.5.1",
-    "webpack": "^5.95.0",
-    "webpack-cli": "^5.1.4",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.4.1",
+    "copy-webpack-plugin": "^11.0.0",
+    "eslint": "^9.16.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.7.2",
+    "webpack": "^5.95.0",
+    "webpack-cli": "^5.1.4"
   }
 }
