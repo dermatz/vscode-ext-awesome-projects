@@ -83,6 +83,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'updateProject':
                     this._updateProject(message.projectPath, message.updates);
                     break;
+                case 'openUrl':
+                    vscode.env.openExternal(vscode.Uri.parse(message.url));
+                    break;
             }
         });
     }
@@ -670,6 +673,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         const darkerB = Math.max(0, b - 40);
 
                         return 'rgb(' + darkerR + ', ' + darkerG + ', ' + darkerB + ')';
+                    }
+
+                    function openUrl(event, url) {
+                        event.preventDefault();
+                        vscode.postMessage({
+                            command: 'openUrl',
+                            url: url
+                        });
                     }
 
                     document.addEventListener('click', (event) => {
