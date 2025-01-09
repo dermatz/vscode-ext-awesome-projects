@@ -280,6 +280,12 @@ background: linear-gradient(135deg,
                         display: flex;
                         align-items: center;
                         gap: 4px;
+                        transition: all 0.2s ease;
+                    }
+                    .info-action-button:hover {
+                        background: var(--vscode-button-background);
+                        color: var(--vscode-button-foreground);
+                        transform: translateY(-1px);
                     }
                     .project-item:not(.active) {
                         border-radius: 6px;
@@ -607,7 +613,7 @@ background: linear-gradient(135deg,
                                                 oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                                         </div>
                                         <div class="settings-item">
-                                            <label>URL:</label>
+                                            <label>Production URL:</label>
                                             <input type="url" value="${project.url || ''}"
                                                 oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                                         </div>
