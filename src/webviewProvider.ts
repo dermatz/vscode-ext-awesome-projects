@@ -113,6 +113,20 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 }
             }
 
+            const urlFields: (keyof Pick<Project, 'productionUrl' | 'devUrl' | 'stagingUrl' | 'managementUrl'>)[] = [
+                'productionUrl',
+                'devUrl',
+                'stagingUrl',
+                'managementUrl'
+            ];
+
+            urlFields.forEach(field => {
+                const value = updates[field];
+                if (typeof value === 'string' && value && !/^https?:\/\//i.test(value)) {
+                    updates[field] = `https://${value}`;
+                }
+            });
+
             const configuration = vscode.workspace.getConfiguration('awesomeProjects');
             const projects = [...(configuration.get<Project[]>('projects') || [])];
             const projectIndex = projects.findIndex(p => p.path === projectPath);
