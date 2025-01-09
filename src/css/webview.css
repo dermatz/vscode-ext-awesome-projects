@@ -215,7 +215,6 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px;
     color: var(--vscode-textLink-foreground);
     text-decoration: none;
     font-size: 12px;
@@ -385,15 +384,13 @@ body {
     margin-top: 2rem;
     flex-wrap: wrap;
     gap: 4px;
-    justify-content: flex-start;
+    padding: 10px;
     position: relative;
-    padding-bottom: 20px;
+    justify-content: space-between;
 }
 
 .version-info {
-    position: absolute;
-    bottom: 0;
-    right: 8px;
+    display: block;
     font-size: 10px;
     opacity: 0.5;
     color: var(--vscode-foreground);
