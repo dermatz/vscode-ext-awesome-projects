@@ -143,9 +143,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             const g = parseInt(hex.substring(2, 4), 16);
             const b = parseInt(hex.substring(4, 6), 16);
 
-            const darkerR = Math.max(0, r - 40);
-            const darkerG = Math.max(0, g - 40);
-            const darkerB = Math.max(0, b - 40);
+            // Stärkerer Farbverlauf durch größere Differenz
+            const darkerR = Math.max(0, r - 80);
+            const darkerG = Math.max(0, g - 80);
+            const darkerB = Math.max(0, b - 80);
 
             return `rgb(${darkerR}, ${darkerG}, ${darkerB})`;
         };
@@ -204,10 +205,13 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         align-items: center;
                         padding: 10px 12px;
                         cursor: pointer;
-                        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                         border-radius: 6px 6px 0 0;
                         position: relative;
-                        background: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-gradient) 100%);
+background: linear-gradient(135deg,
+    color-mix(in srgb, var(--bg-color) 80%, transparent),
+    color-mix(in srgb, var(--bg-gradient) 80%, transparent)
+);
                         border: 1px solid transparent;
                     }
                     .project-info-dropdown {
@@ -259,10 +263,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     .project-item:hover {
                         border-color: var(--vscode-input-border);
                         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                    }
-                    .project-item.active {
-                        border-color: var(--vscode-input-border);
-                        border-bottom-color: transparent;
+                        background: linear-gradient(135deg,
+                            var(--bg-color),
+                            var(--bg-gradient)
+                        );
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     }
                     .project-icon {
                         margin-right: 12px;
