@@ -173,6 +173,49 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         background: var(--vscode-editor-background);
                         border: 1px solid transparent;
                     }
+                    .project-info-dropdown {
+                        display: none;
+                        background: var(--vscode-menu-background);
+                        border: 1px solid var(--vscode-input-border);
+                        border-top: none;
+                        border-radius: 0 0 6px 6px;
+                        padding: 16px;
+                        margin-top: -1px;
+                        animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    }
+                    .project-info-dropdown.show {
+                        display: block;
+                    }
+                    .info-section {
+                        margin-bottom: 12px;
+                    }
+                    .info-label {
+                        font-size: 0.85em;
+                        color: var(--vscode-foreground);
+                        opacity: 0.7;
+                        margin-bottom: 4px;
+                    }
+                    .info-value {
+                        font-size: 0.95em;
+                        color: var(--vscode-foreground);
+                    }
+                    .info-actions {
+                        display: flex;
+                        gap: 8px;
+                        margin-top: 12px;
+                    }
+                    .info-action-button {
+                        padding: 4px 8px;
+                        border-radius: 3px;
+                        border: 1px solid var(--vscode-button-border);
+                        background: var(--vscode-button-secondaryBackground);
+                        color: var(--vscode-button-secondaryForeground);
+                        cursor: pointer;
+                        font-size: 0.9em;
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                    }
                     .project-item:not(.active) {
                         border-radius: 6px;
                     }
@@ -334,18 +377,46 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             const textColor = bgColor.toLowerCase() === '#ffffff' ? '#000000' : '#ffffff';
                             return `
                                 <div class="project-wrapper">
-                                    <div class="project-item"
-                                        style="background: ${bgColor}">
+                                    <div class="project-item" style="background: ${bgColor}" onclick="toggleInfo(event, '${project.path.replace(/'/g, "\\'")}')">
                                         <span class="project-icon">${project.icon || '📁'}</span>
-                                        <div class="project-info" onclick="openProject('${project.path.replace(/'/g, "\\'")}')">
+                                        <div class="project-info">
                                             <div class="project-name" style="color: ${textColor}">${project.name}</div>
-                                            <div class="project-path" style="color: ${textColor}">${project.path}</div>
                                         </div>
                                         <div class="project-settings" onclick="toggleSettings(event, '${project.path.replace(/'/g, "\\'")}')">
                                             Edit
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="1rem" width="1rem" style="margin-left: 0.25rem" stroke-width="1.5" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                             </svg>
+                                        </div>
+                                    </div>
+                                    <div class="project-info-dropdown" id="info-${project.path.replace(/[^a-zA-Z0-9]/g, '-')}">
+                                        <div class="info-section">
+                                            <div class="info-label">Path</div>
+                                            <div class="info-value">${project.path}</div>
+                                        </div>
+                                        ${project.url ? `
+                                        <div class="info-section">
+                                            <div class="info-label">URL</div>
+                                            <div class="info-value">
+                                                <a href="#" onclick="openUrl(event, '${project.url.replace(/'/g, "\\'")}')">
+                                                    ${project.url}
+                                                </a>
+                                            </div>
+                                        </div>
+                                        ` : ''}
+                                        <div class="info-actions">
+                                            <button class="info-action-button" onclick="openProject('${project.path.replace(/'/g, "\\'")}')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/>
+                                                </svg>
+                                                Open Project
+                                            </button>
+                                            <button class="info-action-button" onclick="openInFinder('${project.path.replace(/'/g, "\\'")}')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                                                </svg>
+                                                Show in Finder
+                                            </button>
                                         </div>
                                     </div>
                                     <div class="settings-dropdown" id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, '-')}">
@@ -459,6 +530,36 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 saveButton.classList.remove('show');
                             }
                         }
+                    }
+
+                    function toggleInfo(event, projectPath) {
+                        if (event.target.closest('.project-settings')) {
+                            return;
+                        }
+
+                        const infoId = 'info-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-');
+                        const infoDropdown = document.getElementById(infoId);
+                        const projectItem = event.currentTarget;
+
+                        // Close all other dropdowns
+                        document.querySelectorAll('.project-info-dropdown.show, .settings-dropdown.show').forEach(el => {
+                            if (el.id !== infoId) {
+                                el.classList.remove('show');
+                                el.previousElementSibling.classList.remove('active');
+                            }
+                        });
+
+                        if (infoDropdown) {
+                            infoDropdown.classList.toggle('show');
+                            projectItem.classList.toggle('active');
+                        }
+                    }
+
+                    function openInFinder(path) {
+                        vscode.postMessage({
+                            command: 'openInFinder',
+                            path: path
+                        });
                     }
 
                     document.addEventListener('click', (event) => {
