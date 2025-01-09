@@ -132,125 +132,185 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     }
                     .section {
                         margin-bottom: 20px;
+                        opacity: 0;
+                        animation: fadeIn 0.3s ease forwards;
+                    }
+                    @keyframes fadeIn {
+                        from { opacity: 0; transform: translateY(10px); }
+                        to { opacity: 1; transform: translateY(0); }
                     }
                     .section-header {
-                        padding: 8px;
-                        font-weight: bold;
+                        padding: 12px 16px;
+                        font-weight: 600;
                         background: var(--vscode-sideBar-background);
                         border-bottom: 1px solid var(--vscode-sideBar-border);
+                        letter-spacing: 0.5px;
+                        font-size: 13px;
+                        position: sticky;
+                        top: 0;
+                        z-index: 100;
+                        backdrop-filter: blur(10px);
                     }
                     .project-item {
                         display: flex;
                         align-items: center;
-                        padding: 6px 8px;
+                        padding: 10px 12px;
                         cursor: pointer;
-                        transition: all 0.2s ease;
-                        border-radius: 4px;
-                        margin: 2px 4px;
+                        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                        border-radius: 6px;
+                        margin: 4px 6px;
                         position: relative;
                         z-index: 1;
+                        background: var(--vscode-editor-background);
+                        border: 1px solid transparent;
                     }
                     .project-item:hover {
-                        filter: brightness(1.1);
+                        transform: translateY(-1px);
+                        border-color: var(--vscode-input-border);
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                     }
                     .project-icon {
-                        margin-right: 8px;
+                        margin-right: 12px;
+                        font-size: 1.2em;
+                        transition: transform 0.2s ease;
+                    }
+                    .project-item:hover .project-icon {
+                        transform: scale(1.1);
                     }
                     .project-info {
                         flex: 1;
+                        transition: transform 0.2s ease;
                     }
                     .project-name {
                         font-weight: 500;
+                        margin-bottom: 2px;
                     }
                     .project-path {
                         font-size: 0.85em;
-                        opacity: 0.8;
+                        opacity: 0.7;
                     }
                     .add-button {
                         display: flex;
                         align-items: center;
-                        padding: 6px 8px;
+                        padding: 8px 16px;
                         cursor: pointer;
                         color: var(--vscode-button-foreground);
                         background: var(--vscode-button-background);
                         border: none;
-                        border-radius: 3px;
-                        margin: 8px;
+                        border-radius: 4px;
+                        margin: 12px 8px;
+                        font-weight: 500;
+                        transition: all 0.2s ease;
+                        position: relative;
+                        overflow: hidden;
                     }
                     .add-button:hover {
-                        background: var(--vscode-button-hoverBackground);
+                        transform: translateY(-1px);
+                    }
+                    .add-button::after {
+                        content: '';
+                        position: absolute;
+                        width: 100%;
+                        height: 100%;
+                        top: 0;
+                        left: -100%;
+                        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+                        transition: 0.5s;
+                    }
+                    .add-button:hover::after {
+                        left: 100%;
                     }
                     .project-settings {
                         position: absolute;
-                        right: 8px;
+                        right: 12px;
                         top: 50%;
-                        transform: translateY(-50%);
+                        transform: translateY(-50%) scale(0.9);
                         cursor: pointer;
                         opacity: 0;
-                        transition: opacity 0.2s;
-                        padding: 4px;
+                        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                        padding: 6px;
                         border-radius: 4px;
                         z-index: 10;
                         display: flex;
                         align-items: center;
+                        background: var(--vscode-editor-background);
+                        border: 1px solid var(--vscode-input-border);
                     }
                     .project-item:hover .project-settings {
                         opacity: 1;
-                    }
-                    .project-settings:hover {
-                        background-color: var(--vscode-input-background);
+                        transform: translateY(-50%) scale(1);
                     }
                     .settings-dropdown {
                         position: absolute;
-                        right: 100%;
-                        top: 0;
+                        right: 110%;
+                        top: -20px;
                         background: var(--vscode-menu-background);
                         border: 1px solid var(--vscode-menu-border);
-                        border-radius: 4px;
-                        padding: 12px;
-                        display: none;
+                        border-radius: 6px;
+                        padding: 16px;
+                        opacity: 0;
+                        visibility: hidden;
+                        transform: translateX(10px);
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                         z-index: 9999;
-                        min-width: 200px;
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                        min-width: 240px;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                         margin-right: 8px;
                     }
                     .settings-dropdown.show {
-                        display: block;
+                        opacity: 1;
+                        visibility: visible;
+                        transform: translateX(0);
                     }
                     .settings-item {
-                        margin: 8px 0;
-                        padding: 0 4px;
+                        margin: 12px 0;
                     }
                     .settings-item label {
                         display: block;
-                        margin-bottom: 4px;
+                        margin-bottom: 6px;
                         color: var(--vscode-foreground);
+                        font-size: 0.9em;
+                        font-weight: 500;
                     }
                     .settings-item input {
-                        width: calc(100% - 16px);
+                        width: 100%;
                         background: var(--vscode-input-background);
                         color: var(--vscode-input-foreground);
                         border: 1px solid var(--vscode-input-border);
-                        padding: 4px 8px;
-                        border-radius: 2px;
+                        padding: 6px 10px;
+                        border-radius: 4px;
                         box-sizing: border-box;
+                        transition: all 0.2s ease;
+                    }
+                    .settings-item input:focus {
+                        border-color: var(--vscode-focusBorder);
+                        outline: none;
                     }
                     .save-button {
                         background: var(--vscode-button-background);
                         color: var(--vscode-button-foreground);
                         border: none;
-                        padding: 4px 8px;
-                        border-radius: 2px;
+                        padding: 8px 16px;
+                        border-radius: 4px;
                         cursor: pointer;
-                        margin-top: 8px;
+                        margin-top: 16px;
                         width: 100%;
                         display: none;
+                        font-weight: 500;
+                        transform: translateY(5px);
+                        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                     }
                     .save-button:hover {
-                        background: var(--vscode-button-hoverBackground);
+                        filter: brightness(1.1);
+                        transform: translateY(3px);
                     }
                     .save-button.show {
                         display: block;
+                        animation: slideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+                    }
+                    @keyframes slideUp {
+                        from { opacity: 0; transform: translateY(10px); }
+                        to { opacity: 1; transform: translateY(0); }
                     }
                 </style>
             </head>
