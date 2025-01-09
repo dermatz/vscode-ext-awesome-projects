@@ -130,6 +130,20 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         const configuration = vscode.workspace.getConfiguration('awesomeProjects');
         const projects = configuration.get<Project[]>('projects') || [];
 
+        // Gradient helper function
+        const generateGradient = (baseColor: string): string => {
+            const hex = baseColor.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+
+            const darkerR = Math.max(0, r - 40);
+            const darkerG = Math.max(0, g - 40);
+            const darkerB = Math.max(0, b - 40);
+
+            return `rgb(${darkerR}, ${darkerG}, ${darkerB})`;
+        };
+
         return `<!DOCTYPE html>
             <html>
             <head>
@@ -170,7 +184,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                         border-radius: 6px 6px 0 0;
                         position: relative;
-                        background: var(--vscode-editor-background);
+                        background: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-gradient) 100%);
                         border: 1px solid transparent;
                     }
                     .project-info-dropdown {
@@ -336,9 +350,17 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         box-sizing: border-box;
                         transition: all 0.2s ease;
                     }
-                    .settings-item input:focus {
-                        border-color: var(--vscode-focusBorder);
-                        outline: none;
+                    .settings-item input[type="color"] {
+                        padding: 0;
+                        height: 40px;
+                        cursor: pointer;
+                    }
+                    .settings-item input[type="color"]::-webkit-color-swatch-wrapper {
+                        padding: 0;
+                    }
+                    .settings-item input[type="color"]::-webkit-color-swatch {
+                        border: none;
+                        border-radius: 3px;
                     }
                     .save-button {
                         background: var(--vscode-button-background);
@@ -374,10 +396,13 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     <div id="projects-list">
                         ${projects.map(project => {
                             const bgColor = project.color || 'var(--vscode-list-activeSelectionBackground)';
+                            const gradientColor = project.color ? generateGradient(project.color) : 'var(--vscode-list-activeSelectionBackground)';
                             const textColor = bgColor.toLowerCase() === '#ffffff' ? '#000000' : '#ffffff';
                             return `
                                 <div class="project-wrapper">
-                                    <div class="project-item" style="background: ${bgColor}" onclick="toggleInfo(event, '${project.path.replace(/'/g, "\\'")}')">
+                                    <div class="project-item"
+                                        style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"
+                                        onclick="toggleInfo(event, '${project.path.replace(/'/g, "\\'")}')">
                                         <span class="project-icon">${project.icon || '📁'}</span>
                                         <div class="project-info">
                                             <div class="project-name" style="color: ${textColor}">${project.name}</div>
@@ -493,16 +518,19 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         const field = event.target.closest('.settings-item').querySelector('label').textContent.toLowerCase().replace(':', '');
                         let value = event.target.value;
 
-                        // Validate and format color value
                         if (field === 'color') {
-                            // Ensure color is a valid hex value
-                            const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+                            const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa6-f0-9]{3})$/;
                             if (!value.startsWith('#')) {
                                 value = '#' + value;
                             }
                             if (!isValidHex.test(value)) {
-                                return; // Invalid color format
+                                return;
                             }
+                            // Update gradient in real-time
+                            const projectItem = event.target.closest('.project-wrapper').querySelector('.project-item');
+                            const gradientColor = generateGradient(value);
+                            projectItem.style.setProperty('--bg-color', value);
+                            projectItem.style.setProperty('--bg-gradient', gradientColor);
                         }
 
                         if (!pendingChanges[projectPath]) {
@@ -560,6 +588,19 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             command: 'openInFinder',
                             path: path
                         });
+                    }
+
+                    function generateGradient(baseColor) {
+                        const hex = baseColor.replace('#', '');
+                        const r = parseInt(hex.substring(0, 2), 16);
+                        const g = parseInt(hex.substring(2, 4), 16);
+                        const b = parseInt(hex.substring(4, 6), 16);
+
+                        const darkerR = Math.max(0, r - 40);
+                        const darkerG = Math.max(0, g - 40);
+                        const darkerB = Math.max(0, b - 40);
+
+                        return 'rgb(' + darkerR + ', ' + darkerG + ', ' + darkerB + ')';
                     }
 
                     document.addEventListener('click', (event) => {
