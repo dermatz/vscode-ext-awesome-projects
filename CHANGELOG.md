@@ -2,6 +2,13 @@
 
 All notable changes to the "awesome-projects" extension will be documented in this file.
 
+## [0.1.1] - 2025-01-10
+
+### Fixed
+
+- Fixed + Button to add new Project
+- Add missing Input-Placehoder for increased accessibility
+
 ## [0.1.0] - 2025-01-10
 
 ### Added

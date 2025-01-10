@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ProjectsWebviewProvider } from './webviewProvider';
+import { Project } from './types';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "awesome-projects" is now active!');
@@ -19,8 +20,41 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     const addProjectCommand = vscode.commands.registerCommand('awesome-projects.addProject', () => {
-        vscode.window.showInformationMessage('Add Project clicked!');
-        // Here you can implement the actual project adding logic
+        vscode.window.showOpenDialog({
+            canSelectFolders: true,
+            canSelectMany: false
+        }).then(async folderUri => {
+            if (folderUri && folderUri[0]) {
+                try {
+                    const projectPath = folderUri[0].fsPath;
+                    const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                    const projects: Project[] = configuration.get('projects') || [];
+
+                    const newProject: Project = {
+                        path: projectPath,
+                        name: await vscode.window.showInputBox({
+                            prompt: 'Enter project name',
+                            value: projectPath.split('/').pop()
+                        }) || projectPath.split('/').pop() || ''
+                    };
+
+                    await configuration.update(
+                        'projects',
+                        [...projects, newProject],
+                        vscode.ConfigurationTarget.Global
+                    );
+
+                    const updatedProjects = configuration.get<Project[]>('projects');
+                    if (updatedProjects?.some(p => p.path === newProject.path)) {
+                        projectsProvider.refresh();
+                    } else {
+                        throw new Error('Failed to save project to settings');
+                    }
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to add project: ${error}`);
+                }
+            }
+        });
     });
 
     const openProjectCommand = vscode.commands.registerCommand('awesome-projects.openProject', (projectName: string) => {
