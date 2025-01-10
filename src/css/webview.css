@@ -395,3 +395,59 @@ body {
     opacity: 0.5;
     color: var(--vscode-foreground);
 }
+
+.draggable-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.project-wrapper.dragging {
+    opacity: 0.5;
+}
+
+.project-wrapper.over {
+    border: 2px dashed var(--vscode-input-border);
+    transition: border 0.2s ease;
+}
+
+.project-wrapper.insert-top::before,
+.project-wrapper.insert-bottom::after {
+    content: '';
+    display: block;
+    height: 2px;
+    background: var(--vscode-input-border);
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+
+.project-wrapper.insert-top::before {
+    top: 0;
+}
+
+.project-wrapper.insert-bottom::after {
+    bottom: 0;
+}
+
+.loading-spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid var(--vscode-progressBar-background);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    z-index: 1000;
+}
+
+.hidden {
+    display: none;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}

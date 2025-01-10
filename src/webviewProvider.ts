@@ -100,6 +100,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             }
                         });
                     break;
+                case 'reorderProjects':
+                    this._reorderProjects(message.oldIndex, message.newIndex);
+                    break;
             }
         });
     }
@@ -157,6 +160,28 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    private async _reorderProjects(oldIndex: number, newIndex: number) {
+        try {
+            this._setLoading(true);
+            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+            const projects = [...(configuration.get<Project[]>('projects') || [])];
+            const [movedProject] = projects.splice(oldIndex, 1);
+            projects.splice(newIndex, 0, movedProject);
+            await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+            this.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to reorder projects: ${error}`);
+        } finally {
+            this._setLoading(false);
+        }
+    }
+
+    private _setLoading(isLoading: boolean) {
+        if (this._view) {
+            this._view.webview.postMessage({ command: 'setLoading', isLoading });
+        }
+    }
+
     public async refresh() {
         if (this._view) {
             this._view.webview.html = await this._getHtmlForWebview(this._view.webview);
@@ -206,9 +231,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             <body>
                 <div class="section">
                     <div class="section-header">My Projects</div>
-                    <div id="projects-list">
+                    <div id="loading-spinner" class="loading-spinner hidden"></div>
+                    <div id="projects-list" class="draggable-list">
                         ${projects
-                            .map((project) => {
+                            .map((project, index) => {
                                 const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
                                 const gradientColor = project.color ? generateGradient(project.color) : "var(--vscode-list-activeSelectionBackground)";
 
@@ -232,7 +258,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                     baseUrl && useFavicons ? `<img src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
 
                                 return `
-                                <div class="project-wrapper">
+                                <div class="project-wrapper" draggable="true" data-index="${index}">
                                     <div class="project-item"
                                         style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"
                                         onclick="toggleInfo(event, '${project.path.replace(/'/g, "\\'")}')">
@@ -637,6 +663,91 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         }
                     }
 
+                    const list = document.getElementById('projects-list');
+                    const loadingSpinner = document.getElementById('loading-spinner');
+                    let dragSrcEl = null;
+                    let isSaving = false;
+
+                    function handleDragStart(e) {
+                        if (isSaving) return;
+                        dragSrcEl = this;
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/html', this.innerHTML);
+                        this.classList.add('dragging');
+                    }
+
+                    function handleDragOver(e) {
+                        if (isSaving) return;
+                        if (e.preventDefault) {
+                            e.preventDefault();
+                        }
+                        e.dataTransfer.dropEffect = 'move';
+                        return false;
+                    }
+
+                    function handleDragEnter() {
+                        if (isSaving) return;
+                        this.classList.add('over');
+                    }
+
+                    function handleDragLeave() {
+                        if (isSaving) return;
+                        this.classList.remove('over');
+                    }
+
+                    function handleDrop(e) {
+                        if (isSaving) return;
+                        if (e.stopPropagation) {
+                            e.stopPropagation();
+                        }
+                        if (dragSrcEl !== this) {
+                            const oldIndex = parseInt(dragSrcEl.getAttribute('data-index'));
+                            const newIndex = parseInt(this.getAttribute('data-index'));
+                            dragSrcEl.innerHTML = this.innerHTML;
+                            this.innerHTML = e.dataTransfer.getData('text/html');
+                            vscode.postMessage({
+                                command: 'reorderProjects',
+                                oldIndex: oldIndex,
+                                newIndex: newIndex
+                            });
+                        }
+                        return false;
+                    }
+
+                    function handleDragEnd() {
+                        if (isSaving) return;
+                        this.classList.remove('dragging');
+                        document.querySelectorAll('.project-wrapper').forEach(item => {
+                            item.classList.remove('over');
+                            item.classList.remove('insert-top');
+                            item.classList.remove('insert-bottom');
+                        });
+                    }
+
+                    document.querySelectorAll('.project-wrapper').forEach(item => {
+                        item.addEventListener('dragstart', handleDragStart, false);
+                        item.addEventListener('dragenter', handleDragEnter, false);
+                        item.addEventListener('dragover', handleDragOver, false);
+                        item.addEventListener('dragleave', handleDragLeave, false);
+                        item.addEventListener('drop', handleDrop, false);
+                        item.addEventListener('dragend', handleDragEnd, false);
+                    });
+
+                    document.querySelectorAll('.project-wrapper').forEach(item => {
+                        item.addEventListener('dragover', function(e) {
+                            if (isSaving) return;
+                            const bounding = this.getBoundingClientRect();
+                            const offset = bounding.y + (bounding.height / 2);
+                            if (e.clientY - offset > 0) {
+                                this.classList.add('insert-bottom');
+                                this.classList.remove('insert-top');
+                            } else {
+                                this.classList.add('insert-top');
+                                this.classList.remove('insert-bottom');
+                            }
+                        });
+                    });
+
                     document.addEventListener('click', (event) => {
                         if (!event.target.closest('.project-wrapper')) {
                             document.querySelectorAll('.settings-dropdown.show').forEach(el => {
@@ -651,8 +762,21 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             event.stopPropagation();
                         });
                     });
+
+                    window.addEventListener('message', event => {
+                        const message = event.data;
+                        if (message.command === 'setLoading') {
+                            isSaving = message.isLoading;
+                            if (message.isLoading) {
+                                loadingSpinner.classList.remove('hidden');
+                            } else {
+                                loadingSpinner.classList.add('hidden');
+                            }
+                        }
+                    });
                 </script>
             </body>
             </html>`;
     }
 }
+

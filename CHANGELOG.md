@@ -2,13 +2,28 @@
 
 All notable changes to the "awesome-projects" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [0.1.0] - 2025-01-10
 
-## [0.0.4] - 2025-01-09
+### Added
+
+- added Drag&Drop for Project Cards to rearrange
+
+----
+
+## [0.0.2] - [0.0.6] - 2025-01-09
+
+### Added
+
+- Marketplace Categories and Tags
 
 ### Fixed
+
+- Extension Bundeling
+- Extension Assets calls
+- Security Issues
+- Performance Bottlenecks
 - CSS loading issues in production build
 
-## [Unreleased]
+## [0.0.1] - 2025-01-09
 
 - Initial release
