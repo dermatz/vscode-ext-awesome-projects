@@ -367,7 +367,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                     <div class="settings-dropdown" id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}">
                                         <div class="settings-item">
                                             <label>Name:</label>
-                                            <input type="text" value="${project.name}"
+                                            <input placeholder="Projectname" type="text" value="${project.name}"
                                                 oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                                         </div>
                                         <div class="settings-item">
@@ -401,27 +401,27 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                         </div>
                                         <div class="settings-item">
                                             <label>Production URL:</label>
-                                            <input type="url" value="${project.productionUrl || ""}"
+                                            <input placeholder="https://.." type="url" value="${project.productionUrl || ""}"
                                                 oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                                         </div>
                                         <div class="settings-item">
                                             <label>Staging URL:</label>
-                                            <input type="url" value="${project.stagingUrl || ""}"
+                                            <input placeholder="https://.." type="url" value="${project.stagingUrl || ""}"
                                                 oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                                         </div>
                                         <div class="settings-item">
-                                            <label>Development URL:</label>
-                                            <input type="url" value="${project.devUrl || ""}"
+                                            <label>Local development URL:</label>
+                                            <input placeholder="https://.." type="url" value="${project.devUrl || ""}"
                                                 oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                                         </div>
                                         <div class="settings-item">
-                                            <label>Management URL:</label>
-                                            <input type="url" value="${project.managementUrl || ""}"
+                                            <label>Management URL (e.G. Jira, Trello ... ):</label>
+                                            <input placeholder="https://.." type="url" value="${project.managementUrl || ""}"
                                                 oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                                         </div>
                                         <div class="settings-item">
                                             <label>Path:</label>
-                                            <input type="text" value="${project.path}"
+                                            <input placeholder="~/path/to/your/project/" type="text" value="${project.path}"
                                                 oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                                         </div>
                                         <button class="save-button" id="save-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}"
