@@ -373,7 +373,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                         <div class="settings-item">
                                             <label>Color:</label>
                                             <div class="color-container">
-                                                <input type="color" value="${project.color || "#000000"}"
+                                                <input type="color" class="project-color-input" value="${project.color || bgColor}"
+                                                    data-uses-theme-color="${!project.color}"
                                                     oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                                                 <button class="random-color" style="display:flex; items-align:center" onclick="setRandomColor(event, '${project.path.replace(
                                                     /'/g,
@@ -479,6 +480,26 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 <script>
                     const vscode = acquireVsCodeApi();
                     const pendingChanges = {};
+
+                    document.addEventListener('DOMContentLoaded', () => {
+                        document.querySelectorAll('.project-color-input').forEach(input => {
+                            if (input.getAttribute('data-uses-theme-color') === 'true') {
+                                const themeColor = getComputedStyle(document.documentElement)
+                                    .getPropertyValue('--vscode-list-activeSelectionBackground')
+                                    .trim();
+                                // Konvertiere RGB zu Hex wenn nötig
+                                if (themeColor.startsWith('rgb')) {
+                                    const rgb = themeColor.match(/\d+/g);
+                                    if (rgb && rgb.length === 3) {
+                                        const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+                                        input.value = hex;
+                                    }
+                                } else if (themeColor.startsWith('#')) {
+                                    input.value = themeColor;
+                                }
+                            }
+                        });
+                    });
 
                     function addProject() {
                         vscode.postMessage({ command: 'addProject' });
@@ -623,8 +644,21 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     function resetColor(event, projectPath) {
                         event.preventDefault();
                         const colorInput = event.target.closest('.color-container').querySelector('input[type="color"]');
-                        colorInput.value = '#000000';
-                        colorInput.removeAttribute('value');
+                        const themeColor = getComputedStyle(document.documentElement)
+                            .getPropertyValue('--vscode-list-activeSelectionBackground')
+                            .trim();
+
+                        // Konvertiere RGB zu Hex wenn nötig
+                        let hexColor = themeColor;
+                        if (themeColor.startsWith('rgb')) {
+                            const rgb = themeColor.match(/\d+/g);
+                            if (rgb && rgb.length === 3) {
+                                hexColor = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+                            }
+                        }
+
+                        colorInput.value = hexColor;
+                        colorInput.setAttribute('data-uses-theme-color', 'true');
 
                         if (!pendingChanges[projectPath]) {
                             pendingChanges[projectPath] = {};
