@@ -103,6 +103,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'reorderProjects':
                     this._reorderProjects(message.oldIndex, message.newIndex);
                     break;
+                case 'showInFileManager':
+                    vscode.commands.executeCommand('awesome-projects.showInFileManager', message.project);
+                    break;
             }
         });
     }
@@ -356,11 +359,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                                 </svg>
                                                 Open Project
                                             </button>
-                                            <button class="info-action-button" onclick="openInFinder('${project.path.replace(/'/g, "\\'")}')">
+                                            <button class="info-action-button show-in-file-manager" data-path="${project.path.replace(/'/g, "\\'")}" data-name="${project.name}">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                                                 </svg>
-                                                Show in Finder
+                                                Show in File Manager
                                             </button>
                                         </div>
                                     </div>
@@ -487,9 +490,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 const themeColor = getComputedStyle(document.documentElement)
                                     .getPropertyValue('--vscode-list-activeSelectionBackground')
                                     .trim();
-                                // Konvertiere RGB zu Hex wenn nötig
                                 if (themeColor.startsWith('rgb')) {
-                                    const rgb = themeColor.match(/\d+/g);
+                                    const rgb = themeColor.match(/d+/g);
                                     if (rgb && rgb.length === 3) {
                                         const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
                                         input.value = hex;
@@ -604,13 +606,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             infoDropdown.classList.toggle('show');
                             projectItem.classList.toggle('active');
                         }
-                    }
-
-                    function openInFinder(path) {
-                        vscode.postMessage({
-                            command: 'openInFinder',
-                            path: path
-                        });
                     }
 
                     function generateGradient(baseColor) {
@@ -795,6 +790,22 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         dropdown.addEventListener('click', (event) => {
                             event.stopPropagation();
                         });
+                    });
+
+                    document.addEventListener('click', (e) => {
+                        const target = e.target.closest('.show-in-file-manager');
+                        if (target) {
+                            const projectPath = target.getAttribute('data-path');
+                            const projectName = target.getAttribute('data-name');
+                            console.log('Sending showInFileManager command', { projectPath, projectName });
+                            vscode.postMessage({
+                                command: 'showInFileManager',
+                                project: {
+                                    path: projectPath,
+                                    name: projectName
+                                }
+                            });
+                        }
                     });
 
                     window.addEventListener('message', event => {

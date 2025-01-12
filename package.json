@@ -60,12 +60,23 @@
         "command": "awesome-projects.refreshProjects",
         "title": "Refresh Projects",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "awesome-projects.showInFileManager",
+        "title": "Show in File Manager",
+        "category": "Awesome Projects",
+        "icon": "$(folder-opened)"
       }
     ],
     "menus": {
       "view/item/context": [
         {
           "command": "awesome-projects.openProject",
+          "when": "view == awesomeProjectsView",
+          "group": "navigation"
+        },
+        {
+          "command": "awesome-projects.showInFileManager",
           "when": "view == awesomeProjectsView",
           "group": "navigation"
         }

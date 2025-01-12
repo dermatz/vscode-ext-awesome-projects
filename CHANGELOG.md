@@ -2,6 +2,13 @@
 
 All notable changes to the "awesome-projects" extension will be documented in this file.
 
+## Unreleased
+
+- Fixed Color Picker to display correct reset color
+- Added Windows Support to Show Files in Explorer
+
+---
+
 ## [0.1.2] - 2025-01-11
 
 ### Fixed
