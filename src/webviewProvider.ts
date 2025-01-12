@@ -490,9 +490,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 const themeColor = getComputedStyle(document.documentElement)
                                     .getPropertyValue('--vscode-list-activeSelectionBackground')
                                     .trim();
-                                // Konvertiere RGB zu Hex wenn nötig
                                 if (themeColor.startsWith('rgb')) {
-                                    const rgb = themeColor.match(/\d+/g);
+                                    const rgb = themeColor.match(/d+/g);
                                     if (rgb && rgb.length === 3) {
                                         const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
                                         input.value = hex;
