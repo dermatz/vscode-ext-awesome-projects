@@ -19,6 +19,10 @@ With this extension, you can easily add, open, and manage project urls directly 
 - Open existing projects
 - Refresh the list of projects
 - Organize projects into categories such as Recent Projects and Favorites
+- Manage project URLs (production, staging, development, and management)
+- Assign custom colors to projects
+- Create project shortcuts for quick access
+- Sort projects with drag and drop
 
 ## Requirements
 
@@ -37,6 +41,9 @@ With this extension, you can easily add, open, and manage project urls directly 
     - Use the "Add Project" button to add new projects.
     - Click on a project to open it.
     - Use the refresh button to update the list of projects.
+    - Manage project URLs directly from the sidebar by clicking on the project and editing the URLs.
+    - Assign custom colors to projects for better organization.
+    - Create shortcuts for quick access to frequently used projects.
 
 ## Settings
 
@@ -73,3 +80,4 @@ Example configuration:
     ],
     "awesomeProjects.useFavicons": true
 }
+```
