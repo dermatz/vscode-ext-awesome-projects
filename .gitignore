@@ -9,7 +9,6 @@ logs/
 *.log
 
 # VS Code
-.vscode/
 .vscode-test/
 out/
 
