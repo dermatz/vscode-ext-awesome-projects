@@ -7,4 +7,5 @@ export interface Project {
     devUrl?: string;
     stagingUrl?: string;
     managementUrl?: string;
+    gitUrl?: string;
 }

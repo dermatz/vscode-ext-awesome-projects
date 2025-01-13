@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Project } from './types';
 import { loadResourceFile } from './utils/resourceLoader';
 import { generateGradient, getContrastColor } from './utils/colorUtils';
+import { getGitUrl } from './utils/gitUtils';
 
 export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'awesomeProjectsView';
@@ -218,6 +219,13 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
         const configuration = vscode.workspace.getConfiguration('awesomeProjects');
         const projects = configuration.get<Project[]>('projects') || [];
+
+        // Add Git URLs to projects
+        const projectsWithGit = projects.map(project => ({
+            ...project,
+            gitUrl: getGitUrl(project.path)
+        }));
+
         const useFavicons = configuration.get<boolean>('useFavicons') ?? true;
         let version = require('../package.json').version;
         if (parseFloat(version) < 1.0) {
@@ -234,7 +242,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     <div class="section-header">My Projects</div>
                     <div id="loading-spinner" class="loading-spinner hidden"></div>
                     <div id="projects-list" class="draggable-list">
-                        ${projects
+                        ${projectsWithGit
                             .map((project, index) => {
                                 const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
                                 const gradientColor = project.color ? generateGradient(project.color) : "var(--vscode-list-activeSelectionBackground)";
@@ -280,7 +288,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                             <div class="info-value">${project.path}</div>
                                         </div>
                                         ${
-                                            project.productionUrl || project.devUrl || project.stagingUrl || project.managementUrl
+                                            project.productionUrl || project.devUrl || project.stagingUrl || project.managementUrl || project.gitUrl
                                                 ? `
                                         <div class="info-section">
                                             <div class="info-label">URLs</div>
@@ -341,6 +349,18 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
                                                         </svg>
                                                         Management (Jira, Trello, etc.)
+                                                    </a>
+                                                `
+                                                        : ""
+                                                }
+                                                ${
+                                                    project.gitUrl
+                                                        ? `
+                                                    <a href="${project.gitUrl}" class="project-url" onclick="openUrl(event, '${project.gitUrl.replace(/'/g, "\\'")}')">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                                        </svg>
+                                                        Repository
                                                     </a>
                                                 `
                                                         : ""
