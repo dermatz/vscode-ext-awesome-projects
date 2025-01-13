@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 
 export const loadResourceFile = async (context: vscode.ExtensionContext, relativePath: string): Promise<string> => {
     const diskPath = vscode.Uri.joinPath(context.extensionUri, relativePath);
