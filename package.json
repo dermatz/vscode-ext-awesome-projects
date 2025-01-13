@@ -2,7 +2,7 @@
   "name": "awesome-projects",
   "displayName": "Awesome Projects",
   "description": "Manage and organize your VS Code projects with ease. Quick access to project URLs, custom colors, and project shortcuts.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "preview": true,
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",

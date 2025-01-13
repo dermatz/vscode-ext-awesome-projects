@@ -9,6 +9,13 @@ All notable changes to the "awesome-projects" extension will be documented in th
 
 ---
 
+## [0.1.3] - 2025-01-13
+
+### Fixed
+
+- Improved the color picker functionality to ensure it displays the correct reset color, enhancing user experience by providing accurate color selection [#4](https://github.com/OpenForgeProject/vscode-ext-awesome-projects/issues/4).
+- Introduced support for Windows, allowing users to easily show files in Explorer, thereby improving accessibility and convenience for Windows users ([#5](https://github.com/OpenForgeProject/vscode-ext-awesome-projects/issues/5)).
+
 ## [0.1.2] - 2025-01-11
 
 ### Fixed

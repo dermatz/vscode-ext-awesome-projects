@@ -221,7 +221,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         const useFavicons = configuration.get<boolean>('useFavicons') ?? true;
         let version = require('../package.json').version;
         if (parseFloat(version) < 1.0) {
-            version += ' - (Public Preview) Please report Issues';
+            version += ' Preview - Please report Issues';
         }
 
         return `<!DOCTYPE html>
