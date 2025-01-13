@@ -4,6 +4,7 @@ import { Project } from './types';
 import * as path from 'path';
 import * as os from 'os';
 import * as child_process from 'child_process';
+import * as fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Congratulations, your extension "awesome-projects" is now active!');
@@ -89,70 +90,72 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(showInFileManagerCommand);
 }
 
+function sanitizePath(inputPath: string): string {
+    return inputPath.replace(/[;&|`$()]/g, '');
+}
+
 function showInFileManager(filePath: string) {
     if (!filePath) {
         vscode.window.showErrorMessage('No file path provided');
         return;
     }
 
-    console.log(`showInFileManager called with filePath: ${filePath}`);
-    const platform = process.platform;
-    
+    // Sanitize the file path
+    const sanitizedPath = sanitizePath(filePath);
+
+    // Validate the path exists
     try {
-        if (platform === 'linux' && filePath.startsWith('/mnt/')) {
-            // WSL Umgebung - verwendet Windows Explorer
-            const driveLetter = filePath.charAt(5).toUpperCase();
-            const windowsPath = `${driveLetter}:${filePath.slice(6).replace(/\//g, '\\')}`;
-            
+        const stats = fs.statSync(sanitizedPath);
+        if (!stats.isDirectory() && !stats.isFile()) {
+            throw new Error('Invalid path');
+        }
+    } catch (error) {
+        vscode.window.showErrorMessage('Invalid path specified');
+        return;
+    }
+
+    console.log(`showInFileManager called with filePath: ${sanitizedPath}`);
+    const platform = process.platform;
+
+    try {
+        if (platform === 'linux' && sanitizedPath.startsWith('/mnt/')) {
+            // WSL environment
+            const driveLetter = sanitizedPath.charAt(5).toUpperCase();
+            const windowsPath = `${driveLetter}:${sanitizedPath.slice(6).replace(/\//g, '\\')}`;
+
             console.log('Converting WSL path to Windows path:', windowsPath);
-            
-            // Direkter Explorer-Aufruf ohne PowerShell
-            const explorerCommand = `explorer.exe "${windowsPath}"`;
-            console.log('Executing command:', explorerCommand);
-            
-            // Führe den Befehl aus und zeige etwaige Fehler an
-            const result = child_process.execSync(explorerCommand, { 
-                encoding: 'utf8',
-                stdio: ['pipe', 'pipe', 'pipe']
+
+            // Use spawn instead of exec for better security
+            child_process.spawn('explorer.exe', [windowsPath], {
+                stdio: 'ignore',
+                shell: false
             });
-            
-            console.log('Command executed successfully:', result);
-            
+
         } else if (platform === 'win32') {
-            // Windows - verwendet Explorer
-            const normalizedPath = filePath.replace(/\//g, '\\');
-            const explorerCommand = `explorer.exe "${normalizedPath}"`;
-            
-            child_process.execSync(explorerCommand, {
-                encoding: 'utf8',
-                stdio: ['pipe', 'pipe', 'pipe']
+            // Windows
+            const normalizedPath = sanitizedPath.replace(/\//g, '\\');
+            child_process.spawn('explorer.exe', [normalizedPath], {
+                stdio: 'ignore',
+                shell: false
             });
         } else if (platform === 'darwin') {
-            // macOS - verwendet Finder
-            child_process.exec(`open -R "${filePath}"`, (error) => {
-                if (error) {
-                    console.error('Failed to open Finder:', error);
-                    vscode.window.showErrorMessage(`Failed to open Finder: ${error.message}`);
-                }
+            // macOS
+            child_process.spawn('open', ['-R', sanitizedPath], {
+                stdio: 'ignore',
+                shell: false
             });
         } else {
-            // Linux - verwendet den Standard-Dateimanager
-            child_process.exec(`xdg-open "${path.dirname(filePath)}"`, (error) => {
-                if (error) {
-                    console.error('Failed to open file manager:', error);
-                    vscode.window.showErrorMessage(`Failed to open file manager: ${error.message}`);
-                }
+            // Linux
+            child_process.spawn('xdg-open', [path.dirname(sanitizedPath)], {
+                stdio: 'ignore',
+                shell: false
             });
         }
     } catch (error) {
         console.error('Error showing file in file manager:', error);
         if (error instanceof Error) {
             const errorMessage = error.message;
-            if (errorMessage.includes('ENOENT')) {
-                vscode.window.showErrorMessage('Failed to open file manager: Explorer.exe not found');
-            } else {
-                vscode.window.showErrorMessage(`Failed to open file manager: ${errorMessage}`);
-            }
+            vscode.window.showErrorMessage(`Failed to open file manager: ${errorMessage}`);
         }
     }
 }
