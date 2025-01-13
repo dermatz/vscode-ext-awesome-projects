@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { ProjectsWebviewProvider } from './webviewProvider';
 import { Project } from './types';
 import * as path from 'path';
-import * as os from 'os';
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 

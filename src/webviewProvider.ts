@@ -27,8 +27,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
     public async resolveWebviewView(
         webviewView: vscode.WebviewView,
-        context: vscode.WebviewViewResolveContext,
-        _token: vscode.CancellationToken,
+        _context: vscode.WebviewViewResolveContext,
+        token: vscode.CancellationToken,
     ) {
         this._view = webviewView;
         webviewView.webview.options = {
@@ -200,18 +200,16 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async _getHtmlForWebview(webview: vscode.Webview) {
         let cssContent;
         try {
-            // Versuche zuerst die Datei aus dem dist-Ordner zu laden
             cssContent = await loadResourceFile(this._context, 'dist/css/webview.css');
             if (!cssContent) {
-                // Fallback für Debug-Modus
                 cssContent = await loadResourceFile(this._context, 'src/css/webview.css');
             }
         } catch (error) {
             console.error('Failed to load CSS:', error);
-            // Minimales Fallback-CSS
             cssContent = `
                 body { padding: 0; margin: 0; }
                 .section { margin-bottom: 20px; }
@@ -824,4 +822,3 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             </html>`;
     }
 }
-
