@@ -646,7 +646,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         // Konvertiere RGB zu Hex wenn nötig
                         let hexColor = themeColor;
                         if (themeColor.startsWith('rgb')) {
-                            const rgb = themeColor.match(/\d+/g);
+                            const rgb = themeColor.match(/d+/g);
                             if (rgb && rgb.length === 3) {
                                 hexColor = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
                             }
