@@ -7,6 +7,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'awesomeProjectsView';
     private _view?: vscode.WebviewView;
     private _disposables: vscode.Disposable[] = [];
+    private lastUrlClick: number = 0;
+    private readonly DEBOUNCE_TIME = 500; // 500ms debounce time
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -39,75 +41,91 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
 
         webviewView.webview.onDidReceiveMessage(message => {
-            switch (message.command) {
-                case 'addProject':
-                    vscode.window.showOpenDialog({
-                        canSelectFolders: true,
-                        canSelectMany: false
-                    }).then(async folderUri => {
-                        if (folderUri && folderUri[0]) {
-                            try {
-                                const projectPath = folderUri[0].fsPath;
-                                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
-                                const projects: Project[] = configuration.get('projects') || [];
+            this.handleMessage(message);
+        });
+    }
 
-                                const newProject: Project = {
-                                    path: projectPath,
-                                    name: await vscode.window.showInputBox({
-                                        prompt: 'Enter project name',
-                                        value: projectPath.split('/').pop()
-                                    }) || projectPath.split('/').pop() || ''
-                                };
+    private handleMessage(message: any) {
+        switch (message.command) {
+            case 'addProject':
+                vscode.window.showOpenDialog({
+                    canSelectFolders: true,
+                    canSelectMany: false
+                }).then(async folderUri => {
+                    if (folderUri && folderUri[0]) {
+                        try {
+                            const projectPath = folderUri[0].fsPath;
+                            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                            const projects: Project[] = configuration.get('projects') || [];
 
-                                await configuration.update(
-                                    'projects',
-                                    [...projects, newProject],
-                                    vscode.ConfigurationTarget.Global
-                                );
+                            const newProject: Project = {
+                                path: projectPath,
+                                name: await vscode.window.showInputBox({
+                                    prompt: 'Enter project name',
+                                    value: projectPath.split('/').pop()
+                                }) || projectPath.split('/').pop() || ''
+                            };
 
-                                const updatedProjects = configuration.get<Project[]>('projects');
-                                if (updatedProjects?.some(p => p.path === newProject.path)) {
-                                    this.refresh();
-                                } else {
-                                    throw new Error('Failed to save project to settings');
-                                }
-                            } catch (error) {
-                                vscode.window.showErrorMessage(`Failed to add project: ${error}`);
+                            await configuration.update(
+                                'projects',
+                                [...projects, newProject],
+                                vscode.ConfigurationTarget.Global
+                            );
+
+                            const updatedProjects = configuration.get<Project[]>('projects');
+                            if (updatedProjects?.some(p => p.path === newProject.path)) {
+                                this.refresh();
+                            } else {
+                                throw new Error('Failed to save project to settings');
                             }
+                        } catch (error) {
+                            vscode.window.showErrorMessage(`Failed to add project: ${error}`);
+                        }
+                    }
+                });
+                break;
+            case 'openProject':
+                vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(message.project));
+                break;
+            case 'projectSelected':
+                vscode.window.showInformationMessage(`Project selected: ${message.path}`);
+                break;
+            case 'updateProject':
+                this._updateProject(message.projectPath, message.updates);
+                break;
+            case 'openUrl':
+                this.handleUrlClick(message.url);
+                break;
+            case 'openInFinder':
+                vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.path));
+                break;
+            case 'deleteProject':
+                vscode.window.showWarningMessage('Do you really want to delete this project?', 'Yes', 'No')
+                    .then(selection => {
+                        if (selection === 'Yes') {
+                            this._deleteProject(message.projectPath);
                         }
                     });
-                    break;
-                case 'openProject':
-                    vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(message.project));
-                    break;
-                case 'projectSelected':
-                    vscode.window.showInformationMessage(`Project selected: ${message.path}`);
-                    break;
-                case 'updateProject':
-                    this._updateProject(message.projectPath, message.updates);
-                    break;
-                case 'openUrl':
-                    vscode.env.openExternal(vscode.Uri.parse(message.url));
-                    break;
-                case 'openInFinder':
-                    vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.path));
-                    break;
-                case 'deleteProject':
-                    vscode.window.showWarningMessage('Do you really want to delete this project?', 'Yes', 'No')
-                        .then(selection => {
-                            if (selection === 'Yes') {
-                                this._deleteProject(message.projectPath);
-                            }
-                        });
-                    break;
-                case 'reorderProjects':
-                    this._reorderProjects(message.oldIndex, message.newIndex);
-                    break;
-                case 'showInFileManager':
-                    vscode.commands.executeCommand('awesome-projects.showInFileManager', message.project);
-                    break;
-            }
-        });
+                break;
+            case 'reorderProjects':
+                this._reorderProjects(message.oldIndex, message.newIndex);
+                break;
+            case 'showInFileManager':
+                vscode.commands.executeCommand('awesome-projects.showInFileManager', message.project);
+                break;
+        }
+    }
+
+    private handleUrlClick(url: string) {
+        const now = Date.now();
+        if (now - this.lastUrlClick < this.DEBOUNCE_TIME) {
+            return; // Ignore clicks that happen too quickly
+        }
+        this.lastUrlClick = now;
+
+        if (url) {
+            vscode.env.openExternal(vscode.Uri.parse(url));
+        }
     }
 
     private async _updateProject(projectPath: string, updates: Partial<Project>) {
@@ -288,60 +306,62 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                                 ${
                                                     project.productionUrl
                                                         ? `
-                                                    <a href="${project.productionUrl.replace(
-                                                        /'/g,
-                                                        "\\'"
-                                                    )}" class="project-url" onclick="openUrl(event, '${project.productionUrl.replace(/'/g, "\\'")}')">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9-3-9m-9 9a9 9 0 019-9"/>
-                                                        </svg>
-                                                        Production
-                                                    </a>
+                                                    <span class="project-url-wrapper">
+                                                        <span class="project-url" data-url="${project.productionUrl.replace(
+                                                            /'/g,
+                                                            "\\'"
+                                                        )}">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9-3-9m-9 9a9 9 0 019-9"/>
+                                                            </svg>
+                                                            Production
+                                                        </span>
+                                                    </span>
                                                 `
                                                         : ""
                                                 }
                                                 ${
                                                     project.stagingUrl
                                                         ? `
-                                                    <a href="${project.stagingUrl.replace(/'/g, "\\'")}" class="project-url" onclick="openUrl(event, '${project.stagingUrl.replace(
-                                                              /'/g,
-                                                              "\\'"
-                                                          )}')">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                                        </svg>
-                                                        Staging
-                                                    </a>
+                                                    <span class="project-url-wrapper">
+                                                        <span class="project-url" data-url="${project.stagingUrl.replace(/'/g, "\\'")}">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                                            </svg>
+                                                            Staging
+                                                        </span>
+                                                    </span>
                                                 `
                                                         : ""
                                                 }
                                                 ${
                                                     project.devUrl
                                                         ? `
-                                                    <a href="${project.devUrl.replace(/'/g, "\\'")}" class="project-url" onclick="openUrl(event, '${project.devUrl.replace(
-                                                              /'/g,
-                                                              "\\'"
-                                                          )}')">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                                        </svg>
-                                                        Development
-                                                    </a>
+                                                    <span class="project-url-wrapper">
+                                                        <span class="project-url" data-url="${project.devUrl.replace(/'/g, "\\'")}">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                            </svg>
+                                                            Development
+                                                        </span>
+                                                    </span>
                                                 `
                                                         : ""
                                                 }
                                                 ${
                                                     project.managementUrl
                                                         ? `
-                                                    <a href="${project.managementUrl.replace(
-                                                        /'/g,
-                                                        "\\'"
-                                                    )}" class="project-url" onclick="openUrl(event, '${project.managementUrl.replace(/'/g, "\\'")}')">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                                                        </svg>
-                                                        Management (Jira, Trello, etc.)
-                                                    </a>
+                                                    <span class="project-url-wrapper">
+                                                        <span class="project-url" data-url="${project.managementUrl.replace(
+                                                            /'/g,
+                                                            "\\'"
+                                                        )}">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                                                            </svg>
+                                                            Management (Jira, Trello, etc.)
+                                                        </span>
+                                                    </span>
                                                 `
                                                         : ""
                                                 }
@@ -619,14 +639,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         return 'rgb(' + darkerR + ', ' + darkerG + ', ' + darkerB + ')';
                     }
 
-                    function openUrl(event, url) {
-                        event.preventDefault();
-                        vscode.postMessage({
-                            command: 'openUrl',
-                            url: url
-                        });
-                    }
-
                     function deleteProject(projectPath) {
                         vscode.postMessage({
                             command: 'deleteProject',
@@ -803,6 +815,20 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                     name: projectName
                                 }
                             });
+                        }
+                    });
+
+                    // Remove old URL click handler and consolidate into one
+                    document.addEventListener('click', (e) => {
+                        const urlWrapper = e.target.closest('.project-url-wrapper');
+                        if (urlWrapper) {
+                            const url = urlWrapper.querySelector('.project-url')?.getAttribute('data-url');
+                            if (url) {
+                                vscode.postMessage({
+                                    command: 'openUrl',
+                                    url: url
+                                });
+                            }
                         }
                     });
 
