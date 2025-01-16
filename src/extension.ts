@@ -1,8 +1,5 @@
 import * as vscode from 'vscode';
 import { ProjectsWebviewProvider } from './webviewProvider';
-import * as path from 'path';
-import * as child_process from 'child_process';
-import * as fs from 'fs';
 import { showInFileManager } from './utils/fileManager';
 
 export interface Project {
@@ -17,14 +14,11 @@ export interface Project {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Congratulations, your extension "awesome-projects" is now active!');
     const disposable = vscode.commands.registerCommand('awesome-projects.helloWorld', () => {
         vscode.window.showInformationMessage('Hello World from vscode-ext-awesome-projects!');
     });
     context.subscriptions.push(disposable);
-
     const projectsProvider = new ProjectsWebviewProvider(context.extensionUri, context);
-
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             ProjectsWebviewProvider.viewType,
