@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Project } from './types';
+import { Project } from './extension';
 import { loadResourceFile } from './utils/resourceLoader';
 import { generateGradient, getContrastColor } from './utils/colorUtils';
 

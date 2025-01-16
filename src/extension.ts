@@ -1,9 +1,19 @@
 import * as vscode from 'vscode';
 import { ProjectsWebviewProvider } from './webviewProvider';
-import { Project } from './types';
 import * as path from 'path';
 import * as child_process from 'child_process';
 import * as fs from 'fs';
+
+export interface Project {
+    path: string;
+    name: string;
+    color?: string;
+    icon?: string;
+    productionUrl?: string;
+    devUrl?: string;
+    stagingUrl?: string;
+    managementUrl?: string;
+}
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Congratulations, your extension "awesome-projects" is now active!');

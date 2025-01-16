@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Project } from './types';
+import { Project } from './extension';
 
 enum ProjectItemType {
     Header,
@@ -19,9 +19,7 @@ export class ProjectItem extends vscode.TreeItem {
         if (type === ProjectItemType.Header) {
             this.iconPath = new vscode.ThemeIcon('folder');
             this.contextValue = 'header';
-            // Style headers differently
-            this.description = ''; // Optional description
-            // Make text bold using ThemeIcon
+            this.description = '';
             this.iconPath = new vscode.ThemeIcon('folder', new vscode.ThemeColor('charts.foreground'));
         } else if (type === ProjectItemType.AddButton) {
             this.iconPath = new vscode.ThemeIcon('add');
@@ -32,20 +30,9 @@ export class ProjectItem extends vscode.TreeItem {
                 title: 'Add Project'
             };
         } else {
-            // Project styling
             this.contextValue = 'project';
             this.tooltip = path || label;
             this.description = path ? path.replace(process.env.HOME || '', '~') : '';
-
-            // Use different icons based on project type (example)
-            if (this.description?.includes('node_modules')) {
-                this.iconPath = new vscode.ThemeIcon('nodejs');
-            } else if (this.description?.includes('.git')) {
-                this.iconPath = new vscode.ThemeIcon('git-branch');
-            } else {
-                this.iconPath = new vscode.ThemeIcon('folder-library');
-            }
-
             this.command = {
                 command: 'awesome-projects.openProject',
                 title: 'Open Project',
