@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Project } from './types';
+import { Project } from './extension';
 import { loadResourceFile } from './utils/resourceLoader';
 import { generateGradient, getContrastColor } from './utils/colorUtils';
 
@@ -200,7 +200,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private async _getHtmlForWebview(webview: vscode.Webview) {
         let cssContent;
         try {
@@ -242,7 +241,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 const textColor = project.color ? getContrastColor(project.color) : "#ffffff";
 
                                 const getBaseUrl = (url?: string) => {
-                                    if (!url) return null;
+                                    if (!url) {return null;}
                                     try {
                                         const urlObj = new URL(url);
                                         return urlObj.protocol + "//" + urlObj.hostname;

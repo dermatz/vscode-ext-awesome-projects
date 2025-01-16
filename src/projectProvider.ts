@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Project } from './types';
+import { Project } from './extension';
 
 enum ProjectItemType {
     Header,
@@ -7,6 +7,9 @@ enum ProjectItemType {
     AddButton
 }
 
+/**
+ * Represents an item in the project tree view.
+ */
 export class ProjectItem extends vscode.TreeItem {
     constructor(
         label: string,
@@ -19,9 +22,7 @@ export class ProjectItem extends vscode.TreeItem {
         if (type === ProjectItemType.Header) {
             this.iconPath = new vscode.ThemeIcon('folder');
             this.contextValue = 'header';
-            // Style headers differently
-            this.description = ''; // Optional description
-            // Make text bold using ThemeIcon
+            this.description = '';
             this.iconPath = new vscode.ThemeIcon('folder', new vscode.ThemeColor('charts.foreground'));
         } else if (type === ProjectItemType.AddButton) {
             this.iconPath = new vscode.ThemeIcon('add');
@@ -32,20 +33,9 @@ export class ProjectItem extends vscode.TreeItem {
                 title: 'Add Project'
             };
         } else {
-            // Project styling
             this.contextValue = 'project';
             this.tooltip = path || label;
             this.description = path ? path.replace(process.env.HOME || '', '~') : '';
-
-            // Use different icons based on project type (example)
-            if (this.description?.includes('node_modules')) {
-                this.iconPath = new vscode.ThemeIcon('nodejs');
-            } else if (this.description?.includes('.git')) {
-                this.iconPath = new vscode.ThemeIcon('git-branch');
-            } else {
-                this.iconPath = new vscode.ThemeIcon('folder-library');
-            }
-
             this.command = {
                 command: 'awesome-projects.openProject',
                 title: 'Open Project',
@@ -55,21 +45,37 @@ export class ProjectItem extends vscode.TreeItem {
     }
 }
 
+/**
+ * Provides data for the project tree view.
+ */
 export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<ProjectItem | undefined | null | void> = new vscode.EventEmitter<ProjectItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<ProjectItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
     constructor() {}
 
+    /**
+     * Refreshes the project tree view.
+     */
     refresh(): void {
         this._onDidChangeTreeData.fire();
     }
 
+    /**
+     * Gets a tree item for the project tree view.
+     * @param {ProjectItem} element - The project item.
+     * @returns {vscode.TreeItem} - The tree item.
+     */
     getTreeItem(element: ProjectItem): vscode.TreeItem {
         return element;
     }
 
-    getChildren(element?: ProjectItem): Thenable<ProjectItem[]> {
+    /**
+     * Gets the children for a tree item in the project tree view.
+     * @param {ProjectItem} [element] - The project item.
+     * @returns {Promise<ProjectItem[]>} - The children of the project item.
+     */
+    async getChildren(element?: ProjectItem): Promise<ProjectItem[]> {
         if (element) {
             if (element.type === ProjectItemType.Header) {
                 const configuration = vscode.workspace.getConfiguration('awesomeProjects');
@@ -81,13 +87,13 @@ export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
                     project.path
                 ));
                 projectItems.push(new ProjectItem('Add Project...', ProjectItemType.AddButton, vscode.TreeItemCollapsibleState.None));
-                return Promise.resolve(projectItems);
+                return projectItems;
             }
-            return Promise.resolve([]);
+            return [];
         } else {
-            return Promise.resolve([
+            return [
                 new ProjectItem('Projects', ProjectItemType.Header, vscode.TreeItemCollapsibleState.Expanded)
-            ]);
+            ];
         }
     }
 }
