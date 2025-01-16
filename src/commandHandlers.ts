@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Project } from './types';
+import { Project } from './extension';
 import { showInFileManager } from './fileManager';
 
 export async function handleAddProject(): Promise<void> {
