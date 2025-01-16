@@ -7,6 +7,9 @@ enum ProjectItemType {
     AddButton
 }
 
+/**
+ * Represents an item in the project tree view.
+ */
 export class ProjectItem extends vscode.TreeItem {
     constructor(
         label: string,
@@ -42,21 +45,37 @@ export class ProjectItem extends vscode.TreeItem {
     }
 }
 
+/**
+ * Provides data for the project tree view.
+ */
 export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<ProjectItem | undefined | null | void> = new vscode.EventEmitter<ProjectItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<ProjectItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
     constructor() {}
 
+    /**
+     * Refreshes the project tree view.
+     */
     refresh(): void {
         this._onDidChangeTreeData.fire();
     }
 
+    /**
+     * Gets a tree item for the project tree view.
+     * @param {ProjectItem} element - The project item.
+     * @returns {vscode.TreeItem} - The tree item.
+     */
     getTreeItem(element: ProjectItem): vscode.TreeItem {
         return element;
     }
 
-    getChildren(element?: ProjectItem): Thenable<ProjectItem[]> {
+    /**
+     * Gets the children for a tree item in the project tree view.
+     * @param {ProjectItem} [element] - The project item.
+     * @returns {Promise<ProjectItem[]>} - The children of the project item.
+     */
+    async getChildren(element?: ProjectItem): Promise<ProjectItem[]> {
         if (element) {
             if (element.type === ProjectItemType.Header) {
                 const configuration = vscode.workspace.getConfiguration('awesomeProjects');
@@ -68,13 +87,13 @@ export class ProjectProvider implements vscode.TreeDataProvider<ProjectItem> {
                     project.path
                 ));
                 projectItems.push(new ProjectItem('Add Project...', ProjectItemType.AddButton, vscode.TreeItemCollapsibleState.None));
-                return Promise.resolve(projectItems);
+                return projectItems;
             }
-            return Promise.resolve([]);
+            return [];
         } else {
-            return Promise.resolve([
+            return [
                 new ProjectItem('Projects', ProjectItemType.Header, vscode.TreeItemCollapsibleState.Expanded)
-            ]);
+            ];
         }
     }
 }
