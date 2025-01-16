@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Project } from './extension';
 import { loadResourceFile } from './utils/resourceLoader';
 import { generateGradient, getContrastColor } from './utils/colorUtils';
+import { showInFileManager } from './fileManager';
 
 export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'awesomeProjectsView';
@@ -846,5 +847,46 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 </script>
             </body>
             </html>`;
+    }
+
+    public async handleAddProject(): Promise<void> {
+        const folderUri = await vscode.window.showOpenDialog({
+            canSelectFolders: true,
+            canSelectMany: false
+        });
+
+        if (!folderUri?.[0]) {return;}
+
+        try {
+            const projectPath = folderUri[0].fsPath;
+            const defaultName = projectPath.split('/').pop() || '';
+            const projectName = await vscode.window.showInputBox({
+                prompt: 'Enter project name',
+                value: defaultName
+            }) || defaultName;
+
+            await this.saveProject({ path: projectPath, name: projectName });
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to add project: ${error}`);
+        }
+    }
+
+    private async saveProject(newProject: Project): Promise<void> {
+        const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+        const projects: Project[] = configuration.get('projects') || [];
+
+        await configuration.update(
+            'projects',
+            [...projects, newProject],
+            vscode.ConfigurationTarget.Global
+        );
+    }
+
+    public handleOpenProject(projectPath: string): void {
+        vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(projectPath));
+    }
+
+    public handleShowInFileManager(projectPath: string): void {
+        showInFileManager(projectPath);
     }
 }

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { ProjectsWebviewProvider } from './webviewProvider';
-import { handleAddProject, handleOpenProject, handleShowInFileManager } from './commandHandlers';
 
 export interface Project {
     path: string;
@@ -34,10 +33,10 @@ function registerWebviewProvider(context: vscode.ExtensionContext, provider: Pro
 
 function registerCommands(context: vscode.ExtensionContext, provider: ProjectsWebviewProvider): void {
     context.subscriptions.push(
-        vscode.commands.registerCommand('awesome-projects.addProject', handleAddProject),
-        vscode.commands.registerCommand('awesome-projects.openProject', handleOpenProject),
+        vscode.commands.registerCommand('awesome-projects.addProject', () => provider.handleAddProject()),
+        vscode.commands.registerCommand('awesome-projects.openProject', (projectPath: string) => provider.handleOpenProject(projectPath)),
         vscode.commands.registerCommand('awesome-projects.refreshProjects', () => provider.refresh()),
-        vscode.commands.registerCommand('awesome-projects.showInFileManager', handleShowInFileManager)
+        vscode.commands.registerCommand('awesome-projects.showInFileManager', (projectPath: string) => provider.handleShowInFileManager(projectPath))
     );
 }
 
