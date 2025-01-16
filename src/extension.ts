@@ -13,11 +13,16 @@ export interface Project {
     managementUrl?: string;
 }
 
+/**
+ * Activates the extension.
+ * @param {vscode.ExtensionContext} context - The extension context.
+ */
 export function activate(context: vscode.ExtensionContext) {
     const disposable = vscode.commands.registerCommand('awesome-projects.helloWorld', () => {
         vscode.window.showInformationMessage('Hello World from vscode-ext-awesome-projects!');
     });
     context.subscriptions.push(disposable);
+
     const projectsProvider = new ProjectsWebviewProvider(context.extensionUri, context);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
@@ -27,42 +32,42 @@ export function activate(context: vscode.ExtensionContext) {
         projectsProvider
     );
 
-    const addProjectCommand = vscode.commands.registerCommand('awesome-projects.addProject', () => {
-        vscode.window.showOpenDialog({
+    const addProjectCommand = vscode.commands.registerCommand('awesome-projects.addProject', async () => {
+        const folderUri = await vscode.window.showOpenDialog({
             canSelectFolders: true,
             canSelectMany: false
-        }).then(async folderUri => {
-            if (folderUri && folderUri[0]) {
-                try {
-                    const projectPath = folderUri[0].fsPath;
-                    const configuration = vscode.workspace.getConfiguration('awesomeProjects');
-                    const projects: Project[] = configuration.get('projects') || [];
-
-                    const newProject: Project = {
-                        path: projectPath,
-                        name: await vscode.window.showInputBox({
-                            prompt: 'Enter project name',
-                            value: projectPath.split('/').pop()
-                        }) || projectPath.split('/').pop() || ''
-                    };
-
-                    await configuration.update(
-                        'projects',
-                        [...projects, newProject],
-                        vscode.ConfigurationTarget.Global
-                    );
-
-                    const updatedProjects = configuration.get<Project[]>('projects');
-                    if (updatedProjects?.some(p => p.path === newProject.path)) {
-                        projectsProvider.refresh();
-                    } else {
-                        throw new Error('Failed to save project to settings');
-                    }
-                } catch (error) {
-                    vscode.window.showErrorMessage(`Failed to add project: ${error}`);
-                }
-            }
         });
+
+        if (folderUri && folderUri[0]) {
+            try {
+                const projectPath = folderUri[0].fsPath;
+                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                const projects: Project[] = configuration.get('projects') || [];
+
+                const newProject: Project = {
+                    path: projectPath,
+                    name: await vscode.window.showInputBox({
+                        prompt: 'Enter project name',
+                        value: projectPath.split('/').pop()
+                    }) || projectPath.split('/').pop() || ''
+                };
+
+                await configuration.update(
+                    'projects',
+                    [...projects, newProject],
+                    vscode.ConfigurationTarget.Global
+                );
+
+                const updatedProjects = configuration.get<Project[]>('projects');
+                if (updatedProjects?.some(p => p.path === newProject.path)) {
+                    projectsProvider.refresh();
+                } else {
+                    throw new Error('Failed to save project to settings');
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to add project: ${error}`);
+            }
+        }
     });
 
     const openProjectCommand = vscode.commands.registerCommand('awesome-projects.openProject', (projectName: string) => {
@@ -91,8 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(showInFileManagerCommand);
 }
 
-function sanitizePath(inputPath: string): string {
-    return inputPath.replace(/[;&|`$()]/g, '');
-}
-
+/**
+ * Deactivates the extension.
+ */
 export function deactivate() {}

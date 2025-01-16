@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as childProcess from 'child_process';
-import * as fs from 'fs';
+import { promises as fs } from 'fs';
 import * as path from 'path';
 
 /**
@@ -66,8 +66,7 @@ async function openInLinux(sanitizedPath: string): Promise<void> {
 function handleError(error: unknown) {
     console.error('Error showing file in file manager:', error);
     if (error instanceof Error) {
-        const errorMessage = error.message;
-        vscode.window.showErrorMessage(`Failed to open file manager: ${errorMessage}`);
+        vscode.window.showErrorMessage(`Failed to open file manager: ${error.message}`);
     }
 }
 
@@ -86,7 +85,7 @@ export async function showInFileManager(filePath: string): Promise<void> {
 
     // Validate the path exists
     try {
-        const stats = fs.statSync(sanitizedPath);
+        const stats = await fs.stat(sanitizedPath);
         if (!stats.isDirectory() && !stats.isFile()) {
             throw new Error('Invalid path');
         }
