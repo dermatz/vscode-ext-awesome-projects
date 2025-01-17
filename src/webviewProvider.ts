@@ -215,6 +215,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             `;
         }
 
+        let headerContent;
+        try {
+            headerContent = await loadResourceFile(this._context, 'src/template/header.html');
+        } catch (error) {
+            console.error('Failed to load header:', error);
+            headerContent = '<div class="header">Default Header</div>';
+        }
+
         const configuration = vscode.workspace.getConfiguration('awesomeProjects');
         const projects = configuration.get<Project[]>('projects') || [];
         const useFavicons = configuration.get<boolean>('useFavicons') ?? true;
@@ -229,6 +237,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 <style>${cssContent}</style>
             </head>
             <body>
+
+                ${headerContent}
+
                 <div class="section">
                     <div class="section-header">My Projects</div>
                     <div id="loading-spinner" class="loading-spinner hidden"></div>
