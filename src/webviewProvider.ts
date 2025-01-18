@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Project } from './extension';
 import { loadResourceFile } from './utils/resourceLoader';
 import { generateGradient, getContrastColor } from './utils/colorUtils';
+import { getHeaderHtml } from './template/header';
 
 export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'awesomeProjectsView';
@@ -213,23 +214,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 body { padding: 0; margin: 0; }
                 .section { margin-bottom: 20px; }
             `;
-        }
-
-        let headerContent;
-        try {
-            headerContent = await loadResourceFile(this._context, 'src/template/header.html');
-        } catch (error) {
-            console.error('Failed to load header:', error);
-            headerContent = '<div class="header">Default Header</div>';
-        }
+        };
 
         const configuration = vscode.workspace.getConfiguration('awesomeProjects');
         const projects = configuration.get<Project[]>('projects') || [];
         const useFavicons = configuration.get<boolean>('useFavicons') ?? true;
-        let version = require('../package.json').version;
-        if (parseFloat(version) < 1.0) {
-            version += ' Preview - Please report Issues';
-        }
 
         return `<!DOCTYPE html>
             <html>
@@ -237,11 +226,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 <style>${cssContent}</style>
             </head>
             <body>
-
-                ${headerContent}
+                ${await getHeaderHtml(this._context)}
 
                 <div class="section">
-                    <div class="section-header">My Projects</div>
                     <div id="loading-spinner" class="loading-spinner hidden"></div>
                     <div id="projects-list" class="draggable-list">
                         ${projects
@@ -453,12 +440,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             .join("")}
                     </div>
                     <button class="add-button" onclick="addProject()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M20 6v4a1 1 0 0 1 -1 1h-14a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h14a1 1 0 0 1 1 1z" />
-                            <path d="M12 15l0 4" />
-                            <path d="M14 17l-4 0" />
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke="none" d="M0 0h24v24H0z"/>
+                            <path d="M12 5v14M5 12h14"/>
                         </svg>
                         Add Project
                     </button>
@@ -482,9 +466,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             </svg>
                             Support this Project
                         </a>
-                    </div>
-                    <div class="support-box">
-                        <span class="version-info">Version ${version}</span>
                     </div>
                 </div>
 
