@@ -1,11 +1,41 @@
 import * as vscode from "vscode";
-import { loadResourceFile } from "../utils/resourceLoader";
 import * as path from "path";
-import * as fs from "fs";
+import { promises as fsPromises } from "fs";
 
+/**
+ * Describes relevant parts of the extension's package.json.
+ */
+interface PackageJson {
+    version: string;
+    preview?: boolean;
+}
+
+/**
+ * Cached package.json data.
+ * This is used to avoid reading the package.json file multiple times.
+ */
+
+let cachedPackageJson: PackageJson | null = null;
+
+/**
+ * Returns header HTML for the webview.
+ * @param context Includes all relevant elements for the project webview header.
+ */
 export async function getHeaderHtml(context: vscode.ExtensionContext): Promise<string> {
     const packageJsonPath = path.join(context.extensionPath, 'package.json');
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    let packageJson: PackageJson = { version: "unknown", preview: false };
+    if (cachedPackageJson) {
+        packageJson = cachedPackageJson;
+    } else {
+        try {
+            const data = await fsPromises.readFile(packageJsonPath, "utf8");
+            packageJson = JSON.parse(data);
+            cachedPackageJson = packageJson;
+        } catch (error) {
+            console.error("Error reading package.json:", error);
+            packageJson = { version: "unknown", preview: false };
+        }
+    }
 
     return `
         <header>
