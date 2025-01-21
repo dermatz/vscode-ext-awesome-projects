@@ -205,11 +205,12 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     private async _getHtmlForWebview(webview: vscode.Webview) {
 
         /**
-         * Load CSS content from file.
+         * Load CSS content from dist file.
+         * If the file is not found, load the CSS content from the src folder.
          */
         let cssContent;
         try {
-            let cssContent = await loadResourceFile(this._context, 'dist/css/webview.css') || await loadResourceFile(this._context, 'src/css/webview.css');
+            cssContent = await loadResourceFile(this._context, 'dist/css/webview.css') || await loadResourceFile(this._context, 'src/css/webview.css');
         } catch (error) {
             console.error('Failed to load CSS:', error);
         }
