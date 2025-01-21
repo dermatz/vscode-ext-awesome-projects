@@ -81,3 +81,7 @@ Example configuration:
     "awesomeProjects.useFavicons": true
 }
 ```
+
+## Included Software
+Icons provided by [Tabler Icons](https://tabler.io) under the [MIT License](https://tabler.io/license).
+
