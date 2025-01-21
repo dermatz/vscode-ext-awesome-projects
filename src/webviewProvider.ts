@@ -4,6 +4,7 @@ import { loadResourceFile } from './utils/resourceLoader';
 import { generateGradient, getContrastColor } from './utils/colorUtils';
 import { getHeaderHtml } from './template/webview/header';
 import { getFooterHtml } from './template/webview/footer';
+import { getProjectListHtml } from './template/project/projectlist';
 
 export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'awesomeProjectsView';
@@ -229,6 +230,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
                     <div class="projects-wrapper">
                         <div id="loading-spinner" class="loading-spinner hidden"></div>
+                        ${await getProjectListHtml(this._context)}
+
                         <div id="projects-list" class="draggable-list">
                             ${projects.map((project, index) => {
                                 const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
