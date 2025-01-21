@@ -230,31 +230,30 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     <div class="projects-wrapper">
                         <div id="loading-spinner" class="loading-spinner hidden"></div>
                         <div id="projects-list" class="draggable-list">
-                            ${projects
-                                .map((project, index) => {
-                                    const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
-                                    const gradientColor = project.color ? generateGradient(project.color) : "var(--vscode-list-activeSelectionBackground)";
+                            ${projects.map((project, index) => {
+                                const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
+                                const gradientColor = project.color ? generateGradient(project.color) : "var(--vscode-list-activeSelectionBackground)";
+                                const textColor = project.color ? getContrastColor(project.color) : "#ffffff";
+                                const getBaseUrl = (url?: string) => {
+                                    if (!url) {return null;}
+                                    try {
+                                        const urlObj = new URL(url);
+                                        return urlObj.protocol + "//" + urlObj.hostname;
+                                    } catch (e) {
+                                        return null;
+                                    }
+                                };
 
-                                    const textColor = project.color ? getContrastColor(project.color) : "#ffffff";
+                                /**
+                                 * Get the base URL of the project.
+                                 * This is used to fetch the favicon from Google if useFavicons is enabled in the settings.
+                                 */
+                                const baseUrl = useFavicons
+                                    ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
+                                    : null;
+                                const faviconHtml = baseUrl && useFavicons ? `<img src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
 
-                                    const getBaseUrl = (url?: string) => {
-                                        if (!url) {return null;}
-                                        try {
-                                            const urlObj = new URL(url);
-                                            return urlObj.protocol + "//" + urlObj.hostname;
-                                        } catch (e) {
-                                            return null;
-                                        }
-                                    };
-
-                                    const baseUrl = useFavicons
-                                        ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
-                                        : null;
-
-                                    const faviconHtml =
-                                        baseUrl && useFavicons ? `<img src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
-
-                                    return `
+                                return `
                                     <div class="project-item-wrapper" draggable="true" data-index="${index}">
                                         <div class="project-item"
                                             style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"
@@ -275,8 +274,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                                 <div class="info-label">Path</div>
                                                 <div class="info-value">${project.path}</div>
                                             </div>
-                                            ${
-                                                project.productionUrl || project.devUrl || project.stagingUrl || project.managementUrl
+                                            ${ project.productionUrl || project.devUrl || project.stagingUrl || project.managementUrl
                                                     ? `
                                             <div class="info-section">
                                                 <div class="info-label">URLs</div>
