@@ -227,7 +227,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 <body>
                     ${await getHeaderHtml(this._context)}
 
-                    <div class="section">
+                    <div class="projects-wrapper">
                         <div id="loading-spinner" class="loading-spinner hidden"></div>
                         <div id="projects-list" class="draggable-list">
                             ${projects
@@ -255,7 +255,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                         baseUrl && useFavicons ? `<img src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
 
                                     return `
-                                    <div class="project-wrapper" draggable="true" data-index="${index}">
+                                    <div class="project-item-wrapper" draggable="true" data-index="${index}">
                                         <div class="project-item"
                                             style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"
                                             onclick="toggleInfo(event, '${project.path.replace(/'/g, "\\'")}')">
@@ -520,7 +520,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 if (!isValidHex.test(value)) {
                                     return;
                                 }
-                                const projectItem = event.target.closest('.project-wrapper').querySelector('.project-item');
+                                const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
                                 const gradientColor = generateGradient(value);
                                 projectItem.style.setProperty('--bg-color', value);
                                 projectItem.style.setProperty('--bg-gradient', gradientColor);
@@ -627,7 +627,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             }
                             pendingChanges[projectPath]['color'] = null;
 
-                            const projectItem = event.target.closest('.project-wrapper').querySelector('.project-item');
+                            const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
                             projectItem.style.setProperty('--bg-color', 'var(--vscode-list-activeSelectionBackground)');
                             projectItem.style.setProperty('--bg-gradient', 'var(--vscode-list-activeSelectionBackground)');
 
@@ -648,7 +648,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             }
                             pendingChanges[projectPath]['color'] = randomColor;
 
-                            const projectItem = event.target.closest('.project-wrapper').querySelector('.project-item');
+                            const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
                             const gradientColor = generateGradient(randomColor);
                             projectItem.style.setProperty('--bg-color', randomColor);
                             projectItem.style.setProperty('--bg-gradient', gradientColor);
@@ -713,14 +713,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         function handleDragEnd() {
                             if (isSaving) return;
                             this.classList.remove('dragging');
-                            document.querySelectorAll('.project-wrapper').forEach(item => {
+                            document.querySelectorAll('.project-item-wrapper').forEach(item => {
                                 item.classList.remove('over');
                                 item.classList.remove('insert-top');
                                 item.classList.remove('insert-bottom');
                             });
                         }
 
-                        document.querySelectorAll('.project-wrapper').forEach(item => {
+                        document.querySelectorAll('.project-item-wrapper').forEach(item => {
                             item.addEventListener('dragstart', handleDragStart, false);
                             item.addEventListener('dragenter', handleDragEnter, false);
                             item.addEventListener('dragover', handleDragOver, false);
@@ -729,7 +729,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             item.addEventListener('dragend', handleDragEnd, false);
                         });
 
-                        document.querySelectorAll('.project-wrapper').forEach(item => {
+                        document.querySelectorAll('.project-item-wrapper').forEach(item => {
                             item.addEventListener('dragover', function(e) {
                                 if (isSaving) return;
                                 const bounding = this.getBoundingClientRect();
@@ -745,7 +745,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         });
 
                         document.addEventListener('click', (event) => {
-                            if (!event.target.closest('.project-wrapper')) {
+                            if (!event.target.closest('.project-item-wrapper')) {
                                 document.querySelectorAll('.settings-dropdown.show').forEach(el => {
                                     el.classList.remove('show');
                                     el.previousElementSibling.classList.remove('active');
