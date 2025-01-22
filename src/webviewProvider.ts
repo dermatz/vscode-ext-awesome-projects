@@ -6,6 +6,13 @@ import { getHeaderHtml } from './template/webview/header';
 import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
 
+    /**
+     * Project Components
+     */
+
+    import { getAddToHtml } from './template/project/components/add-to';
+
+
 export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'awesomeProjectsView';
     private _view?: vscode.WebviewView;
@@ -219,6 +226,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         const configuration = vscode.workspace.getConfiguration('awesomeProjects');
         const projects = configuration.get<Project[]>('projects') || [];
         const useFavicons = configuration.get<boolean>('useFavicons') ?? true;
+
 
         return `<!DOCTYPE html>
             <html>
@@ -439,13 +447,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 })
                                 .join("")}
                         </div>
-                        <button class="add-button" onclick="addProject()">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke="none" d="M0 0h24v24H0z"/>
-                                <path d="M12 5v14M5 12h14"/>
-                            </svg>
-                            Add Project
-                        </button>
+                        ${await getAddToHtml(this._context)}
                     </div>
 
                     <script>
