@@ -6,11 +6,12 @@ import { getHeaderHtml } from './template/webview/header';
 import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
 
-    /**
-     * Project Components
-     */
+/**
+ * Project Components
+ */
 
-    import { getAddToHtml } from './template/project/components/add-to';
+import { getSettingsDropdownHtml } from './template/project/components/settings-dropdown';
+import { getAddToHtml } from './template/project/components/add-to';
 
 
 export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
@@ -102,22 +103,29 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'openInFinder':
                     vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.path));
                     break;
-                case 'deleteProject':
-                    vscode.window.showWarningMessage('Do you really want to delete this project?', 'Yes', 'No')
-                        .then(selection => {
-                            if (selection === 'Yes') {
-                                this._deleteProject(message.projectPath);
-                            }
-                        });
-                    break;
                 case 'reorderProjects':
                     this._reorderProjects(message.oldIndex, message.newIndex);
                     break;
                 case 'showInFileManager':
                     vscode.commands.executeCommand('awesome-projects.showInFileManager', message.project);
                     break;
+                case 'deleteProject':
+                    this._handleProjectDeletion(message.projectPath);
+                    break;
             }
         });
+    }
+
+    private async _handleProjectDeletion(projectPath: string) {
+        const selection = await vscode.window.showWarningMessage(
+            'Do you really want to delete this project?',
+            'Yes',
+            'No'
+        );
+
+        if (selection === 'Yes') {
+            await this._deleteProject(projectPath);
+        }
     }
 
     private async _updateProject(projectPath: string, updates: Partial<Project>) {
@@ -157,22 +165,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async _deleteProject(projectPath: string) {
-        try {
-            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
-            const projects = [...(configuration.get<Project[]>('projects') || [])];
-            const projectIndex = projects.findIndex(p => p.path === projectPath);
-
-            if (projectIndex !== -1) {
-                projects.splice(projectIndex, 1);
-                await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
-                this.refresh();
-            }
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to delete project: ${error}`);
-        }
-    }
-
     private async _reorderProjects(oldIndex: number, newIndex: number) {
         try {
             this._setLoading(true);
@@ -186,6 +178,22 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             vscode.window.showErrorMessage(`Failed to reorder projects: ${error}`);
         } finally {
             this._setLoading(false);
+        }
+    }
+
+    private async _deleteProject(projectPath: string) {
+        try {
+            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+            const projects = [...(configuration.get<Project[]>('projects') || [])];
+            const projectIndex = projects.findIndex(p => p.path === projectPath);
+
+            if (projectIndex !== -1) {
+                projects.splice(projectIndex, 1);
+                await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+                this.refresh();
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to delete project: ${error}`);
         }
     }
 
@@ -216,7 +224,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
          * Load CSS content from dist file.
          * If the file is not found, load the CSS content from the src folder.
          */
-        let cssContent;
+        let cssContent = '';
         try {
             cssContent = await loadResourceFile(this._context, 'dist/css/webview.css') || await loadResourceFile(this._context, 'src/css/webview.css');
         } catch (error) {
@@ -227,6 +235,148 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         const projects = configuration.get<Project[]>('projects') || [];
         const useFavicons = configuration.get<boolean>('useFavicons') ?? true;
 
+        // Pre-load all HTML components
+        const headerHtml = await getHeaderHtml(this._context);
+        const projectListHtml = await getProjectListHtml(this._context);
+        const footerHtml = await getFooterHtml(this._context);
+
+        const projectsHtml = await Promise.all(projects.map(async (project, index) => {
+            const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
+            const gradientColor = project.color ? generateGradient(project.color) : "var(--vscode-list-activeSelectionBackground)";
+            const textColor = project.color ? getContrastColor(project.color) : "#ffffff";
+            const getBaseUrl = (url?: string) => {
+                if (!url) {return null;}
+                try {
+                    const urlObj = new URL(url);
+                    return urlObj.protocol + "//" + urlObj.hostname;
+                } catch (e) {
+                    return null;
+                }
+            };
+
+            /**
+             * Get the base URL of the project.
+             * This is used to fetch the favicon from Google if useFavicons is enabled in the settings.
+             */
+            const baseUrl = useFavicons
+                ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
+                : null;
+            const faviconHtml = baseUrl && useFavicons ? `<img src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
+
+            const projectSettingsHtml = await getSettingsDropdownHtml(this._context, project);
+
+            return `
+                <div class="project-item-wrapper" draggable="true" data-index="${index}">
+                    <div class="project-item"
+                        style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"
+                        onclick="toggleInfo(event, '${project.path.replace(/'/g, "\\'")}')">
+                        <span class="project-icon">${faviconHtml}</span>
+                        <div class="project-info">
+                            <div class="project-name" style="color: ${textColor}">${project.name}</div>
+                        </div>
+                        <div class="project-settings" onclick="toggleSettings(event, '${project.path.replace(/'/g, "\\'")}')">
+                            Edit
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="1rem" width="1rem" style="margin-left: 0.25rem" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="project-info-dropdown" id="info-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}">
+                        <div class="info-section">
+                            <div class="info-label">Path</div>
+                            <div class="info-value">${project.path}</div>
+                        </div>
+                        ${ project.productionUrl || project.devUrl || project.stagingUrl || project.managementUrl
+                                ? `
+                        <div class="info-section">
+                            <div class="info-label">URLs</div>
+                            <div class="info-value">
+                                ${
+                                    project.productionUrl
+                                        ? `
+                                    <a href="${project.productionUrl.replace(
+                                        /'/g,
+                                        "\\'"
+                                    )}" class="project-url" onclick="openUrl(event, '${project.productionUrl.replace(/'/g, "\\'")}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9-3-9m-9 9a9 9 0 019-9"/>
+                                        </svg>
+                                        Production
+                                    </a>
+                                `
+                                        : ""
+                                }
+                                ${
+                                    project.stagingUrl
+                                        ? `
+                                    <a href="${project.stagingUrl.replace(/'/g, "\\'")}" class="project-url" onclick="openUrl(event, '${project.stagingUrl.replace(
+                                                /'/g,
+                                                "\\'"
+                                            )}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                        </svg>
+                                        Staging
+                                    </a>
+                                `
+                                        : ""
+                                }
+                                ${
+                                    project.devUrl
+                                        ? `
+                                    <a href="${project.devUrl.replace(/'/g, "\\'")}" class="project-url" onclick="openUrl(event, '${project.devUrl.replace(
+                                                /'/g,
+                                                "\\'"
+                                            )}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        Development
+                                    </a>
+                                `
+                                        : ""
+                                }
+                                ${
+                                    project.managementUrl
+                                        ? `
+                                    <a href="${project.managementUrl.replace(
+                                        /'/g,
+                                        "\\'"
+                                    )}" class="project-url" onclick="openUrl(event, '${project.managementUrl.replace(/'/g, "\\'")}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                                        </svg>
+                                        Management (Jira, Trello, etc.)
+                                    </a>
+                                `
+                                        : ""
+                                }
+                            </div>
+                        </div>
+                        `
+                                : ""
+                        }
+                        <div class="info-actions">
+                            <button class="info-action-button" onclick="openProject('${project.path.replace(/'/g, "\\'")}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/>
+                                </svg>
+                                Open Project
+                            </button>
+                            <button class="info-action-button show-in-file-manager" data-path="${project.path.replace(/'/g, "\\'")}" data-name="${project.name}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                                </svg>
+                                Show in File Manager
+                            </button>
+                        </div>
+                    </div>
+
+                    ${projectSettingsHtml}
+
+                </div>
+            `;
+            }));
 
         return `<!DOCTYPE html>
             <html>
@@ -234,218 +384,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     <style>${cssContent}</style>
                 </head>
                 <body>
-                    ${await getHeaderHtml(this._context)}
+                    ${headerHtml}
 
                     <div class="projects-wrapper">
                         <div id="loading-spinner" class="loading-spinner hidden"></div>
-                        ${await getProjectListHtml(this._context)}
+                        ${projectListHtml}
 
                         <div id="projects-list" class="draggable-list">
-                            ${projects.map((project, index) => {
-                                const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
-                                const gradientColor = project.color ? generateGradient(project.color) : "var(--vscode-list-activeSelectionBackground)";
-                                const textColor = project.color ? getContrastColor(project.color) : "#ffffff";
-                                const getBaseUrl = (url?: string) => {
-                                    if (!url) {return null;}
-                                    try {
-                                        const urlObj = new URL(url);
-                                        return urlObj.protocol + "//" + urlObj.hostname;
-                                    } catch (e) {
-                                        return null;
-                                    }
-                                };
-
-                                /**
-                                 * Get the base URL of the project.
-                                 * This is used to fetch the favicon from Google if useFavicons is enabled in the settings.
-                                 */
-                                const baseUrl = useFavicons
-                                    ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
-                                    : null;
-                                const faviconHtml = baseUrl && useFavicons ? `<img src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
-
-                                return `
-                                    <div class="project-item-wrapper" draggable="true" data-index="${index}">
-                                        <div class="project-item"
-                                            style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"
-                                            onclick="toggleInfo(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            <span class="project-icon">${faviconHtml}</span>
-                                            <div class="project-info">
-                                                <div class="project-name" style="color: ${textColor}">${project.name}</div>
-                                            </div>
-                                            <div class="project-settings" onclick="toggleSettings(event, '${project.path.replace(/'/g, "\\'")}')">
-                                                Edit
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="1rem" width="1rem" style="margin-left: 0.25rem" stroke-width="1.5" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <div class="project-info-dropdown" id="info-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}">
-                                            <div class="info-section">
-                                                <div class="info-label">Path</div>
-                                                <div class="info-value">${project.path}</div>
-                                            </div>
-                                            ${ project.productionUrl || project.devUrl || project.stagingUrl || project.managementUrl
-                                                    ? `
-                                            <div class="info-section">
-                                                <div class="info-label">URLs</div>
-                                                <div class="info-value">
-                                                    ${
-                                                        project.productionUrl
-                                                            ? `
-                                                        <a href="${project.productionUrl.replace(
-                                                            /'/g,
-                                                            "\\'"
-                                                        )}" class="project-url" onclick="openUrl(event, '${project.productionUrl.replace(/'/g, "\\'")}')">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9-3-9m-9 9a9 9 0 019-9"/>
-                                                            </svg>
-                                                            Production
-                                                        </a>
-                                                    `
-                                                            : ""
-                                                    }
-                                                    ${
-                                                        project.stagingUrl
-                                                            ? `
-                                                        <a href="${project.stagingUrl.replace(/'/g, "\\'")}" class="project-url" onclick="openUrl(event, '${project.stagingUrl.replace(
-                                                                    /'/g,
-                                                                    "\\'"
-                                                                )}')">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                                            </svg>
-                                                            Staging
-                                                        </a>
-                                                    `
-                                                            : ""
-                                                    }
-                                                    ${
-                                                        project.devUrl
-                                                            ? `
-                                                        <a href="${project.devUrl.replace(/'/g, "\\'")}" class="project-url" onclick="openUrl(event, '${project.devUrl.replace(
-                                                                    /'/g,
-                                                                    "\\'"
-                                                                )}')">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                                            </svg>
-                                                            Development
-                                                        </a>
-                                                    `
-                                                            : ""
-                                                    }
-                                                    ${
-                                                        project.managementUrl
-                                                            ? `
-                                                        <a href="${project.managementUrl.replace(
-                                                            /'/g,
-                                                            "\\'"
-                                                        )}" class="project-url" onclick="openUrl(event, '${project.managementUrl.replace(/'/g, "\\'")}')">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                                                            </svg>
-                                                            Management (Jira, Trello, etc.)
-                                                        </a>
-                                                    `
-                                                            : ""
-                                                    }
-                                                </div>
-                                            </div>
-                                            `
-                                                    : ""
-                                            }
-                                            <div class="info-actions">
-                                                <button class="info-action-button" onclick="openProject('${project.path.replace(/'/g, "\\'")}')">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/>
-                                                    </svg>
-                                                    Open Project
-                                                </button>
-                                                <button class="info-action-button show-in-file-manager" data-path="${project.path.replace(/'/g, "\\'")}" data-name="${project.name}">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                                                    </svg>
-                                                    Show in File Manager
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="settings-dropdown" id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}">
-                                            <div class="settings-item">
-                                                <label>Name:</label>
-                                                <input placeholder="Projectname" type="text" value="${project.name}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <div class="settings-item">
-                                                <label>Color:</label>
-                                                <div class="color-container">
-                                                    <input type="color" class="project-color-input" value="${project.color || bgColor}"
-                                                        data-uses-theme-color="${!project.color}"
-                                                        oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                                    <button class="random-color" style="display:flex; items-align:center" onclick="setRandomColor(event, '${project.path.replace(
-                                                        /'/g,
-                                                        "\\'"
-                                                    )}')">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                                            <path d="M18 4l3 3l-3 3" />
-                                                            <path d="M18 20l3 -3l-3 -3" />
-                                                            <path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" />
-                                                            <path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3" />
-                                                        </svg>
-                                                        Randomize
-                                                    </button>
-                                                    <button class="reset-color" onclick="resetColor(event, '${project.path.replace(/'/g, "\\'")}')">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                                            <path d="M9 14l-4 -4l4 -4" />
-                                                            <path d="M5 10h11a4 4 0 1 1 0 8h-1" />
-                                                        </svg>
-                                                        Reset
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="settings-item">
-                                                <label>Production URL:</label>
-                                                <input placeholder="https://.." type="url" value="${project.productionUrl || ""}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <div class="settings-item">
-                                                <label>Staging URL:</label>
-                                                <input placeholder="https://.." type="url" value="${project.stagingUrl || ""}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <div class="settings-item">
-                                                <label>Local development URL:</label>
-                                                <input placeholder="https://.." type="url" value="${project.devUrl || ""}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <div class="settings-item">
-                                                <label>Management URL (e.G. Jira, Trello ... ):</label>
-                                                <input placeholder="https://.." type="url" value="${project.managementUrl || ""}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <div class="settings-item">
-                                                <label>Path:</label>
-                                                <input placeholder="~/path/to/your/project/" type="text" value="${project.path}"
-                                                    oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                                            </div>
-                                            <button class="save-button" id="save-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}"
-                                                onclick="saveChanges('${project.path.replace(/'/g, "\\'")}')">
-                                                Save Changes
-                                            </button>
-                                            <span class="delete-link" onclick="deleteProject('${project.path.replace(/'/g, "\\'")}')">
-                                                Delete
-                                                <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z"/>
-                                                </svg>
-                                            </span>
-                                        </div>
-                                    </div>
-                                `;
-                                })
-                                .join("")}
+                            ${projectsHtml.join("")}
                         </div>
                         ${await getAddToHtml(this._context)}
                     </div>
@@ -500,61 +446,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             }
                         }
 
-                        function handleInput(event, projectPath) {
-                            const labelMap = {
-                                'production url': 'productionUrl',
-                                'staging url': 'stagingUrl',
-                                'development url': 'devUrl',
-                                'management url': 'managementUrl',
-                                'name': 'name',
-                                'color': 'color',
-                                'path': 'path'
-                            };
-
-                            const label = event.target.closest('.settings-item').querySelector('label').textContent.toLowerCase().replace(':', '');
-                            const field = labelMap[label] || label;
-                            let value = event.target.value;
-
-                            if (field === 'color') {
-                                const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-                                if (!value.startsWith('#')) {
-                                    value = '#' + value;
-                                }
-                                if (!isValidHex.test(value)) {
-                                    return;
-                                }
-                                const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
-                                const gradientColor = generateGradient(value);
-                                projectItem.style.setProperty('--bg-color', value);
-                                projectItem.style.setProperty('--bg-gradient', gradientColor);
-                            }
-
-                            if (!pendingChanges[projectPath]) {
-                                pendingChanges[projectPath] = {};
-                            }
-                            pendingChanges[projectPath][field] = value;
-
-                            const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
-                            if (saveButton) {
-                                saveButton.classList.add('show');
-                            }
-                        }
-
-                        function saveChanges(projectPath) {
-                            if (pendingChanges[projectPath]) {
-                                vscode.postMessage({
-                                    command: 'updateProject',
-                                    projectPath: projectPath,
-                                    updates: pendingChanges[projectPath]
-                                });
-                                delete pendingChanges[projectPath];
-
-                                const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
-                                if (saveButton) {
-                                    saveButton.classList.remove('show');
-                                }
-                            }
-                        }
 
                         function toggleInfo(event, projectPath) {
                             if (event.target.closest('.project-settings')) {
@@ -597,69 +488,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 command: 'openUrl',
                                 url: url
                             });
-                        }
-
-                        function deleteProject(projectPath) {
-                            vscode.postMessage({
-                                command: 'deleteProject',
-                                projectPath: projectPath
-                            });
-                        }
-
-                        function resetColor(event, projectPath) {
-                            event.preventDefault();
-                            const colorInput = event.target.closest('.color-container').querySelector('input[type="color"]');
-                            const themeColor = getComputedStyle(document.documentElement)
-                                .getPropertyValue('--vscode-list-activeSelectionBackground')
-                                .trim();
-
-                            // Konvertiere RGB zu Hex wenn nötig
-                            let hexColor = themeColor;
-                            if (themeColor.startsWith('rgb')) {
-                                const rgb = themeColor.match(/d+/g);
-                                if (rgb && rgb.length === 3) {
-                                    hexColor = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-                                }
-                            }
-
-                            colorInput.value = hexColor;
-                            colorInput.setAttribute('data-uses-theme-color', 'true');
-
-                            if (!pendingChanges[projectPath]) {
-                                pendingChanges[projectPath] = {};
-                            }
-                            pendingChanges[projectPath]['color'] = null;
-
-                            const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
-                            projectItem.style.setProperty('--bg-color', 'var(--vscode-list-activeSelectionBackground)');
-                            projectItem.style.setProperty('--bg-gradient', 'var(--vscode-list-activeSelectionBackground)');
-
-                            const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
-                            if (saveButton) {
-                                saveButton.classList.add('show');
-                            }
-                        }
-
-                        function setRandomColor(event, projectPath) {
-                            event.preventDefault();
-                            const colorInput = event.target.previousElementSibling;
-                            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
-                            colorInput.value = randomColor;
-
-                            if (!pendingChanges[projectPath]) {
-                                pendingChanges[projectPath] = {};
-                            }
-                            pendingChanges[projectPath]['color'] = randomColor;
-
-                            const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
-                            const gradientColor = generateGradient(randomColor);
-                            projectItem.style.setProperty('--bg-color', randomColor);
-                            projectItem.style.setProperty('--bg-gradient', gradientColor);
-
-                            const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
-                            if (saveButton) {
-                                saveButton.classList.add('show');
-                            }
                         }
 
                         const list = document.getElementById('projects-list');
@@ -791,7 +619,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         });
                     </script>
 
-                    ${await getFooterHtml(this._context)}
+                    ${footerHtml}
                 </body>
             </html>`;
     }
