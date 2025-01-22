@@ -130,10 +130,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
     private async _updateProject(projectPath: string, updates: Partial<Project>) {
         try {
-            if (updates.color) {
-                const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-                if (!isValidHex.test(updates.color)) {
-                    throw new Error('Invalid color format');
+            if ('color' in updates) {
+                if (updates.color === null) {
+                    updates.color = undefined; // Ermöglicht das Zurücksetzen auf den Standardwert
+                } else if (updates.color) {
+                    const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+                    if (!isValidHex.test(updates.color)) {
+                        throw new Error('Invalid color format');
+                    }
                 }
             }
 
@@ -158,7 +162,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             if (projectIndex !== -1) {
                 projects[projectIndex] = { ...projects[projectIndex], ...updates };
                 await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
-                this.refresh();
+                this.refresh(); // Wichtig: Aktualisiert die gesamte Ansicht
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to update project: ${error}`);
@@ -400,6 +404,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         const vscode = acquireVsCodeApi();
                         const pendingChanges = {};
 
+                        // Nur noch die Basis-Funktionalität hier
                         document.addEventListener('DOMContentLoaded', () => {
                             document.querySelectorAll('.project-color-input').forEach(input => {
                                 if (input.getAttribute('data-uses-theme-color') === 'true') {
@@ -418,10 +423,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 }
                             });
                         });
-
-                        function addProject() {
-                            vscode.postMessage({ command: 'addProject' });
-                        }
 
                         function openProject(project) {
                             vscode.postMessage({ command: 'openProject', project });

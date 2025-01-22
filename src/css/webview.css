@@ -1,8 +1,10 @@
+/* Reset & Base Styles */
 body {
     padding: 0;
     margin: 0;
 }
 
+/* Header Styles */
 header {
     background: linear-gradient(to right, var(--vscode-sideBar-background), var(--vscode-sideBarActivityBarTop-border));
     display: flex;
@@ -14,54 +16,56 @@ header {
     margin-bottom: .25rem;
     border-radius: 3px;
     gap: 1rem;
-
-    .logo {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--vscode-button-background);
-        white-space: nowrap;
-        svg {
-            width: 2.5rem;
-            height: 2.5rem;
-        }
-    }
-
-    h1 {
-        margin: 0;
-        font-size: 1.25rem;
-        background: linear-gradient(to right, var(--vscode-button-background), var(--vscode-foreground));
-        -webkit-background-clip: text;
-        line-height: 1.5rem;
-        color: transparent;
-    }
-
-    .linkbar {
-        display: flex;
-        gap: 1rem;
-    }
-
-    .version {
-        color: var(--vscode-button-secondaryForeground);
-        opacity: 0.7;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .preview-badge {
-        background-color: var(--vscode-inputValidation-errorBackground);
-        color: var(--vscode-button-secondaryForeground);
-        padding: 0.1rem 0.3rem;
-        border-radius: 3px;
-        font-size: 0.6rem;
-    }
-
-    .button {
-        padding: .25rem .5rem;
-    }
 }
 
+header .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--vscode-button-background);
+    white-space: nowrap;
+}
+
+header .logo svg {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    background: linear-gradient(to right, var(--vscode-button-background), var(--vscode-foreground));
+    -webkit-background-clip: text;
+    line-height: 1.5rem;
+    color: transparent;
+}
+
+header .linkbar {
+    display: flex;
+    gap: 1rem;
+}
+
+header .version {
+    color: var(--vscode-button-secondaryForeground);
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+header .preview-badge {
+    background-color: var(--vscode-inputValidation-errorBackground);
+    color: var(--vscode-button-secondaryForeground);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.6rem;
+}
+
+header .button {
+    padding: .25rem .5rem;
+}
+
+/* Button Styles */
 .button {
     display: flex;
     align-items: center;
@@ -74,37 +78,44 @@ header {
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease-in-out;
     white-space: nowrap;
-    &:hover {
-        background-color: var(--vscode-button-hoverBackground);
-        color: var(--vscode-button-hoverForeground);
-        box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.1)
-    }
+}
 
-    &.secondary {
-        background-color: var(--vscode-button-secondaryBackground);
-        color: var(--vscode-button-secondaryForeground);
-        &:hover {
-            background-color: var(--vscode-button-secondaryHoverBackground);
-            color: var(--vscode-button-secondaryHoverForeground);
-        }
-    }
-    svg {
-        width: 1.25rem;
-        height: 1.25rem;
-    }
- }
- .projects-wrapper,
- footer {
+.button:hover {
+    background-color: var(--vscode-button-hoverBackground);
+    color: var(--vscode-button-hoverForeground);
+    box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.1)
+}
+
+.button.secondary {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.button.secondary:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+    color: var(--vscode-button-secondaryHoverForeground);
+}
+
+.button svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Project Layout Styles */
+.projects-wrapper,
+footer {
     padding: .5rem;
- }
+}
 
- .project-item-wrapper {
+.project-item-wrapper {
     margin: 4px 6px;
 }
 
+/* Project Item Styles */
 .project-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 10px 12px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -114,89 +125,6 @@ header {
         color-mix(in srgb, var(--bg-color) 80%, transparent),
         color-mix(in srgb, var(--bg-gradient) 80%, transparent)
     );
-    border: 1px solid transparent;
-}
-
-.project-info-dropdown {
-    display: none;
-    background: var(--vscode-menu-background);
-    border: 1px solid var(--vscode-input-border);
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    padding: 16px;
-    margin-top: -1px;
-    margin-bottom: 10px;
-    animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.project-info-dropdown.show {
-    display: block;
-}
-
-.color-container {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-}
-
-.reset-color, .random-color {
-    padding: 4px 8px;
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border: 1px solid var(--vscode-button-border);
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.reset-color:hover, .random-color:hover {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-}
-
-.info-section {
-    margin-bottom: 12px;
-}
-
-.info-label {
-    font-size: 0.85em;
-    color: var(--vscode-foreground);
-    opacity: 0.7;
-    margin-bottom: 4px;
-}
-
-.info-value {
-    font-size: 0.95em;
-    color: var(--vscode-foreground);
-}
-
-.info-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-.info-action-button {
-    padding: 4px 8px;
-    border-radius: 3px;
-    border: 1px solid var(--vscode-button-border);
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    cursor: pointer;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.2s ease;
-}
-
-.info-action-button:hover {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    transform: translateY(-1px);
 }
 
 .project-item:not(.active) {
@@ -210,7 +138,6 @@ header {
         var(--bg-color),
         var(--bg-gradient)
     );
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .project-icon {
@@ -246,58 +173,50 @@ header {
     opacity: 0.7;
 }
 
-.add-button {
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
-    cursor: pointer;
-    color: var(--vscode-button-foreground);
-    background: var(--vscode-button-background);
-    border: none;
-    border-radius: 4px;
-    margin: 12px 8px;
-    gap: 2px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.add-button:hover {
-    transform: translateY(-1px);
-}
-
-.add-button::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: -100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: 0.5s;
-}
-
-.add-button:hover::after {
-    left: 100%;
-}
-
-.support-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--vscode-textLink-foreground);
+.project-url {
+    opacity: 0.7;
     text-decoration: none;
-    font-size: 12px;
-    gap: 4px;
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
+    color: var(--vscode-foreground);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 0;
+    transition: opacity 0.4s ease-in-out;
 }
 
-.support-link:hover {
+.project-url:hover {
+    text-decoration: underline;
     opacity: 1;
 }
 
+/* Card & Dropdown Styles */
+.card {
+    background: var(--vscode-editor-background);
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.project-info-dropdown,
+.settings-dropdown {
+    display: none;
+    background: var(--vscode-menu-background);
+    border: 1px solid var(--vscode-input-border);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 16px;
+    margin-top: -1px;
+    margin-bottom: 10px;
+    animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.project-info-dropdown.show,
+.settings-dropdown.show {
+    display: block;
+}
+
+/* Settings Styles */
 .project-settings {
     position: absolute;
     right: 12px;
@@ -320,136 +239,57 @@ header {
     transform: translateY(-50%) scale(1);
 }
 
-.settings-dropdown {
-    display: none;
-    background: var(--vscode-menu-background);
-    border: 1px solid var(--vscode-input-border);
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    padding: 16px;
-    margin-top: -1px;
-    margin-bottom: 10px;
-    animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
+/* Info Section Styles */
+.info-section {
+    margin-bottom: 12px;
 }
 
-.settings-dropdown.show {
-    display: block;
-}
-
-@keyframes slideDown {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.settings-item {
-    margin: 12px 0;
-}
-
-.settings-item label {
-    display: block;
-    margin-bottom: 6px;
+.info-label {
+    font-size: 0.85em;
     color: var(--vscode-foreground);
-    font-size: 0.9em;
-    font-weight: 500;
+    opacity: 0.7;
+    margin-bottom: 4px;
 }
 
-.settings-item input {
-    width: 100%;
-    background: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
-    border: 1px solid var(--vscode-input-border);
-    padding: 6px 10px;
-    border-radius: 4px;
-    box-sizing: border-box;
-    transition: all 0.2s ease;
+.info-value {
+    font-size: 0.95em;
+    color: var(--vscode-foreground);
 }
 
-.settings-item input[type="color"] {
-    padding: 0;
-    height: 30px;
-    max-width: 30px;
-    border-radius: 5px;
-    margin-right: 6px;
-    cursor: pointer;
+.info-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
 }
 
-.settings-item input[type="color"]::-webkit-color-swatch-wrapper {
-    padding: 0;
+/* Color Controls */
+.color-container {
+    display: flex;
+    gap: 4px;
+    align-items: center;
 }
 
-.settings-item input[type="color"]::-webkit-color-swatch {
-    border: none;
+.reset-color,
+.random-color {
+    padding: 4px 8px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
     border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
-.save-button {
+.reset-color:hover,
+.random-color:hover {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 16px;
-    width: 100%;
-    display: none;
-    font-weight: 500;
-    transform: translateY(5px);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.save-button:hover {
-    filter: brightness(1.1);
-    transform: translateY(3px);
-}
-
-.save-button.show {
-    display: block;
-    animation: slideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-@keyframes slideUp {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.project-url {
-    opacity: 0.7;
-    text-decoration: none;
-    color: var(--vscode-foreground);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 0;
-    transition: opacity 0.4s ease-in-out;
-}
-
-.project-url:hover {
-    text-decoration: underline;
-    opacity: 1;
-}
-
-.delete-link {
-    bottom: 16px;
-    right: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-    color: var(--vscode-Foreground);
-    opacity: 0.7;
-    font-size: 12px;
-    cursor: pointer;
-    transition: opacity 0.3s ease;
-    z-index: 10;
-    margin-top: 1rem;
-}
-
-.delete-link:hover {
-    opacity: 1;
-    color: var(--vscode-errorForeground);
-}
-
+/* Support Box and Footer */
 .support-box {
     display: flex;
     margin-top: 2rem;
@@ -460,6 +300,22 @@ header {
     justify-content: space-between;
 }
 
+.support-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--vscode-textLink-foreground);
+    text-decoration: none;
+    font-size: 12px;
+    gap: 4px;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.support-link:hover {
+    opacity: 1;
+}
+
 .version-info {
     display: block;
     font-size: 10px;
@@ -467,6 +323,7 @@ header {
     color: var(--vscode-foreground);
 }
 
+/* Drag and Drop Styles */
 .draggable-list {
     display: flex;
     flex-direction: column;
@@ -500,6 +357,7 @@ header {
     bottom: 0;
 }
 
+/* Utility Styles */
 .loading-spinner {
     position: fixed;
     top: 50%;
@@ -518,25 +376,18 @@ header {
     display: none;
 }
 
+/* Animations */
+@keyframes slideDown {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 @keyframes spin {
     0% { transform: translate(-50%, -50%) rotate(0deg); }
     100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-.project-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px;
-    border-bottom: 1px solid var(--vscode-widget-shadow);
-}
-
-.show-in-file-manager {
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    opacity: 0.7;
-}
-
-.show-in-file-manager:hover {
-    opacity: 1;
 }
