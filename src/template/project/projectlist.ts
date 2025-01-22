@@ -8,7 +8,7 @@ import * as vscode from "vscode";
 export async function getProjectListHtml(context: vscode.ExtensionContext): Promise<string> {
     return `
 
-        Project List
+       *** Move Project List in projectlist.ts ***
 
     `;
 }
