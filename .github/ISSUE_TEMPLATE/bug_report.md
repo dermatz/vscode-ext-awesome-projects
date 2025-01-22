@@ -11,6 +11,7 @@ A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
+
 1. Open '...'
 2. Click on '....'
 3. View log file '....'
@@ -26,8 +27,3 @@ If applicable, add screenshots to help explain your problem.
 - OS: [e.g. Windows 10, macOS 13.0, Ubuntu 22.04]
 - VS Code Version: [e.g. 1.84.0]
 - Extension Version: [e.g. 1.1.0]
-- Magento Version: [e.g. 2.4.6]
-
-**Log Files (if applicable)**
-<details>
-<summary>VS Code Developer Tools Console</summary>

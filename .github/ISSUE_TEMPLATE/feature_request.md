@@ -6,30 +6,20 @@ labels: enhancement
 assignees: 'dermatz'
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**What would you like to see?**
+Describe the feature you want to see added.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**Why is this feature important?**
+Explain why this feature would be useful.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**Any alternatives?**
+Mention any alternative solutions you've thought of.
 
-**Use case**
-Describe how this feature would be used in a Magento development workflow.
+**How would this be used?**
+Describe how you would use this feature in your workflow.
 
-**Extension Context**
-- Would this feature require additional configuration?
-- Would it affect existing log viewing functionality?
-- Does it require changes to the log file parsing?
-
-**Technical Considerations**
-- Potential impact on extension performance
-- Required access to VS Code APIs
-- Integration with Magento's logging system
-
-**Additional context**
-Add any other context, screenshots, or mock-ups about the feature request here.
+**Anything else?**
+Add any other information, screenshots, or mock-ups here.
 
 **Related Issues/PRs**
 Link to any related issues or pull requests.
