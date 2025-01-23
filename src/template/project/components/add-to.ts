@@ -9,6 +9,13 @@ export async function getAddToHtml(context: vscode.ExtensionContext): Promise<st
             </svg>
             Add Project
         </button>
+        <script>
+            function addProject() {
+                vscode.postMessage({
+                    command: 'addProject'
+                });
+            }
+        </script>
     `;
 }
 
