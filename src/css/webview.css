@@ -40,11 +40,6 @@ header h1 {
     color: transparent;
 }
 
-header .linkbar {
-    display: flex;
-    gap: 1rem;
-}
-
 header .version {
     color: var(--vscode-button-secondaryForeground);
     opacity: 0.7;
@@ -61,99 +56,16 @@ header .preview-badge {
     font-size: 0.6rem;
 }
 
-header .button {
-    padding: .25rem .5rem;
-}
-
-/* Button Styles */
-.button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--vscode-button-foreground);
-    background-color: var(--vscode-button-background);
-    text-decoration: none;
-    border-radius: 0.25rem;
-    padding: 0.5rem 1rem;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease-in-out;
-    white-space: nowrap;
-}
-
-.button:hover {
-    background-color: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-hoverForeground);
-    box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.1)
-}
-
-.button.secondary {
-    background-color: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-}
-
-.button.secondary:hover {
-    background-color: var(--vscode-button-secondaryHoverBackground);
-    color: var (--vscode-button-secondaryHoverForeground);
-}
-
-.button svg {
-    width: 1.25rem;
-    height: 1.25rem;
-}
-
-/* Add Project Button Styles */
-.add-button {
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
-    cursor: pointer;
-    color: var(--vscode-button-foreground);
-    background: var(--vscode-button-background);
-    border: none;
-    border-radius: 4px;
-    margin: 12px 8px;
-    gap: 2px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.add-button:hover {
-    transform: translateY(-1px);
-}
-
-.add-button::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: -100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: 0.5s;
-}
-
-.add-button:hover::after {
-    left: 100%;
-}
-
-.add-button svg {
-    width: 1rem;
-    height: 1rem;
-}
-
 /* Project Layout Styles */
-.projects-wrapper,
-footer {
+.projects-wrapper {
     padding: .5rem;
 }
 
+/* Project Item Styles */
 .project-item-wrapper {
     margin: 4px 6px;
 }
 
-/* Project Item Styles */
 .project-item {
     display: flex;
     align-items: center;
@@ -196,50 +108,12 @@ footer {
     height: 16px;
 }
 
-.project-item:hover .project-icon {
-    transform: scale(1.1);
-}
-
-.project-info {
-    flex: 1;
-    transition: transform 0.2s ease;
-}
-
 .project-name {
     font-weight: 500;
     margin-bottom: 2px;
 }
 
-.project-path {
-    font-size: 0.85em;
-    opacity: 0.7;
-}
-
-.project-url {
-    opacity: 0.7;
-    text-decoration: none;
-    color: var(--vscode-foreground);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 0;
-    transition: opacity 0.4s ease-in-out;
-}
-
-.project-url:hover {
-    text-decoration: underline;
-    opacity: 1;
-}
-
-/* Card & Dropdown Styles */
-.card {
-    background: var(--vscode-editor-background);
-    border-radius: 0.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 0.5rem 1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+/* Settings Dropdown Styles */
 .project-info-dropdown,
 .settings-dropdown {
     display: none;
@@ -256,52 +130,6 @@ footer {
 .project-info-dropdown.show,
 .settings-dropdown.show {
     display: block;
-}
-
-/* Settings Styles */
-.project-settings {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%) scale(0.9);
-    cursor: pointer;
-    opacity: 0;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 6px;
-    border-radius: 4px;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    background: var(--vscode-editor-background);
-    border: 1px solid var(--vscode-input-border);
-}
-
-.project-item:hover .project-settings {
-    opacity: 1;
-    transform: translateY(-50%) scale(1);
-}
-
-/* Info Section Styles */
-.info-section {
-    margin-bottom: 12px;
-}
-
-.info-label {
-    font-size: 0.85em;
-    color: var(--vscode-foreground);
-    opacity: 0.7;
-    margin-bottom: 4px;
-}
-
-.info-value {
-    font-size: 0.95em;
-    color: var(--vscode-foreground);
-}
-
-.info-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
 }
 
 /* Color Controls */
@@ -331,75 +159,23 @@ footer {
     color: var(--vscode-button-foreground);
 }
 
-/* Support Box and Footer */
-.support-box {
-    display: flex;
-    margin-top: 2rem;
-    flex-wrap: wrap;
-    gap: 4px;
-    padding: 10px;
-    position: relative;
-    justify-content: space-between;
-}
-
-.support-link {
+/* Add Project Button */
+.add-button {
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: var(--vscode-textLink-foreground);
-    text-decoration: none;
-    font-size: 12px;
-    gap: 4px;
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
+    padding: 8px 16px;
+    cursor: pointer;
+    color: var(--vscode-button-foreground);
+    background: var(--vscode-button-background);
+    border: none;
+    border-radius: 4px;
+    margin: 12px 8px;
+    gap: 2px;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
-.support-link:hover {
-    opacity: 1;
-}
-
-.version-info {
-    display: block;
-    font-size: 10px;
-    opacity: 0.5;
-    color: var(--vscode-foreground);
-}
-
-/* Drag and Drop Styles */
-.draggable-list {
-    display: flex;
-    flex-direction: column;
-}
-
-.project-wrapper.dragging {
-    opacity: 0.5;
-}
-
-.project-wrapper.over {
-    border: 2px dashed var(--vscode-input-border);
-    transition: border 0.2s ease;
-}
-
-.project-wrapper.insert-top::before,
-.project-wrapper.insert-bottom::after {
-    content: '';
-    display: block;
-    height: 2px;
-    background: var(--vscode-input-border);
-    position: absolute;
-    left: 0;
-    right: 0;
-}
-
-.project-wrapper.insert-top::before {
-    top: 0;
-}
-
-.project-wrapper.insert-bottom::after {
-    bottom: 0;
-}
-
-/* Utility Styles */
+/* Loading Spinner */
 .loading-spinner {
     position: fixed;
     top: 50%;
@@ -420,11 +196,6 @@ footer {
 
 /* Animations */
 @keyframes slideDown {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
     from { opacity: 0; }
     to { opacity: 1; }
 }
