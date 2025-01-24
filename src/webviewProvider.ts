@@ -361,13 +361,13 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 : ""
                         }
                         <div class="info-actions">
-                            <button class="info-action-button" onclick="openProject('${project.path.replace(/'/g, "\\'")}')">
+                            <button class="button info-action" onclick="openProject('${project.path.replace(/'/g, "\\'")}')">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/>
                                 </svg>
                                 Open Project
                             </button>
-                            <button class="info-action-button show-in-file-manager" data-path="${project.path.replace(/'/g, "\\'")}" data-name="${project.name}">
+                            <button class="button show-in-file-manager" data-path="${project.path.replace(/'/g, "\\'")}" data-name="${project.name}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                                 </svg>
@@ -394,10 +394,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         <div id="loading-spinner" class="loading-spinner hidden"></div>
                         ${projectListHtml}
 
-                        <div id="projects-list" class="draggable-list">
-                            ${projectsHtml.join("")}
-                        </div>
-                        ${await getAddToHtml(this._context)}
+                        <section>
+                            <div id="projects-list" class="draggable-list">
+                                ${projectsHtml.join("")}
+                            </div>
+                        </section>
+                        <section>
+                            ${await getAddToHtml(this._context)}
+                        </section>
                     </div>
 
                     <script>
