@@ -67,7 +67,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                     name: await vscode.window.showInputBox({
                                         prompt: 'Enter project name',
                                         value: projectPath.split('/').pop()
-                                    }) || projectPath.split('/').pop() || ''
+                                    }) || projectPath.split('/').pop() || '',
+                                    color: null  // Set default color to null
                                 };
 
                                 await configuration.update(

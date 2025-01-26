@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { Project } from '../../../extension';
-import { getColorHandlingScript } from '../utils/colorHandling';
+import { getColorPickerHtml } from './color-picker';
 
 async function handleDeleteProject(projectPath: string) {
     try {
@@ -21,6 +21,9 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
     const defaultBgColor = "var(--vscode-list-activeSelectionBackground)";
     const bgColor = project.color || defaultBgColor;
 
+    // Convert undefined to null explicitly for type safety
+    const projectColor: string | null = project.color ?? null;
+
     const urls = [
         { label: 'Project name:', type: 'text', value: project.name, placeholder: 'Projectname', field: 'name' },
         { label: 'Local path:', type: 'text', value: project.path, placeholder: '~/path/to/your/project/', field: 'path' },
@@ -32,38 +35,22 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
 
     return `
         <div class="settings-dropdown" id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}">
-
             <div class="settings-item">
                 <label>Background:</label>
-                <div class="color-container">
-                    <input type="color"
-                        class="project-color-input"
-                        value="${project.color || bgColor}"
-                        data-uses-theme-color="${!project.color}"
-                        oninput="handleColorChange(event, '${project.path.replace(/'/g, "\\'")}')"
-                        onchange="handleColorChange(event, '${project.path.replace(/'/g, "\\'")}')">
-                    <button class="button small secondary" onclick="setRandomColor(event, '${project.path.replace(/'/g,"\\'")}')" style="display:flex; align-items:center; gap:4px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 4l3 3l-3 3" /><path d="M18 20l3 -3l-3 -3" /><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" /><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3" />
-                        </svg>
-                        <span style="pointer-events: none">Randomize</span>
-                    </button>
-                    <button class="button small secondary" onclick="resetColor(event, '${project.path.replace(/'/g, "\\'")}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" />
-                        </svg>
-                        Reset
-                    </button>
-                </div>
+                ${getColorPickerHtml({
+                    projectPath: project.path,
+                    currentColor: projectColor,
+                    defaultColor: bgColor
+                })}
             </div>
 
             <div class="card">
-            ${urls.map(url => `
-                <div class="settings-item">
-                    <label>${url.label}</label>
-                    <input type="${url.type}" placeholder="${url.placeholder}" value="${url.value}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
-                </div>
-            `).join('')}
+                ${urls.map(url => `
+                    <div class="settings-item">
+                        <label>${url.label}</label>
+                        <input type="${url.type}" placeholder="${url.placeholder}" value="${url.value}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                    </div>
+                `).join('')}
             </div>
 
             <button class="save-button" id="save-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}" onclick="saveChanges('${project.path.replace(/'/g, "\\'")}')">
@@ -78,8 +65,6 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
         </div>
 
         <script>
-            ${getColorHandlingScript()}
-
             function handleInput(event, projectPath) {
                 const labelMap = {
                     'production url': 'productionUrl',
@@ -87,66 +72,17 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     'development url': 'devUrl',
                     'management url': 'managementUrl',
                     'name': 'name',
-                    'color': 'color',
                     'path': 'path'
                 };
 
                 const label = event.target.closest('.settings-item').querySelector('label').textContent.toLowerCase().replace(':', '');
                 const field = labelMap[label] || label;
-                let value = event.target.value;
-
-                if (field === 'color') {
-                    const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-                    if (!value.startsWith('#')) {
-                        value = '#' + value;
-                    }
-                    if (!isValidHex.test(value)) {
-                        return;
-                    }
-                    const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
-                    const gradientColor = generateGradient(value);
-                    projectItem.style.setProperty('--bg-color', value);
-                    projectItem.style.setProperty('--bg-gradient', gradientColor);
-                }
+                const value = event.target.value;
 
                 if (!pendingChanges[projectPath]) {
                     pendingChanges[projectPath] = {};
                 }
                 pendingChanges[projectPath][field] = value === '' ? null : value;
-
-                const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
-                if (saveButton) {
-                    saveButton.classList.add('show');
-                }
-            }
-
-            function resetColor(event, projectPath) {
-                event.preventDefault();
-                const colorInput = event.target.closest('.color-container').querySelector('input[type="color"]');
-                const themeColor = getComputedStyle(document.documentElement)
-                    .getPropertyValue('--vscode-list-activeSelectionBackground')
-                    .trim();
-
-                // Konvertiere RGB zu Hex wenn nötig
-                let hexColor = themeColor;
-                if (themeColor.startsWith('rgb')) {
-                    const rgb = themeColor.match(/d+/g);
-                    if (rgb && rgb.length === 3) {
-                        hexColor = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-                    }
-                }
-
-                colorInput.value = hexColor;
-                colorInput.setAttribute('data-uses-theme-color', 'true');
-
-                if (!pendingChanges[projectPath]) {
-                    pendingChanges[projectPath] = {};
-                }
-                pendingChanges[projectPath]['color'] = null;
-
-                const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
-                projectItem.style.setProperty('--bg-color', 'var(--vscode-list-activeSelectionBackground)');
-                projectItem.style.setProperty('--bg-gradient', 'var(--vscode-list-activeSelectionBackground)');
 
                 const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
                 if (saveButton) {

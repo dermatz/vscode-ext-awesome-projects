@@ -5,7 +5,7 @@ import { registerCommands } from './commands';
 export interface Project {
     path: string;
     name: string;
-    color?: string;
+    color?: string | null;  // Make color optional
     icon?: string;
     productionUrl?: string;
     devUrl?: string;
