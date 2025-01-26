@@ -42,13 +42,13 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                         data-uses-theme-color="${!project.color}"
                         oninput="handleColorChange(event, '${project.path.replace(/'/g, "\\'")}')"
                         onchange="handleColorChange(event, '${project.path.replace(/'/g, "\\'")}')">
-                    <button class="random-color" onclick="setRandomColor(event, '${project.path.replace(/'/g,"\\'")}')" style="display:flex; align-items:center; gap:4px;">
+                    <button class="button small secondary" onclick="setRandomColor(event, '${project.path.replace(/'/g,"\\'")}')" style="display:flex; align-items:center; gap:4px;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 4l3 3l-3 3" /><path d="M18 20l3 -3l-3 -3" /><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" /><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3" />
                         </svg>
                         <span style="pointer-events: none">Randomize</span>
                     </button>
-                    <button class="reset-color" onclick="resetColor(event, '${project.path.replace(/'/g, "\\'")}')">
+                    <button class="button small secondary" onclick="resetColor(event, '${project.path.replace(/'/g, "\\'")}')">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" />
                         </svg>

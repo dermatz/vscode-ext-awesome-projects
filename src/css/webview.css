@@ -84,6 +84,10 @@ header .button {
     white-space: nowrap;
 }
 
+.button.small {
+    padding: 0.3rem 0.6rem;
+}
+
 .button:hover {
     background-color: var(--vscode-button-hoverBackground);
     color: var(--vscode-button-hoverForeground);
@@ -297,32 +301,6 @@ header .button {
     margin-top: 12px;
 }
 
-/* Color Controls */
-.color-container {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-}
-
-.reset-color,
-.random-color {
-    padding: 4px 8px;
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border: 1px solid var(--vscode-button-border);
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.reset-color:hover,
-.random-color:hover {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-}
 
 /* Support Box and Footer */
 .support-box {
@@ -425,4 +403,64 @@ header .button {
 @keyframes spin {
     0% { transform: translate(-50%, -50%) rotate(0deg); }
     100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Color Picker Input Styling */
+.color-container {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 1rem 0;
+}
+input[type="color"].project-color-input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    background-color: transparent;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 4px;
+}
+
+input[type="color"].project-color-input::-webkit-color-swatch-wrapper {
+    border-radius: 4px;
+    padding: 0;
+    border: none;
+}
+
+input[type="color"].project-color-input::-webkit-color-swatch {
+    border: 2px solid var(--vscode-input-border);
+    border-radius: 4px;
+}
+
+input[type="color"].project-color-input:hover::-webkit-color-swatch {
+    border-color: var(--vscode-button-background);
+    transition: border-color 0.3s ease-in-out;
+}
+
+input[type="color"].project-color-input:focus::-webkit-color-swatch {
+    border-color: var(--vscode-focusBorder);
+    box-shadow: 0 0 0 2px var(--vscode-focusBorder);
+    outline: none;
+}
+
+.reset-color,
+.random-color {
+    padding: 4px 8px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reset-color:hover,
+.random-color:hover {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
 }
