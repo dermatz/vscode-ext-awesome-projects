@@ -426,7 +426,21 @@ input[type="text"]:focus,
 input[type="url"]:focus {
     background: color-mix(in srgb, var(--vscode-input-background) 60%, transparent);
 }
+/* save button */
+.save-button {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
+.save-button.show {
+    opacity: 1;
+    cursor: pointer;
+}
+
+.save-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 /* Color Picker Input Styling */
 .color-container {
     display: flex;

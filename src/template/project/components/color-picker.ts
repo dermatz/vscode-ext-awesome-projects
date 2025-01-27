@@ -107,6 +107,8 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 if (saveButton) {
                     saveButton.classList.add('show');
                 }
+
+                updateSaveButtonState(projectPath);
             }
 
             function generateGradient(baseColor) {
@@ -165,16 +167,25 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 if (saveButton) {
                     saveButton.classList.add('show');
                 }
+
+                updateSaveButtonState(projectPath);
             }
 
             function handleColorChange(event, projectPath) {
                 const value = event.target.value;
+                const oldValue = event.target.defaultValue;
                 event.target.setAttribute('data-uses-theme-color', 'false');
 
                 if (!pendingChanges[projectPath]) {
                     pendingChanges[projectPath] = {};
                 }
-                pendingChanges[projectPath]['color'] = value;
+
+                // Nur speichern wenn sich der Wert tatsächlich geändert hat
+                if (value !== oldValue) {
+                    pendingChanges[projectPath]['color'] = value;
+                } else {
+                    delete pendingChanges[projectPath]['color'];
+                }
 
                 const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
                 if (projectItem) {
@@ -187,13 +198,17 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                     }
                 }
 
+                updateSaveButtonState(projectPath);
+            }
+
+            function showSaveButton(projectPath) {
                 const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
                 if (saveButton) {
                     saveButton.classList.add('show');
                 }
             }
 
-            function showSaveButton(projectPath) {
+            function updateSaveButtonState(projectPath) {
                 const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
                 if (saveButton) {
                     saveButton.classList.add('show');

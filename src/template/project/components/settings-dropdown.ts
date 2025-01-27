@@ -77,15 +77,29 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                 const label = event.target.closest('.settings-item').querySelector('label').textContent.toLowerCase().replace(':', '');
                 const field = labelMap[label] || label;
                 const value = event.target.value;
+                const oldValue = event.target.defaultValue;
 
                 if (!pendingChanges[projectPath]) {
                     pendingChanges[projectPath] = {};
                 }
-                pendingChanges[projectPath][field] = value === '' ? null : value;
 
+                // Nur speichern wenn sich der Wert tatsächlich geändert hat
+                if (value !== oldValue) {
+                    pendingChanges[projectPath][field] = value === '' ? null : value;
+                } else {
+                    delete pendingChanges[projectPath][field];
+                }
+
+                updateSaveButtonState(projectPath);
+            }
+
+            function updateSaveButtonState(projectPath) {
                 const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
                 if (saveButton) {
-                    saveButton.classList.add('show');
+                    // Prüfen ob es überhaupt Änderungen gibt
+                    const hasChanges = pendingChanges[projectPath] && Object.keys(pendingChanges[projectPath]).length > 0;
+                    saveButton.classList.toggle('show', hasChanges);
+                    saveButton.disabled = !hasChanges;
                 }
             }
 
@@ -103,12 +117,27 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                         projectPath: projectPath,
                         updates: pendingChanges[projectPath]
                     });
-                    delete pendingChanges[projectPath];
 
-                    const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
-                    if (saveButton) {
-                        saveButton.classList.remove('show');
+                    // Update defaultValue für alle geänderten Felder
+                    const settingsElement = document.getElementById('settings-' + projectPath.replace(/[^a-zA-Z0-9]/g, "-"));
+
+                    if (settingsElement) {
+                        Object.entries(pendingChanges[projectPath]).forEach(([field, value]) => {
+                            const labelText = Object.entries(labelMap).find(([_, val]) => val === field)?.[0];
+                            if (labelText) {
+                                const inputs = settingsElement.querySelectorAll('input');
+                                inputs.forEach(input => {
+                                    const inputLabel = input.closest('.settings-item')?.querySelector('label')?.textContent.toLowerCase().replace(':', '');
+                                    if (inputLabel === labelText) {
+                                        input.defaultValue = value ?? '';
+                                    }
+                                });
+                            }
+                        });
                     }
+
+                    delete pendingChanges[projectPath];
+                    updateSaveButtonState(projectPath);
                 }
             }
         </script>
