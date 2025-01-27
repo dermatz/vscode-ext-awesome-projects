@@ -93,11 +93,20 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 }
                 pendingChanges[projectPath]['color'] = null;
 
-                const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
-                projectItem.style.setProperty('--bg-color', 'var(--vscode-list-activeSelectionBackground)');
-                projectItem.style.setProperty('--bg-gradient', 'var(--vscode-list-activeSelectionBackground)');
+                const projectItem = colorInput.closest('.project-item-wrapper').querySelector('.project-item');
+                if (projectItem) {
+                    projectItem.style.setProperty('--bg-color', 'var(--vscode-list-activeSelectionBackground)');
+                    projectItem.style.setProperty('--bg-gradient', 'var(--vscode-list-activeSelectionBackground)');
+                    const projectName = projectItem.querySelector('.project-name');
+                    if (projectName) {
+                        projectName.style.color = '#ffffff';
+                    }
+                }
 
-                showSaveButton(projectPath);
+                const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
+                if (saveButton) {
+                    saveButton.classList.add('show');
+                }
             }
 
             function generateGradient(baseColor) {
@@ -132,19 +141,25 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 const colorInput = button.closest('.color-container').querySelector('input[type="color"]');
                 const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
                 colorInput.value = randomColor;
-
-                const projectItem = button.closest('.project-item-wrapper').querySelector('.project-item');
-                const gradientColor = generateGradient(randomColor);
-                const textColor = getContrastColor(randomColor);
-
-                projectItem.style.setProperty('--bg-color', randomColor);
-                projectItem.style.setProperty('--bg-gradient', gradientColor);
-                projectItem.querySelector('.project-name').style.color = textColor;
+                colorInput.setAttribute('data-uses-theme-color', 'false');
 
                 if (!pendingChanges[projectPath]) {
                     pendingChanges[projectPath] = {};
                 }
                 pendingChanges[projectPath]['color'] = randomColor;
+
+                const projectItem = button.closest('.project-item-wrapper').querySelector('.project-item');
+                if (projectItem) {
+                    const gradientColor = generateGradient(randomColor);
+                    const textColor = getContrastColor(randomColor);
+
+                    projectItem.style.setProperty('--bg-color', randomColor);
+                    projectItem.style.setProperty('--bg-gradient', gradientColor);
+                    const projectName = projectItem.querySelector('.project-name');
+                    if (projectName) {
+                        projectName.style.color = textColor;
+                    }
+                }
 
                 const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
                 if (saveButton) {
@@ -154,17 +169,23 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
 
             function handleColorChange(event, projectPath) {
                 const value = event.target.value;
-                const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
-                const textColor = getContrastColor(value);
-
-                projectItem.style.setProperty('--bg-color', value);
-                projectItem.style.setProperty('--bg-gradient', generateGradient(value));
-                projectItem.querySelector('.project-name').style.color = textColor;
+                event.target.setAttribute('data-uses-theme-color', 'false');
 
                 if (!pendingChanges[projectPath]) {
                     pendingChanges[projectPath] = {};
                 }
                 pendingChanges[projectPath]['color'] = value;
+
+                const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
+                if (projectItem) {
+                    const textColor = getContrastColor(value);
+                    projectItem.style.setProperty('--bg-color', value);
+                    projectItem.style.setProperty('--bg-gradient', generateGradient(value));
+                    const projectName = projectItem.querySelector('.project-name');
+                    if (projectName) {
+                        projectName.style.color = textColor;
+                    }
+                }
 
                 const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
                 if (saveButton) {
