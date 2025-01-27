@@ -83,7 +83,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     pendingChanges[projectPath] = {};
                 }
 
-                // Nur speichern wenn sich der Wert tatsächlich geändert hat
+                // Only save if the value has actually changed
                 if (value !== oldValue) {
                     pendingChanges[projectPath][field] = value === '' ? null : value;
                 } else {
@@ -96,7 +96,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
             function updateSaveButtonState(projectPath) {
                 const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
                 if (saveButton) {
-                    // Prüfen ob es überhaupt Änderungen gibt
+                    // Check if there are any changes
                     const hasChanges = pendingChanges[projectPath] && Object.keys(pendingChanges[projectPath]).length > 0;
                     saveButton.classList.toggle('show', hasChanges);
                     saveButton.disabled = !hasChanges;
@@ -118,7 +118,6 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                         updates: pendingChanges[projectPath]
                     });
 
-                    // Update defaultValue für alle geänderten Felder
                     const settingsElement = document.getElementById('settings-' + projectPath.replace(/[^a-zA-Z0-9]/g, "-"));
 
                     if (settingsElement) {
