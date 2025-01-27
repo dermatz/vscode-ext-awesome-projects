@@ -36,7 +36,6 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
     return `
         <div class="settings-dropdown" id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}">
             <div class="settings-item">
-                <label>Background:</label>
                 ${getColorPickerHtml({
                     projectPath: project.path,
                     currentColor: projectColor,
