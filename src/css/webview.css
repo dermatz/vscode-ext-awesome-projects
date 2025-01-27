@@ -371,6 +371,7 @@ header .button {
 }
 
 /* Utility Styles */
+
 .loading-spinner {
     position: fixed;
     top: 50%;
@@ -390,6 +391,7 @@ header .button {
 }
 
 /* Animations */
+
 @keyframes slideDown {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -403,6 +405,26 @@ header .button {
 @keyframes spin {
     0% { transform: translate(-50%, -50%) rotate(0deg); }
     100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Input Styles */
+
+input[type="text"],
+input[type="url"] {
+    width: calc(100% - 1rem);
+    padding: 0.5rem;
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    font-size: 0.8rem;
+    margin: 0.5rem 0;
+    transition: background 0.2s ease-in-out;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus {
+    background: color-mix(in srgb, var(--vscode-input-background) 60%, transparent);
 }
 
 /* Color Picker Input Styling */
