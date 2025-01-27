@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { Project } from './extension';
 import { loadResourceFile } from './utils/resourceLoader';
-import { generateGradient, getContrastColor } from './utils/colorUtils';
+// Ändere den Import-Pfad von colorUtils zu color-picker
+import { generateGradient, getContrastColor } from './template/project/components/color-picker';
 import { getHeaderHtml } from './template/webview/header';
 import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
