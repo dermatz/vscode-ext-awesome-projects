@@ -104,6 +104,11 @@ header .button {
     color: var (--vscode-button-secondaryHoverForeground);
 }
 
+.button.remove:hover {
+    background-color: var(--vscode-inputValidation-errorBackground);
+    color: var(--vscode-inputValidation-errorForeground);
+}
+
 .button svg {
     width: 1.25rem;
     height: 1.25rem;
@@ -235,6 +240,7 @@ header .button {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 0.5rem 1rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 1rem;
 }
 
 .project-info-dropdown,
