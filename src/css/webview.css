@@ -506,3 +506,58 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
     background: var(--vscode-button-background);
     color: var(--vscode-button-foreground);
 }
+
+/* Accordion Styles */
+.settings-accordion {
+    margin: 1rem 0;
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+}
+
+.accordion-toggle {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--vscode-input-background);
+    border: none;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.accordion-toggle:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.accordion-toggle .chevron {
+    transition: transform 0.2s ease;
+}
+
+.accordion-toggle.expanded .chevron {
+    transform: rotate(180deg);
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    padding: 0 1rem;
+    background: var(--vscode-editor-background);
+}
+
+.accordion-toggle.expanded + .accordion-content {
+    padding: 1rem;
+    border-top: 1px solid var(--vscode-input-border);
+}
+
+/* Adjust existing settings item styles */
+.settings-item {
+    margin-bottom: 0.75rem;
+}
+
+.settings-item:last-child {
+    margin-bottom: 0;
+}

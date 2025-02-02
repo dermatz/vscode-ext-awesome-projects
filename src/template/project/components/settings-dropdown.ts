@@ -20,17 +20,18 @@ async function handleDeleteProject(projectPath: string) {
 export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, project: Project): Promise<string> {
     const defaultBgColor = "var(--vscode-list-activeSelectionBackground)";
     const bgColor = project.color || defaultBgColor;
-
-    // Convert undefined to null explicitly for type safety
     const projectColor: string | null = project.color ?? null;
 
-    const urls = [
+    const basicInputs = [
         { label: 'Project name:', type: 'text', value: project.name, placeholder: 'Projectname', field: 'name' },
         { label: 'Local path:', type: 'text', value: project.path, placeholder: '~/path/to/your/project/', field: 'path' },
+    ];
+
+    const urlInputs = [
         { label: 'Production URL:', type: 'url', value: project.productionUrl || "", placeholder: 'https://..', field: 'productionUrl' },
         { label: 'Staging URL:', type: 'url', value: project.stagingUrl || "", placeholder: 'https://..', field: 'stagingUrl' },
         { label: 'Local development URL:', type: 'url', value: project.devUrl || "", placeholder: 'https://..', field: 'devUrl' },
-        { label: 'Management URL (e.G. Jira, Trello ... ):', type: 'url', value: project.managementUrl || "", placeholder: 'https://..', field: 'managementUrl' },
+        { label: 'Management URL:', type: 'url', value: project.managementUrl || "", placeholder: 'https://..', field: 'managementUrl' },
     ];
 
     return `
@@ -44,12 +45,29 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
             </div>
 
             <div class="card">
-                ${urls.map(url => `
+                ${basicInputs.map(input => `
                     <div class="settings-item">
-                        <label>${url.label}</label>
-                        <input type="${url.type}" placeholder="${url.placeholder}" value="${url.value}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                        <label>${input.label}</label>
+                        <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                     </div>
                 `).join('')}
+
+                <div class="settings-accordion">
+                    <button class="accordion-toggle" onclick="toggleUrlSettings(event)">
+                        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
+                        </svg>
+                        URL Settings
+                    </button>
+                    <div class="accordion-content">
+                        ${urlInputs.map(url => `
+                            <div class="settings-item">
+                                <label>${url.label}</label>
+                                <input type="${url.type}" placeholder="${url.placeholder}" value="${url.value}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
             </div>
 
             <button class="button small save-button" id="save-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}" onclick="saveChanges('${project.path.replace(/'/g, "\\'")}')">
@@ -64,7 +82,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     <path fill-rule="evenodd" clip-rule="evenodd" d="M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z"/>
                 </svg>
                 Remove project
-            </span>
+            </button>
         </div>
 
         <script>
@@ -142,6 +160,15 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     delete pendingChanges[projectPath];
                     updateSaveButtonState(projectPath);
                 }
+            }
+
+            function toggleUrlSettings(event) {
+                const button = event.currentTarget;
+                const content = button.nextElementSibling;
+                const isExpanded = button.classList.contains('expanded');
+
+                button.classList.toggle('expanded');
+                content.style.maxHeight = isExpanded ? '0' : content.scrollHeight + 'px';
             }
         </script>
     `;
