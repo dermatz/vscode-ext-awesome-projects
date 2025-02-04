@@ -89,7 +89,8 @@ header .button {
     gap: 2px;
     font-weight: 500;
     transition: all 0.2s ease;
-  }
+}
+
 .button:hover {
     box-shadow: 1px 1px 15px 5px color-mix(in srgb, var(--vscode-widget-shadow) 10%, transparent);
     transform: translateY(-1px);
@@ -151,9 +152,8 @@ header .button {
     border-radius: 6px 6px 0 0;
     position: relative;
     background: linear-gradient(135deg,
-        color-mix(in srgb, var(--bg-color) 80%, transparent),
-        color-mix(in srgb, var(--bg-gradient) 80%, transparent)
-    );
+            color-mix(in srgb, var(--bg-color) 80%, transparent),
+            color-mix(in srgb, var(--bg-gradient) 80%, transparent));
 }
 
 .project-item:not(.active) {
@@ -164,9 +164,8 @@ header .button {
     border-color: var(--vscode-input-border);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     background: linear-gradient(135deg,
-        var(--bg-color),
-        var(--bg-gradient)
-    );
+            var(--bg-color),
+            var(--bg-gradient));
 }
 
 .project-icon {
@@ -384,18 +383,33 @@ header .button {
 /* Animations */
 
 @keyframes slideDown {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
 }
 
 /* Input Styles */
@@ -417,6 +431,7 @@ input[type="text"]:focus,
 input[type="url"]:focus {
     background: color-mix(in srgb, var(--vscode-input-background) 60%, transparent);
 }
+
 /* save button */
 .save-button {
     opacity: 0.5;
@@ -432,6 +447,7 @@ input[type="url"]:focus {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
 /* Color Picker Input Styling */
 .color-container {
     display: flex;
@@ -439,6 +455,7 @@ input[type="url"]:focus {
     align-items: center;
     margin: 1rem 0;
 }
+
 input[type="color"].project-color-input {
     -webkit-appearance: none;
     appearance: none;
@@ -513,7 +530,7 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
     background: var(--vscode-editor-background);
 }
 
-.accordion-toggle.expanded + .accordion-content {
+.accordion-toggle.expanded+.accordion-content {
     padding: 1rem;
     border-top: 1px solid var(--vscode-input-border);
 }
