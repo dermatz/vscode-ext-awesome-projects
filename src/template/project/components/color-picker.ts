@@ -48,7 +48,6 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
     const escapedPath = projectPath.replace(/'/g, "\\'");
 
     return `
-        <label>Background:</label>
         <div class="color-container">
             <input type="color"
                 class="project-color-input"
