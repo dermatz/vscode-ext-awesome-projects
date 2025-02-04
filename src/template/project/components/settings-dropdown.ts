@@ -86,16 +86,16 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
         <script>
             function handleInput(event, projectPath) {
                 const labelMap = {
-                    'production url': 'productionUrl',
-                    'staging url': 'stagingUrl',
-                    'development url': 'devUrl',
-                    'management url': 'managementUrl',
-                    'name': 'name',
-                    'path': 'path'
+                    'Project name': 'name',
+                    'Local path': 'path',
+                    'Production URL': 'productionUrl',
+                    'Staging URL': 'stagingUrl',
+                    'Local development URL': 'devUrl',
+                    'Management URL': 'managementUrl'
                 };
 
-                const label = event.target.closest('.settings-item').querySelector('label').textContent.toLowerCase().replace(':', '');
-                const field = labelMap[label] || label;
+                const label = event.target.closest('.settings-item').querySelector('label').textContent.replace(':', '').trim();
+                const field = labelMap[label] || label.toLowerCase();
                 const value = event.target.value;
                 const oldValue = event.target.defaultValue;
 
@@ -103,7 +103,6 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     pendingChanges[projectPath] = {};
                 }
 
-                // Only save if the value has actually changed
                 if (value !== oldValue) {
                     pendingChanges[projectPath][field] = value === '' ? null : value;
                 } else {
@@ -142,16 +141,14 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
 
                     if (settingsElement) {
                         Object.entries(pendingChanges[projectPath]).forEach(([field, value]) => {
-                            const labelText = Object.entries(labelMap).find(([_, val]) => val === field)?.[0];
-                            if (labelText) {
-                                const inputs = settingsElement.querySelectorAll('input');
-                                inputs.forEach(input => {
-                                    const inputLabel = input.closest('.settings-item')?.querySelector('label')?.textContent.toLowerCase().replace(':', '');
-                                    if (inputLabel === labelText) {
-                                        input.defaultValue = value ?? '';
-                                    }
-                                });
-                            }
+                            const inputs = settingsElement.querySelectorAll('input');
+                            inputs.forEach(input => {
+                                const inputLabel = input.closest('.settings-item')?.querySelector('label')?.textContent.replace(':', '').trim();
+                                const mappedField = Object.entries(labelMap).find(([key, val]) => val === field)?.[0];
+                                if (inputLabel === mappedField) {
+                                    input.defaultValue = value ?? '';
+                                }
+                            });
                         });
                     }
 
