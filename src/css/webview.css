@@ -292,6 +292,10 @@ header .button {
     margin-top: 12px;
 }
 
+.actions {
+    margin: 1.25rem 0 0;
+}
+
 
 /* Support Box and Footer */
 .support-box {

@@ -37,14 +37,22 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
     return `
         <div class="settings-dropdown" id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}">
 
-            <div class="card">
-
-                ${basicInputs.map(input => `
+            <div class="settings-accordion">
+                <button class="accordion-toggle" onclick="toggleUrlSettings(event)">
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
+                    </svg>
+                    Project Settings
+                </button>
+                <div class="accordion-content">
+                    <p>Choose a color to colorize the project card.</p>
+                    ${basicInputs.map(input => `
                     <div class="settings-item">
                         <label>${input.label}</label>
                         <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
                     </div>
                 `).join('')}
+                </div>
             </div>
 
             <div class="settings-accordion">
@@ -55,6 +63,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     Color
                 </button>
                 <div class="accordion-content">
+                    <p>Choose a color to colorize the project card.</p>
                     ${getColorPickerHtml({
                         projectPath: project.path,
                         currentColor: projectColor,
@@ -81,19 +90,21 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                 </div>
             </div>
 
-            <button class="button small save-button" id="save-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}" onclick="saveChanges('${project.path.replace(/'/g, "\\'")}')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke="none" d="M0 0h24v24H0z"/>
-                    <path d="M8.56 3.69a9 9 0 0 0-2.92 1.95M3.69 8.56A9 9 0 0 0 3 12M3.69 15.44a9 9 0 0 0 1.95 2.92M8.56 20.31A9 9 0 0 0 12 21M15.44 20.31a9 9 0 0 0 2.92-1.95M20.31 15.44A9 9 0 0 0 21 12M20.31 8.56a9 9 0 0 0-1.95-2.92M15.44 3.69A9 9 0 0 0 12 3M9 12l2 2 4-4"/>
-                </svg>
-                Save
-            </button>
-            <button class="button small secondary remove" onclick="deleteProject('${project.path.replace(/'/g, "\\'")}')">
-                <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z"/>
-                </svg>
-                Remove project
-            </button>
+            <div class="actions">
+                <button class="button small save-button" id="save-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}" onclick="saveChanges('${project.path.replace(/'/g, "\\'")}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke="none" d="M0 0h24v24H0z"/>
+                        <path d="M8.56 3.69a9 9 0 0 0-2.92 1.95M3.69 8.56A9 9 0 0 0 3 12M3.69 15.44a9 9 0 0 0 1.95 2.92M8.56 20.31A9 9 0 0 0 12 21M15.44 20.31a9 9 0 0 0 2.92-1.95M20.31 15.44A9 9 0 0 0 21 12M20.31 8.56a9 9 0 0 0-1.95-2.92M15.44 3.69A9 9 0 0 0 12 3M9 12l2 2 4-4"/>
+                    </svg>
+                    Save
+                </button>
+                <button class="button small secondary remove" onclick="deleteProject('${project.path.replace(/'/g, "\\'")}')">
+                    <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z"/>
+                    </svg>
+                    Remove project
+                </button>
+            </div>
         </div>
 
         <script>
