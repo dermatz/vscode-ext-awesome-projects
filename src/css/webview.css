@@ -220,7 +220,7 @@ header .button {
 
 /* Card & Dropdown Styles */
 .card {
-    background: var(--vscode-editor-background);
+    background: var(--vscode-menu-background);
     border-radius: 0.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 0.5rem 1rem;
@@ -231,7 +231,7 @@ header .button {
 .project-info-dropdown,
 .settings-dropdown {
     display: none;
-    background: var(--vscode-menu-background);
+    background: var(--vscode-editor-background);
     border: 1px solid var(--vscode-input-border);
     border-top: none;
     border-radius: 0 0 6px 6px;
@@ -490,7 +490,8 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
     align-items: center;
     gap: 0.5rem;
     font-size: 0.9rem;
-    transition: background-color 0.2s ease;
+    border-radius: 5px;
+    transition: background-color 0.2s, border-radius 0.45s ease;
 }
 
 .accordion-toggle:hover {
@@ -510,7 +511,12 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
     overflow: hidden;
     transition: max-height 0.3s ease-out;
     padding: 0 1rem;
-    background: var(--vscode-editor-background);
+    background: var(--vscode-menu-background);
+    border-radius: 0 0 5px 5px;
+}
+
+.accordion-toggle.expanded {
+    border-radius: 5px 5px 0 0;
 }
 
 .accordion-toggle.expanded + .accordion-content {
