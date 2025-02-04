@@ -38,11 +38,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
         <div class="settings-dropdown" id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}">
 
             <div class="card">
-                ${getColorPickerHtml({
-                    projectPath: project.path,
-                    currentColor: projectColor,
-                    defaultColor: bgColor
-                })}
+
                 ${basicInputs.map(input => `
                     <div class="settings-item">
                         <label>${input.label}</label>
@@ -56,9 +52,26 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
                     </svg>
-                    URL Settings
+                    Color
                 </button>
                 <div class="accordion-content">
+                    ${getColorPickerHtml({
+                        projectPath: project.path,
+                        currentColor: projectColor,
+                        defaultColor: bgColor
+                    })}
+                </div>
+            </div>
+
+            <div class="settings-accordion">
+                <button class="accordion-toggle" onclick="toggleUrlSettings(event)">
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
+                    </svg>
+                    Quick Links
+                </button>
+                <div class="accordion-content">
+                    <p>These URLs will be displayed in the project overview and can be used to quickly navigate to the project websites.</p>
                     ${urlInputs.map(url => `
                         <div class="settings-item">
                             <label>${url.label}</label>

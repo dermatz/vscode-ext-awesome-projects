@@ -474,14 +474,14 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
 
 /* Accordion Styles */
 .settings-accordion {
-    margin: 1rem 0;
+    margin: 0 0 .5rem;
     border: 1px solid var(--vscode-input-border);
     border-radius: 4px;
 }
 
 .accordion-toggle {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem;
     background: var(--vscode-input-background);
     border: none;
     color: var(--vscode-foreground);
