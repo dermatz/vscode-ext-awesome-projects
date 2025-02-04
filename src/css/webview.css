@@ -1,4 +1,5 @@
-/* Reset & Base Styles */
+@import url('button.css');
+
 body {
     padding: 0;
     margin: 0;
@@ -58,11 +59,13 @@ header .version {
 }
 
 header .preview-badge {
-    background-color: var(--vscode-inputValidation-errorBackground);
-    color: var(--vscode-button-secondaryForeground);
+    background-color: #FBBF24;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #451A03;
     padding: 0.1rem 0.3rem;
     border-radius: 3px;
     font-size: 0.6rem;
+    animation: shine 5s infinite;
 }
 
 header .button {
@@ -70,28 +73,41 @@ header .button {
 }
 
 /* Button Styles */
+
 .button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--vscode-button-foreground);
-    background-color: var(--vscode-button-background);
     text-decoration: none;
-    border-radius: 0.25rem;
-    padding: 0.5rem 1rem;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease-in-out;
-    white-space: nowrap;
-}
-
-.button.small {
-    padding: 0.3rem 0.6rem;
-}
-
+    border: var(--vscode-button-border);
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    color: var(--vscode-button-foreground);
+    background: var(--vscode-button-background);
+    border-radius: 4px;
+    gap: 2px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
 .button:hover {
-    background-color: var(--vscode-button-hoverBackground);
-    color: var(--vscode-button-hoverForeground);
-    box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.1)
+    box-shadow: 1px 1px 15px 5px color-mix(in srgb, var(--vscode-widget-shadow) 10%, transparent);
+    transform: translateY(-1px);
+}
+
+.button:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, color-mix(in srgb, var(--vscode-button-foreground) 10%, transparent), transparent);
+    transition: all 650ms;
+}
+
+.button:hover:before {
+    left: 100%;
 }
 
 .button.secondary {
@@ -114,38 +130,6 @@ header .button {
     height: 1.25rem;
 }
 
-/* Add Project Button Styles */
-.button {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
-    cursor: pointer;
-    color: var(--vscode-button-foreground);
-    background: var(--vscode-button-background);
-    border: none;
-    border-radius: 4px;
-    gap: 2px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.button:hover {
-    transform: translateY(-1px);
-}
-
-.button::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: -100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: 0.5s;
-}
-
 .button:hover::after {
     left: 100%;
 }
@@ -154,6 +138,7 @@ header .button {
     width: 1rem;
     height: 1rem;
 }
+
 
 /* Project Item Styles */
 .project-item {
@@ -457,8 +442,8 @@ input[type="url"]:focus {
 input[type="color"].project-color-input {
     -webkit-appearance: none;
     appearance: none;
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 2rem;
+    height: 2rem;
     background-color: transparent;
     cursor: pointer;
     padding: 0;
@@ -485,26 +470,6 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
     border-color: var(--vscode-focusBorder);
     box-shadow: 0 0 0 2px var(--vscode-focusBorder);
     outline: none;
-}
-
-.reset-color,
-.random-color {
-    padding: 4px 8px;
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border: 1px solid var(--vscode-button-border);
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.reset-color:hover,
-.random-color:hover {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
 }
 
 /* Accordion Styles */
