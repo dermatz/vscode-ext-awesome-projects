@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 export interface ColorPickerProps {
     projectPath: string;
+    projectId: string;  // Add this new prop
     currentColor: string | null;
     defaultColor: string;
 }
@@ -44,7 +45,7 @@ export const getContrastColor = (hexColor: string | null): string => {
 };
 
 export function getColorPickerHtml(props: ColorPickerProps): string {
-    const { projectPath, currentColor, defaultColor } = props;
+    const { projectPath, projectId, currentColor, defaultColor } = props;
     const escapedPath = projectPath.replace(/'/g, "\\'");
 
     return `
@@ -53,15 +54,15 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 class="project-color-input"
                 value="${currentColor || defaultColor}"
                 data-uses-theme-color="${!currentColor}"
-                oninput="handleColorChange(event, '${escapedPath}')"
-                onchange="handleColorChange(event, '${escapedPath}')">
-            <button class="button small secondary random-color" onclick="setRandomColor(event, '${escapedPath}')" style="display:flex; align-items:center; gap:4px;">
+                oninput="handleColorChange(event, '${escapedPath}', '${projectId}')"
+                onchange="handleColorChange(event, '${escapedPath}', '${projectId}')">
+            <button class="button small secondary random-color" onclick="setRandomColor(event, '${escapedPath}', '${projectId}')" style="display:flex; align-items:center; gap:4px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 4l3 3l-3 3" /><path d="M18 20l3 -3l-3 -3" /><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" /><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3" />
                 </svg>
                 <span style="pointer-events: none">Randomize</span>
             </button>
-            <button class="button small secondary" onclick="resetColor(event, '${escapedPath}')">
+            <button class="button small secondary" onclick="resetColor(event, '${escapedPath}', '${projectId}')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" />
                 </svg>
@@ -69,7 +70,7 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
             </button>
         </div>
         <script>
-            function resetColor(event, projectPath) {
+            function resetColor(event, projectPath, projectId) {
                 event.preventDefault();
                 const colorInput = event.target.closest('.color-container').querySelector('input[type="color"]');
                 const themeColor = getComputedStyle(document.documentElement)
@@ -102,12 +103,13 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                     }
                 }
 
-                const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
+                const saveButton = document.getElementById('save-' + projectId);
                 if (saveButton) {
-                    saveButton.classList.add('show');
+                    // Entferne diese Zeile, da updateSaveButtonState das handling übernimmt
+                    // saveButton.classList.add('show');
                 }
 
-                updateSaveButtonState(projectPath);
+                updateSaveButtonState(projectPath, projectId);
             }
 
             function generateGradient(baseColor) {
@@ -134,7 +136,7 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 return brightness > 128 ? '#000000' : '#ffffff';
             }
 
-            function setRandomColor(event, projectPath) {
+            function setRandomColor(event, projectPath, projectId) {
                 event.preventDefault();
                 event.stopPropagation();
 
@@ -162,15 +164,15 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                     }
                 }
 
-                const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
+                const saveButton = document.getElementById('save-' + projectId);
                 if (saveButton) {
                     saveButton.classList.add('show');
                 }
 
-                updateSaveButtonState(projectPath);
+                updateSaveButtonState(projectPath, projectId);
             }
 
-            function handleColorChange(event, projectPath) {
+            function handleColorChange(event, projectPath, projectId) {
                 const value = event.target.value;
                 const oldValue = event.target.defaultValue;
                 event.target.setAttribute('data-uses-theme-color', 'false');
@@ -197,20 +199,22 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                     }
                 }
 
-                updateSaveButtonState(projectPath);
+                updateSaveButtonState(projectPath, projectId);
             }
 
-            function showSaveButton(projectPath) {
-                const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
+            function showSaveButton(projectPath, projectId) {
+                const saveButton = document.getElementById('save-' + projectId);
                 if (saveButton) {
                     saveButton.classList.add('show');
                 }
             }
 
-            function updateSaveButtonState(projectPath) {
-                const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
+            function updateSaveButtonState(projectPath, projectId) {
+                const saveButton = document.getElementById('save-' + projectId);
                 if (saveButton) {
-                    saveButton.classList.add('show');
+                    const hasChanges = pendingChanges[projectPath] && Object.keys(pendingChanges[projectPath]).length > 0;
+                    saveButton.classList.toggle('show', hasChanges);
+                    saveButton.disabled = !hasChanges;
                 }
             }
         </script>

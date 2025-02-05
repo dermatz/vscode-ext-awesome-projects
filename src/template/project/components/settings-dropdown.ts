@@ -38,8 +38,8 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
 
     return `
         <div class="dropdown settings-dropdown"
-            style="border-left: 1px solid ${bgColor}; border-right: 1px solid ${bgColor}; border-bottom: 1px solid ${bgColor};
-            id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}"
+            style="border-left: 1px solid ${bgColor}; border-right: 1px solid ${bgColor}; border-bottom: 1px solid ${bgColor};"
+            id="settings-${projectId}"
             data-settings-id="${projectId}">
 
             <div class="settings-accordion">
@@ -54,7 +54,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     ${basicInputs.map(input => `
                     <div class="settings-item">
                         <label>${input.label}</label>
-                        <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                        <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}', '${projectId}')">
                     </div>
                 `).join('')}
                 </div>
@@ -71,6 +71,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     <p>Choose a color to colorize the project card.</p>
                     ${getColorPickerHtml({
                         projectPath: project.path,
+                        projectId: projectId,  // Add this line
                         currentColor: projectColor,
                         defaultColor: bgColor
                     })}
@@ -89,21 +90,21 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     ${urlInputs.map(url => `
                         <div class="settings-item">
                             <label>${url.label}</label>
-                            <input type="${url.type}" placeholder="${url.placeholder}" value="${url.value}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}')">
+                            <input type="${url.type}" placeholder="${url.placeholder}" value="${url.value}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}', '${projectId}')">
                         </div>
                     `).join('')}
                 </div>
             </div>
 
             <div class="actions">
-                <button class="button small save-button" id="save-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}" onclick="saveChanges('${project.path.replace(/'/g, "\\'")}')">
+                <button class="button small save-button" id="save-${projectId}" onclick="saveChanges('${project.path.replace(/'/g, "\\'")}', '${projectId}')">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke="none" d="M0 0h24v24H0z"/>
                         <path d="M8.56 3.69a9 9 0 0 0-2.92 1.95M3.69 8.56A9 9 0 0 0 3 12M3.69 15.44a9 9 0 0 0 1.95 2.92M8.56 20.31A9 9 0 0 0 12 21M15.44 20.31a9 9 0 0 0 2.92-1.95M20.31 15.44A9 9 0 0 0 21 12M20.31 8.56a9 9 0 0 0-1.95-2.92M15.44 3.69A9 9 0 0 0 12 3M9 12l2 2 4-4"/>
                     </svg>
                     Save
                 </button>
-                <button class="button small secondary remove" onclick="deleteProject('${project.path.replace(/'/g, "\\'")}')">
+                <button class="button small secondary remove" onclick="deleteProject('${project.path.replace(/'/g, "\\'")}', '${projectId}')">
                     <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z"/>
                     </svg>
@@ -113,9 +114,8 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
         </div>
 
         <script>
-            function handleInput(event, projectPath) {
+            function handleInput(event, projectPath, projectId) {
                 const settingsDropdown = event.target.closest('.settings-dropdown');
-                const projectId = settingsDropdown.dataset.settingsId;
                 const labelMap = {
                     'Project name': 'name',
                     'Local path': 'path',
@@ -140,11 +140,11 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     delete pendingChanges[projectPath][field];
                 }
 
-                updateSaveButtonState(projectPath);
+                updateSaveButtonState(projectPath, projectId);
             }
 
-            function updateSaveButtonState(projectPath) {
-                const saveButton = document.getElementById('save-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-'));
+            function updateSaveButtonState(projectPath, projectId) {
+                const saveButton = document.getElementById('save-' + projectId);
                 if (saveButton) {
                     // Check if there are any changes
                     const hasChanges = pendingChanges[projectPath] && Object.keys(pendingChanges[projectPath]).length > 0;
@@ -153,9 +153,8 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                 }
             }
 
-            function deleteProject(projectPath) {
-                const settingsDropdown = document.querySelector(\`#settings-\${projectPath.replace(/[^a-zA-Z0-9]/g, "-")}\`);
-                const projectId = settingsDropdown.dataset.settingsId;
+            function deleteProject(projectPath, projectId) {
+                const settingsDropdown = document.querySelector(\`#settings-\${projectId}\`);
 
                 vscode.postMessage({
                     command: 'deleteProject',
@@ -164,10 +163,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                 });
             }
 
-            function saveChanges(projectPath) {
-                const settingsDropdown = document.querySelector(\`#settings-\${projectPath.replace(/[^a-zA-Z0-9]/g, "-")}\`);
-                const projectId = settingsDropdown.dataset.settingsId;
-
+            function saveChanges(projectPath, projectId) {
                 if (pendingChanges[projectPath]) {
                     vscode.postMessage({
                         command: 'updateProject',
@@ -176,7 +172,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                         updates: pendingChanges[projectPath]
                     });
 
-                    const settingsElement = document.getElementById('settings-' + projectPath.replace(/[^a-zA-Z0-9]/g, "-"));
+                    const settingsElement = document.getElementById('settings-' + projectId);
 
                     if (settingsElement) {
                         Object.entries(pendingChanges[projectPath]).forEach(([field, value]) => {
@@ -192,7 +188,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     }
 
                     delete pendingChanges[projectPath];
-                    updateSaveButtonState(projectPath);
+                    updateSaveButtonState(projectPath, projectId);
                 }
             }
 
