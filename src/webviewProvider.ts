@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Project } from './extension';
-import { loadResourceFile } from './utils/resourceLoader';
+import { loadResourceFile } from './template/utils/resourceLoader';
 import { getHeaderHtml } from './template/webview/header';
 import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
