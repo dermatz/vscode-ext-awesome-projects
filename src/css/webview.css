@@ -228,8 +228,7 @@ header .button {
     margin-bottom: 1rem;
 }
 
-.project-info-dropdown,
-.settings-dropdown {
+.dropdown {
     display: none;
     background: var(--vscode-editor-background);
     border-top: none;
@@ -240,8 +239,7 @@ header .button {
     animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.project-info-dropdown.show,
-.settings-dropdown.show {
+.dropdown.show {
     display: block;
 }
 
@@ -492,7 +490,7 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     border-radius: 5px;
     transition: background-color 0.2s, border-radius 0.45s ease;
 }

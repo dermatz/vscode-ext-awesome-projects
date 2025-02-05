@@ -37,7 +37,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
     ];
 
     return `
-        <div class="settings-dropdown"
+        <div class="dropdown settings-dropdown"
             style="border-left: 1px solid ${bgColor}; border-right: 1px solid ${bgColor}; border-bottom: 1px solid ${bgColor};
             id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}"
             data-settings-id="${projectId}">

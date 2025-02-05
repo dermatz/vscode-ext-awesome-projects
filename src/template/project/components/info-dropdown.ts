@@ -17,7 +17,7 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
 
     return `
         <div id="info-${projectId}"
-             class="project-info-dropdown"
+             class="dropdown project-info-dropdown"
              style="border-left: 1px solid ${borderColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor};"
         >
             <div class="info-section">
