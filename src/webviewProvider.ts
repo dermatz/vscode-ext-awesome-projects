@@ -7,6 +7,7 @@ import { getHeaderHtml } from './template/webview/header';
 import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
 import { getProjectInfoDropdownHtml } from './template/project/components/info-dropdown';
+import { getProjectItemHtml } from './template/project/components/project-item';
 
 /**
  * Project Components
@@ -247,53 +248,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         const projectListHtml = await getProjectListHtml(this._context);
         const footerHtml = await getFooterHtml(this._context);
 
-        const projectsHtml = await Promise.all(projects.map(async (project, index) => {
-            const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
-            const gradientColor = project.color ? generateGradient(project.color) : "var(--vscode-list-activeSelectionBackground)";
-            const textColor = project.color ? getContrastColor(project.color) : "#ffffff";
-            const getBaseUrl = (url?: string) => {
-                if (!url) {return null;}
-                try {
-                    const urlObj = new URL(url);
-                    return urlObj.protocol + "//" + urlObj.hostname;
-                } catch (e) {
-                    return null;
-                }
-            };
-
-            /**
-             * Get the base URL of the project.
-             * This is used to fetch the favicon from Google if useFavicons is enabled in the settings.
-             */
-            const baseUrl = useFavicons
-                ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
-                : null;
-            const faviconHtml = baseUrl && useFavicons ? `<img src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
-
-            const projectSettingsHtml = await getSettingsDropdownHtml(this._context, project);
-            const projectInfoHtml = await getProjectInfoDropdownHtml(project);
-
-            return `
-                <div class="project-item-wrapper" draggable="true" data-index="${index}">
-                    <div class="project-item"
-                        style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"
-                        onclick="toggleInfo(event, '${project.path.replace(/'/g, "\\'")}')">
-                        <span class="project-icon">${faviconHtml}</span>
-                        <div class="project-info">
-                            <div class="project-name" style="color: ${textColor}">${project.name}</div>
-                        </div>
-                        <div class="project-settings" onclick="toggleSettings(event, '${project.path.replace(/'/g, "\\'")}')">
-                            Edit
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" height="1rem" width="1rem" style="margin-left: 0.25rem" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                            </svg>
-                        </div>
-                    </div>
-                    ${projectInfoHtml}
-                    ${projectSettingsHtml}
-                </div>
-            `;
-            }));
+        const projectsHtml = await Promise.all(
+            projects.map((project, index) =>
+                getProjectItemHtml(this._context, { project, index, useFavicons })
+            )
+        );
 
         return `<!DOCTYPE html>
             <html>
