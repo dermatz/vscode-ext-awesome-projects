@@ -1,7 +1,7 @@
 import { Project } from '../../../extension';
 import { getProjectId } from '../../../utils/project-id';
 
-export async function getProjectInfoDropdownHtml(project: Project): Promise<string> {
+export async function getProjectInfoDropdownHtml(project: Project, color?: string): Promise<string> {
     const getBaseUrl = (url?: string) => {
         if (!url) { return null; }
         try {
@@ -13,9 +13,13 @@ export async function getProjectInfoDropdownHtml(project: Project): Promise<stri
     };
 
     const projectId = getProjectId(project);
+    const borderColor = color || "var(--vscode-list-activeSelectionBackground)";
 
     return `
-        <div id="info-${projectId}" class="project-info-dropdown">
+        <div id="info-${projectId}"
+             class="project-info-dropdown"
+             style="border-left: 1px solid ${borderColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor};"
+        >
             <div class="info-section">
                 <div class="info-label">Path</div>
                 <div class="info-value">${project.path}</div>

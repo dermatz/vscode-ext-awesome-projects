@@ -33,10 +33,11 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const faviconHtml = baseUrl && useFavicons ? `<img src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
 
     const projectSettingsHtml = await getSettingsDropdownHtml(context, project);
-    const projectInfoHtml = await getProjectInfoDropdownHtml(project);
+    const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor);
 
     return `
-        <div class="project-item-wrapper" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}">
+        <div class="project-item-wrapper" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}"
+        >
             <div class="project-item"
                 style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"
                 onclick="toggleDropdown(event, '${getProjectId(project)}', 'info')"
