@@ -117,10 +117,6 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
         <script>
             ${getSaveFunctionsScript()}
 
-            /**
-             * Handle input event for settings fields
-             * */
-
             function handleInput(event, projectPath, projectId) {
                 const settingsDropdown = event.target.closest('.settings-dropdown');
                 const labelMap = {
@@ -150,6 +146,16 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                 updateSaveButtonState(projectPath, projectId);
             }
 
+            function updateSaveButtonState(projectPath, projectId) {
+                const saveButton = document.getElementById('save-' + projectId);
+                if (saveButton) {
+                    // Check if there are any changes
+                    const hasChanges = pendingChanges[projectPath] && Object.keys(pendingChanges[projectPath]).length > 0;
+                    saveButton.classList.toggle('show', hasChanges);
+                    saveButton.disabled = !hasChanges;
+                }
+            }
+
             function deleteProject(projectPath, projectId) {
                 const settingsDropdown = document.querySelector(\`#settings-\${projectId}\`);
 
@@ -158,6 +164,35 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     projectPath: projectPath,
                     projectId: projectId
                 });
+            }
+
+            function saveChanges(projectPath, projectId) {
+                if (pendingChanges[projectPath]) {
+                    vscode.postMessage({
+                        command: 'updateProject',
+                        projectPath: projectPath,
+                        projectId: projectId,
+                        updates: pendingChanges[projectPath]
+                    });
+
+                    const settingsElement = document.getElementById('settings-' + projectId);
+
+                    if (settingsElement) {
+                        Object.entries(pendingChanges[projectPath]).forEach(([field, value]) => {
+                            const inputs = settingsElement.querySelectorAll('input');
+                            inputs.forEach(input => {
+                                const inputLabel = input.closest('.settings-item')?.querySelector('label')?.textContent.replace(':', '').trim();
+                                const mappedField = Object.entries(labelMap).find(([key, val]) => val === field)?.[0];
+                                if (inputLabel === mappedField) {
+                                    input.defaultValue = value ?? '';
+                                }
+                            });
+                        });
+                    }
+
+                    delete pendingChanges[projectPath];
+                    updateSaveButtonState(projectPath, projectId);
+                }
             }
 
             function toggleUrlSettings(event) {
