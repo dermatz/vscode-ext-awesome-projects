@@ -205,7 +205,7 @@ header .button {
 .project-url {
     opacity: 0.7;
     text-decoration: none;
-    color: var(--vscode-foreground);
+    color: var(--vscode-button-foreground);
     display: flex;
     align-items: center;
     gap: 5px;
@@ -276,17 +276,25 @@ header .button {
     color: var(--vscode-foreground);
     opacity: 0.7;
     margin-bottom: 4px;
+    font-weight: 600;
 }
 
 .info-value {
     font-size: 0.95em;
     color: var(--vscode-foreground);
+    width: 100%;
+    overflow: auto;
 }
 
 .info-actions {
     display: flex;
+    flex-direction: column;
     gap: 8px;
     margin-top: 12px;
+    @media screen and (min-width: 310px) {
+        flex-direction: row;
+        justify-content: space-between;
+    }
 }
 
 .actions {
