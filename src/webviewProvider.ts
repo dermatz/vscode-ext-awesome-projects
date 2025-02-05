@@ -1,12 +1,9 @@
 import * as vscode from 'vscode';
 import { Project } from './extension';
 import { loadResourceFile } from './utils/resourceLoader';
-// Ändere den Import-Pfad von colorUtils zu color-picker
-import { generateGradient, getContrastColor } from './template/project/components/color-picker';
 import { getHeaderHtml } from './template/webview/header';
 import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
-import { getProjectInfoDropdownHtml } from './template/project/components/info-dropdown';
 import { getProjectItemHtml } from './template/project/components/project-item';
 
 /**
@@ -280,7 +277,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         const vscode = acquireVsCodeApi();
                         const pendingChanges = {};
 
-                        // Nur noch die Basis-Funktionalität hier
                         document.addEventListener('DOMContentLoaded', () => {
                             document.querySelectorAll('.project-color-input').forEach(input => {
                                 if (input.getAttribute('data-uses-theme-color') === 'true') {
@@ -323,7 +319,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             }
                         }
 
-
                         function toggleInfo(event, projectPath) {
                             if (event.target.closest('.project-settings')) {
                                 return;
@@ -344,19 +339,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 infoDropdown.classList.toggle('show');
                                 projectItem.classList.toggle('active');
                             }
-                        }
-
-                        function generateGradient(baseColor) {
-                            const hex = baseColor.replace('#', '');
-                            const r = parseInt(hex.substring(0, 2), 16);
-                            const g = parseInt(hex.substring(2, 4), 16);
-                            const b = parseInt(hex.substring(4, 6), 16);
-
-                            const darkerR = Math.max(0, r - 40);
-                            const darkerG = Math.max(0, g - 40);
-                            const darkerB = Math.max(0, b - 40);
-
-                            return 'rgb(' + darkerR + ', ' + darkerG + ', ' + darkerB + ')';
                         }
 
                         function openUrl(event, url) {
