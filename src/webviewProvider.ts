@@ -10,7 +10,6 @@ import { getProjectItemHtml } from './template/project/components/project-item';
  * Project Components
  */
 
-import { getSettingsDropdownHtml } from './template/project/components/settings-dropdown';
 import { getAddToHtml } from './template/project/components/add-to';
 
 

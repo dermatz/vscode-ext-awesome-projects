@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
-import { Project } from '../../../extension';
-import { getColorPickerHtml } from './color-picker';
-import { getProjectId } from '../utils/project-id';
-import { getSaveFunctionsScript } from '../utils/save-functions';
+import { Project } from '../../../../extension';
+import { getColorPickerHtml } from '../color-picker';
+import { getProjectId } from '../../utils/project-id';
+import { getSaveFunctionsScript } from '../../utils/save-functions';
 
 async function handleDeleteProject(projectPath: string) {
     try {
