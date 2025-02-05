@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { getSaveFunctionsScript } from '../utils/save-functions';
 
 export interface ColorPickerProps {
     projectPath: string;
@@ -70,6 +71,8 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
             </button>
         </div>
         <script>
+            ${getSaveFunctionsScript()}
+
             function resetColor(event, projectPath, projectId) {
                 event.preventDefault();
                 const colorInput = event.target.closest('.color-container').querySelector('input[type="color"]');
@@ -104,11 +107,6 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 }
 
                 const saveButton = document.getElementById('save-' + projectId);
-                if (saveButton) {
-                    // Entferne diese Zeile, da updateSaveButtonState das handling übernimmt
-                    // saveButton.classList.add('show');
-                }
-
                 updateSaveButtonState(projectPath, projectId);
             }
 

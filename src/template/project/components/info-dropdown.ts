@@ -1,5 +1,5 @@
 import { Project } from '../../../extension';
-import { getProjectId } from '../../../utils/project-id';
+import { getProjectId } from '../utils/project-id';
 
 export async function getProjectInfoDropdownHtml(project: Project, color?: string): Promise<string> {
     const getBaseUrl = (url?: string) => {

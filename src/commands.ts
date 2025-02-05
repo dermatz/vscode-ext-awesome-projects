@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Project } from './types';
 import { ProjectsWebviewProvider } from './webviewProvider';
-import { showInFileManager } from './utils/fileManager';
+import { showInFileManager } from './template/project/utils/fileManager';
 
 export const Commands = {
     ADD_PROJECT: 'awesome-projects.addProject',

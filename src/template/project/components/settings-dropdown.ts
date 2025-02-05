@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import { Project } from '../../../extension';
 import { getColorPickerHtml } from './color-picker';
-import { getProjectId } from '../../../utils/project-id';
+import { getProjectId } from '../utils/project-id';
+import { getSaveFunctionsScript } from '../utils/save-functions';
 
 async function handleDeleteProject(projectPath: string) {
     try {
@@ -114,6 +115,8 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
         </div>
 
         <script>
+            ${getSaveFunctionsScript()}
+
             function handleInput(event, projectPath, projectId) {
                 const settingsDropdown = event.target.closest('.settings-dropdown');
                 const labelMap = {

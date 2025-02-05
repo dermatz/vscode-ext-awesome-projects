@@ -3,7 +3,7 @@ import { Project } from '../../../extension';
 import { generateGradient, getContrastColor } from './color-picker';
 import { getSettingsDropdownHtml } from './settings-dropdown';
 import { getProjectInfoDropdownHtml } from './info-dropdown';
-import { getProjectId } from '../../../utils/project-id';
+import { getProjectId } from '../utils/project-id';
 
 export interface ProjectItemProps {
     project: Project;

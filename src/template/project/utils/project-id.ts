@@ -1,4 +1,4 @@
-import { Project } from '../extension';
+import { Project } from '../../../extension';
 import * as crypto from 'crypto';
 
 /**
