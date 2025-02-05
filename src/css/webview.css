@@ -1,39 +1,150 @@
+@import url('button.css');
+
 body {
     padding: 0;
     margin: 0;
 }
 
-.section {
-    margin-bottom: 20px;
-    opacity: 0;
-    animation: fadeIn 0.3s ease forwards;
+section {
+    padding: .5rem 1rem;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+/* Header Styles */
+header {
+    background: linear-gradient(to right, var(--vscode-sideBar-background), var(--vscode-sideBarActivityBarTop-border));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    color: var(--vscode-foreground);
+    padding: 0.5rem 1rem;
+    margin-bottom: .25rem;
+    border-radius: 3px;
+    gap: 1rem;
 }
 
-.section-header {
-    padding: 12px 16px;
-    font-weight: 600;
-    background: var(--vscode-sideBar-background);
-    border-bottom: 1px solid var(--vscode-sideBar-border);
-    letter-spacing: 0.5px;
-    font-size: 13px;
-    position: sticky;
+header .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--vscode-button-background);
+    white-space: nowrap;
+}
+
+header .logo svg {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    background: linear-gradient(to right, var(--vscode-button-background), var(--vscode-foreground));
+    -webkit-background-clip: text;
+    line-height: 1.5rem;
+    color: transparent;
+}
+
+header .linkbar {
+    display: flex;
+    gap: 1rem;
+}
+
+header .version {
+    color: var(--vscode-button-secondaryForeground);
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+header .preview-badge {
+    background-color: #FBBF24;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #451A03;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    animation: shine 5s infinite;
+}
+
+header .button {
+    padding: .25rem .5rem;
+}
+
+/* Button Styles */
+
+.button {
+    text-decoration: none;
+    border: var(--vscode-button-border);
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    color: var(--vscode-button-foreground);
+    background: var(--vscode-button-background);
+    border-radius: 4px;
+    gap: 2px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+.button:hover {
+    box-shadow: 1px 1px 15px 5px color-mix(in srgb, var(--vscode-widget-shadow) 10%, transparent);
+    transform: translateY(-1px);
+}
+
+.button:before {
+    content: "";
+    position: absolute;
     top: 0;
-    z-index: 100;
-    backdrop-filter: blur(10px);
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, color-mix(in srgb, var(--vscode-button-foreground) 10%, transparent), transparent);
+    transition: all 650ms;
 }
 
-.project-wrapper {
-    margin: 4px 6px;
+.button:hover:before {
+    left: 100%;
 }
 
+.button.secondary {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.button.secondary:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+    color: var (--vscode-button-secondaryHoverForeground);
+}
+
+.button.remove:hover {
+    background-color: var(--vscode-inputValidation-errorBackground);
+    color: var(--vscode-inputValidation-errorForeground);
+}
+
+.button svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.button:hover::after {
+    left: 100%;
+}
+
+.button svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+
+/* Project Item Styles */
 .project-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 10px 12px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -43,89 +154,6 @@ body {
         color-mix(in srgb, var(--bg-color) 80%, transparent),
         color-mix(in srgb, var(--bg-gradient) 80%, transparent)
     );
-    border: 1px solid transparent;
-}
-
-.project-info-dropdown {
-    display: none;
-    background: var(--vscode-menu-background);
-    border: 1px solid var(--vscode-input-border);
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    padding: 16px;
-    margin-top: -1px;
-    margin-bottom: 10px;
-    animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.project-info-dropdown.show {
-    display: block;
-}
-
-.color-container {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-}
-
-.reset-color, .random-color {
-    padding: 4px 8px;
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    border: 1px solid var(--vscode-button-border);
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.reset-color:hover, .random-color:hover {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-}
-
-.info-section {
-    margin-bottom: 12px;
-}
-
-.info-label {
-    font-size: 0.85em;
-    color: var(--vscode-foreground);
-    opacity: 0.7;
-    margin-bottom: 4px;
-}
-
-.info-value {
-    font-size: 0.95em;
-    color: var(--vscode-foreground);
-}
-
-.info-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-.info-action-button {
-    padding: 4px 8px;
-    border-radius: 3px;
-    border: 1px solid var(--vscode-button-border);
-    background: var(--vscode-button-secondaryBackground);
-    color: var(--vscode-button-secondaryForeground);
-    cursor: pointer;
-    font-size: 0.9em;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.2s ease;
-}
-
-.info-action-button:hover {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    transform: translateY(-1px);
 }
 
 .project-item:not(.active) {
@@ -139,7 +167,6 @@ body {
         var(--bg-color),
         var(--bg-gradient)
     );
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .project-icon {
@@ -175,58 +202,48 @@ body {
     opacity: 0.7;
 }
 
-.add-button {
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
-    cursor: pointer;
-    color: var(--vscode-button-foreground);
-    background: var(--vscode-button-background);
-    border: none;
-    border-radius: 4px;
-    margin: 12px 8px;
-    gap: 2px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.add-button:hover {
-    transform: translateY(-1px);
-}
-
-.add-button::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: -100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: 0.5s;
-}
-
-.add-button:hover::after {
-    left: 100%;
-}
-
-.support-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--vscode-textLink-foreground);
+.project-url {
+    opacity: 0.7;
     text-decoration: none;
-    font-size: 12px;
-    gap: 4px;
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
+    color: var(--vscode-button-foreground);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 0;
+    transition: opacity 0.4s ease-in-out;
 }
 
-.support-link:hover {
+.project-url:hover {
+    text-decoration: underline;
     opacity: 1;
 }
 
+/* Card & Dropdown Styles */
+.card {
+    background: var(--vscode-menu-background);
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 1rem;
+}
+
+.dropdown {
+    display: none;
+    background: var(--vscode-editor-background);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 16px;
+    margin-top: -1px;
+    margin-bottom: 10px;
+    animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown.show {
+    display: block;
+}
+
+/* Settings Styles */
 .project-settings {
     position: absolute;
     right: 12px;
@@ -249,144 +266,68 @@ body {
     transform: translateY(-50%) scale(1);
 }
 
-.settings-dropdown {
-    display: none;
-    background: var(--vscode-menu-background);
-    border: 1px solid var(--vscode-input-border);
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    padding: 16px;
-    margin-top: -1px;
-    margin-bottom: 10px;
-    animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
+/* Info Section Styles */
+.info-section {
+    margin-bottom: 12px;
 }
 
-.settings-dropdown.show {
-    display: block;
-}
-
-@keyframes slideDown {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.settings-item {
-    margin: 12px 0;
-}
-
-.settings-item label {
-    display: block;
-    margin-bottom: 6px;
+.info-label {
+    font-size: 0.85em;
     color: var(--vscode-foreground);
-    font-size: 0.9em;
-    font-weight: 500;
-}
-
-.settings-item input {
-    width: 100%;
-    background: var(--vscode-input-background);
-    color: var(--vscode-input-foreground);
-    border: 1px solid var(--vscode-input-border);
-    padding: 6px 10px;
-    border-radius: 4px;
-    box-sizing: border-box;
-    transition: all 0.2s ease;
-}
-
-.settings-item input[type="color"] {
-    padding: 0;
-    height: 30px;
-    max-width: 30px;
-    border-radius: 5px;
-    margin-right: 6px;
-    cursor: pointer;
-}
-
-.settings-item input[type="color"]::-webkit-color-swatch-wrapper {
-    padding: 0;
-}
-
-.settings-item input[type="color"]::-webkit-color-swatch {
-    border: none;
-    border-radius: 3px;
-}
-
-.save-button {
-    background: var(--vscode-button-background);
-    color: var(--vscode-button-foreground);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 16px;
-    width: 100%;
-    display: none;
-    font-weight: 500;
-    transform: translateY(5px);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.save-button:hover {
-    filter: brightness(1.1);
-    transform: translateY(3px);
-}
-
-.save-button.show {
-    display: block;
-    animation: slideUp 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-@keyframes slideUp {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.project-url {
     opacity: 0.7;
-    text-decoration: none;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.info-value {
+    font-size: 0.95em;
     color: var(--vscode-foreground);
+    width: 100%;
+    overflow: auto;
+}
+
+.info-actions {
     display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 0;
-    transition: opacity 0.4s ease-in-out;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    @media screen and (min-width: 310px) {
+        flex-direction: row;
+        justify-content: space-between;
+    }
 }
 
-.project-url:hover {
-    text-decoration: underline;
-    opacity: 1;
-}
-
-.delete-link {
-    bottom: 16px;
-    right: 16px;
+.actions {
     display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-    color: var(--vscode-Foreground);
-    opacity: 0.7;
-    font-size: 12px;
-    cursor: pointer;
-    transition: opacity 0.3s ease;
-    z-index: 10;
-    margin-top: 1rem;
+    justify-content: space-between;
+    margin: 1rem 0 0;
 }
 
-.delete-link:hover {
-    opacity: 1;
-    color: var(--vscode-errorForeground);
-}
 
+/* Support Box and Footer */
 .support-box {
-    display: flex;
     margin-top: 2rem;
+    display: flex;
     flex-wrap: wrap;
-    gap: 4px;
-    padding: 10px;
+    gap: 0.5rem;
     position: relative;
     justify-content: space-between;
+}
+
+.support-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--vscode-textLink-foreground);
+    text-decoration: none;
+    font-size: 12px;
+    gap: 4px;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.support-link:hover {
+    opacity: 1;
 }
 
 .version-info {
@@ -396,9 +337,11 @@ body {
     color: var(--vscode-foreground);
 }
 
+/* Drag and Drop Styles */
 .draggable-list {
     display: flex;
     flex-direction: column;
+    gap: 0.5rem;
 }
 
 .project-wrapper.dragging {
@@ -429,6 +372,8 @@ body {
     bottom: 0;
 }
 
+/* Utility Styles */
+
 .loading-spinner {
     position: fixed;
     top: 50%;
@@ -447,7 +392,154 @@ body {
     display: none;
 }
 
+/* Animations */
+
+@keyframes slideDown {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 @keyframes spin {
     0% { transform: translate(-50%, -50%) rotate(0deg); }
     100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Input Styles */
+
+input[type="text"],
+input[type="url"] {
+    width: calc(100% - 1rem);
+    padding: 0.5rem;
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    font-size: 0.8rem;
+    margin: 0.5rem 0;
+    transition: background 0.2s ease-in-out;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus {
+    background: color-mix(in srgb, var(--vscode-input-background) 60%, transparent);
+}
+/* save button */
+.save-button {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.save-button.show {
+    opacity: 1;
+    cursor: pointer;
+}
+
+.save-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+/* Color Picker Input Styling */
+.color-container {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 1rem 0;
+}
+input[type="color"].project-color-input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 2rem;
+    height: 2rem;
+    background-color: transparent;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 4px;
+}
+
+input[type="color"].project-color-input::-webkit-color-swatch-wrapper {
+    border-radius: 4px;
+    padding: 0;
+    border: none;
+}
+
+input[type="color"].project-color-input::-webkit-color-swatch {
+    border: 2px solid var(--vscode-input-border);
+    border-radius: 4px;
+}
+
+input[type="color"].project-color-input:hover::-webkit-color-swatch {
+    border-color: var(--vscode-button-background);
+    transition: border-color 0.3s ease-in-out;
+}
+
+input[type="color"].project-color-input:focus::-webkit-color-swatch {
+    border-color: var(--vscode-focusBorder);
+    box-shadow: 0 0 0 2px var(--vscode-focusBorder);
+    outline: none;
+}
+
+/* Accordion Styles */
+.settings-accordion {
+    margin: 0 0 .5rem;
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+}
+
+.accordion-toggle {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--vscode-input-background);
+    border: none;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 5px;
+    transition: background-color 0.2s, border-radius 0.45s ease;
+}
+
+.accordion-toggle:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.accordion-toggle .chevron {
+    transition: transform 0.2s ease;
+}
+
+.accordion-toggle.expanded .chevron {
+    transform: rotate(180deg);
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    padding: 0 1rem;
+    background: var(--vscode-menu-background);
+    border-radius: 0 0 5px 5px;
+}
+
+.accordion-toggle.expanded {
+    border-radius: 5px 5px 0 0;
+}
+
+.accordion-toggle.expanded + .accordion-content {
+    padding: 1rem;
+    border-top: 1px solid var(--vscode-input-border);
+}
+
+/* Adjust existing settings item styles */
+.settings-item {
+    margin-bottom: 0.75rem;
+}
+
+.settings-item:last-child {
+    margin-bottom: 0;
 }
