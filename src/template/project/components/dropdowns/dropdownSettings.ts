@@ -117,6 +117,10 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
         <script>
             ${getSaveFunctionsScript()}
 
+            /**
+             * Handle input event for settings fields
+             * */
+
             function handleInput(event, projectPath, projectId) {
                 const settingsDropdown = event.target.closest('.settings-dropdown');
                 const labelMap = {
