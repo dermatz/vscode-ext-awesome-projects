@@ -3,6 +3,7 @@ import { ProjectsWebviewProvider } from './webviewProvider';
 import { registerCommands } from './commands';
 
 export interface Project {
+    id?: string;
     path: string;
     name: string;
     color?: string | null;  // Make color optional

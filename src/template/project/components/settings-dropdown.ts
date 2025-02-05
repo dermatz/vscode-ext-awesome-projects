@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { Project } from '../../../extension';
 import { getColorPickerHtml } from './color-picker';
+import { getProjectId } from '../../../utils/project-id';
 
 async function handleDeleteProject(projectPath: string) {
     try {
@@ -21,6 +22,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
     const defaultBgColor = "var(--vscode-list-activeSelectionBackground)";
     const bgColor = project.color || defaultBgColor;
     const projectColor: string | null = project.color ?? null;
+    const projectId = getProjectId(project);
 
     const basicInputs = [
         { label: 'Project name:', type: 'text', value: project.name, placeholder: 'Projectname', field: 'name' },
@@ -35,7 +37,9 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
     ];
 
     return `
-        <div class="settings-dropdown" id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}">
+        <div class="settings-dropdown"
+            id="settings-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}"
+            data-settings-id="${projectId}">
 
             <div class="settings-accordion">
                 <button class="accordion-toggle" onclick="toggleUrlSettings(event)">
@@ -109,6 +113,8 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
 
         <script>
             function handleInput(event, projectPath) {
+                const settingsDropdown = event.target.closest('.settings-dropdown');
+                const projectId = settingsDropdown.dataset.settingsId;
                 const labelMap = {
                     'Project name': 'name',
                     'Local path': 'path',
@@ -147,17 +153,25 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
             }
 
             function deleteProject(projectPath) {
+                const settingsDropdown = document.querySelector(\`#settings-\${projectPath.replace(/[^a-zA-Z0-9]/g, "-")}\`);
+                const projectId = settingsDropdown.dataset.settingsId;
+
                 vscode.postMessage({
                     command: 'deleteProject',
-                    projectPath: projectPath
+                    projectPath: projectPath,
+                    projectId: projectId
                 });
             }
 
             function saveChanges(projectPath) {
+                const settingsDropdown = document.querySelector(\`#settings-\${projectPath.replace(/[^a-zA-Z0-9]/g, "-")}\`);
+                const projectId = settingsDropdown.dataset.settingsId;
+
                 if (pendingChanges[projectPath]) {
                     vscode.postMessage({
                         command: 'updateProject',
                         projectPath: projectPath,
+                        projectId: projectId,
                         updates: pendingChanges[projectPath]
                     });
 
