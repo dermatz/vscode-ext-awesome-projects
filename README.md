@@ -1,5 +1,7 @@
 # Awesome-Projects 🤩 A Visual Studio Code Extension
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/aa3fe284550449ec9088834773d3b1fb)](https://app.codacy.com/gh/dermatz/vscode-ext-awesome-projects/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
 ![Awesome Projects](resources/image.png)
 
 ## Note
