@@ -1,4 +1,8 @@
 import * as vscode from "vscode";
+import { Project } from "../../extension";
+import { getProjectItemHtml } from "./components/project-item";
+import { getAddToHtml } from "./components/add-to";
+import { getDropdownToggleScript } from "./utils/dropdownUtils";
 
 /**
  * Returns footer HTML for the webview.
@@ -6,55 +10,28 @@ import * as vscode from "vscode";
  */
 
 export async function getProjectListHtml(context: vscode.ExtensionContext): Promise<string> {
+    const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+    const projects = configuration.get<Project[]>('projects') || [];
+    const useFavicons = configuration.get<boolean>('useFavicons') ?? true;
+
+    const projectsHtml = await Promise.all(
+        projects.map((project, index) =>
+            getProjectItemHtml(context, { project, index, useFavicons })
+        )
+    );
+
     return `
+        <section id="a">
+            <div id="projects-list" class="draggable-list">
+                ${projectsHtml.join("")}
+            </div>
+        </section>
+        <section id="b">
+            ${await getAddToHtml(context)}
+        </section>
 
-       *** Move Project List in projectlist.ts ***
-
-       <script>
-            /**
-             * Toggles any dropdown (settings or info) for a project
-             * @param {MouseEvent} event The click event
-             * @param {string} targetId The ID of the project
-             * @param {string} type The type of dropdown ('settings' or 'info')
-             */
-            function toggleDropdown(event, targetId, type) {
-                if (type === 'info' && event.target.closest('.project-settings')) {
-                    return;
-                }
-
-                event.stopPropagation();
-
-                const projectWrapper = document.querySelector('[data-project-id="' + targetId + '"]');
-                const projectItem = projectWrapper ? projectWrapper.querySelector('.project-item') : null;
-
-                // Get the target dropdown and its state
-                const targetDropdown = type === 'settings'
-                    ? document.querySelector('[data-settings-id="' + targetId + '"]')
-                    : document.getElementById('info-' + targetId);
-                const isTargetOpen = targetDropdown?.classList.contains('show');
-
-                // Close ALL dropdowns first (both types)
-                document.querySelectorAll('.settings-dropdown.show, .project-info-dropdown.show').forEach(el => {
-                    el.classList.remove('show');
-                    const dropdownProjectId = el.classList.contains('settings-dropdown')
-                        ? el.getAttribute('data-settings-id')
-                        : el.id.replace('info-', '');
-
-                    const relatedWrapper = document.querySelector('[data-project-id="' + dropdownProjectId + '"]');
-                    if (relatedWrapper) {
-                        const relatedItem = relatedWrapper.querySelector('.project-item');
-                        if (relatedItem) {
-                            relatedItem.classList.remove('active');
-                        }
-                    }
-                });
-
-                // Only open the target dropdown if it wasn't already open
-                if (!isTargetOpen && targetDropdown && projectItem) {
-                    targetDropdown.classList.add('show');
-                    projectItem.classList.add('active');
-                }
-            }
+        <script>
+            ${getDropdownToggleScript()}
        </script>
     `;
 }

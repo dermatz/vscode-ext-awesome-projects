@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Project } from '../../../extension';
-import { generateGradient, getContrastColor } from './color-picker';
+import { generateGradient, getContrastColor } from './colorpicker/colorPicker';
 import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
 import { getProjectId } from '../utils/project-id';

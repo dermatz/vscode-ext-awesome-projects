@@ -1,5 +1,4 @@
-import * as vscode from "vscode";
-import { getSaveFunctionsScript } from '../utils/save-functions';
+import { getSaveFunctionsScript } from '../../utils/save-functions';
 
 export interface ColorPickerProps {
     projectPath: string;

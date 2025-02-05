@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { Project } from '../../../../extension';
-import { getColorPickerHtml } from '../color-picker';
+import { getColorPickerHtml } from '../colorpicker/colorPicker';
 import { getProjectId } from '../../utils/project-id';
 import { getSaveFunctionsScript } from '../../utils/save-functions';
 
