@@ -1,4 +1,5 @@
 import { Project } from '../../../extension';
+import { getProjectId } from '../../../utils/project-id';
 
 export async function getProjectInfoDropdownHtml(project: Project): Promise<string> {
     const getBaseUrl = (url?: string) => {
@@ -11,8 +12,10 @@ export async function getProjectInfoDropdownHtml(project: Project): Promise<stri
         }
     };
 
+    const projectId = getProjectId(project);
+
     return `
-        <div class="project-info-dropdown" id="info-${project.path.replace(/[^a-zA-Z0-9]/g, "-")}">
+        <div id="info-${projectId}" class="project-info-dropdown">
             <div class="info-section">
                 <div class="info-label">Path</div>
                 <div class="info-value">${project.path}</div>

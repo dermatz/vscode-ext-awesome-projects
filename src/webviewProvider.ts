@@ -300,27 +300,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     vscode.postMessage({ command: 'openProject', project });
                 }
 
-                function toggleInfo(event, projectPath) {
-                    if (event.target.closest('.project-settings')) {
-                    return;
-                    }
 
-                    const infoId = 'info-' + projectPath.replace(/[^a-zA-Z0-9]/g, '-');
-                    const infoDropdown = document.getElementById(infoId);
-                    const projectItem = event.currentTarget;
-
-                    document.querySelectorAll('.project-info-dropdown.show, .settings-dropdown.show').forEach(el => {
-                    if (el.id !== infoId) {
-                        el.classList.remove('show');
-                        el.previousElementSibling.classList.remove('active');
-                    }
-                    });
-
-                    if (infoDropdown) {
-                    infoDropdown.classList.toggle('show');
-                    projectItem.classList.toggle('active');
-                    }
-                }
 
                 function openUrl(event, url) {
                     event.preventDefault();
