@@ -2,16 +2,6 @@ import { Project } from '../../../../extension';
 import { getProjectId } from '../../utils/project-id';
 
 export async function getProjectInfoDropdownHtml(project: Project, color?: string): Promise<string> {
-    const getBaseUrl = (url?: string) => {
-        if (!url) { return null; }
-        try {
-            const urlObj = new URL(url);
-            return urlObj.protocol + "//" + urlObj.hostname;
-        } catch (e) {
-            return null;
-        }
-    };
-
     const projectId = getProjectId(project);
     const borderColor = color || "var(--vscode-list-activeSelectionBackground)";
 
