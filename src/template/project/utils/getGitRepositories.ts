@@ -34,7 +34,7 @@ function getSubmodules(projectPath: string): {name: string, url: string}[] {
 
     if (fs.existsSync(gitmodulesPath)) {
         const content = fs.readFileSync(gitmodulesPath, 'utf8');
-        const submoduleMatches = content.matchAll(/\[submodule "([^"]+)"\][^\[]*url = ([^\n]+)/g);
+        const submoduleMatches = content.matchAll(/\[submodule "([^"]+)"\][^[]*url = ([^\n]+)/g);
 
         for (const match of submoduleMatches) {
             const name = match[1];
