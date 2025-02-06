@@ -7,7 +7,6 @@ import { promises as fsPromises } from "fs";
  */
 interface PackageJson {
     version: string;
-    preview?: boolean;
 }
 
 /**
@@ -18,12 +17,24 @@ interface PackageJson {
 let cachedPackageJson: PackageJson | null = null;
 
 /**
+ * Checks if the version is below 1.0.0
+ */
+function isBetaVersion(version: string): boolean {
+    try {
+        const [major] = version.split('.').map(Number);
+        return major < 1;
+    } catch {
+        return false;
+    }
+}
+
+/**
  * Returns header HTML for the webview.
  * @param context Includes all relevant elements for the project webview header.
  */
 export async function getHeaderHtml(context: vscode.ExtensionContext): Promise<string> {
     const packageJsonPath = path.join(context.extensionPath, 'package.json');
-    let packageJson: PackageJson = { version: "unknown", preview: false };
+    let packageJson: PackageJson = { version: "unknown" };
     if (cachedPackageJson) {
         packageJson = cachedPackageJson;
     } else {
@@ -33,7 +44,7 @@ export async function getHeaderHtml(context: vscode.ExtensionContext): Promise<s
             cachedPackageJson = packageJson;
         } catch (error) {
             console.error("Error reading package.json:", error);
-            packageJson = { version: "unknown", preview: false };
+            packageJson = { version: "unknown" };
         }
     }
 
@@ -44,7 +55,7 @@ export async function getHeaderHtml(context: vscode.ExtensionContext): Promise<s
                 <h1>Awesome Projects</h1>
                 <small class="version">
                   Version: ${packageJson.version}
-                  ${packageJson.preview ? '<span class="preview-badge">Preview</span>' : ''}
+                  ${isBetaVersion(packageJson.version) ? '<span class="badge">Beta</span>' : ''}
                 </small>
               </div>
             </div>

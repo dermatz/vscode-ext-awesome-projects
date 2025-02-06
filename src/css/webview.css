@@ -39,10 +39,12 @@ header .logo svg {
 header h1 {
     margin: 0;
     font-size: 1.25rem;
-    background: linear-gradient(to right, var(--vscode-button-background), var(--vscode-foreground));
     -webkit-background-clip: text;
     line-height: 1.5rem;
     color: transparent;
+    background-color: #4158D0;
+    text-shadow: 0 5px 5px rgba(0, 0, 0, 0.3);
+    background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
 }
 
 header .linkbar {
@@ -58,14 +60,17 @@ header .version {
     gap: 0.5rem;
 }
 
-header .preview-badge {
-    background-color: #FBBF24;
+header .version .badge {
+    background-color: #4158D0;
+    background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    color: #451A03;
+    color: #4C0519;
     padding: 0.1rem 0.3rem;
     border-radius: 3px;
     font-size: 0.6rem;
     animation: shine 5s infinite;
+    text-transform: uppercase;
+    font-weight: bold;
 }
 
 header .button {
