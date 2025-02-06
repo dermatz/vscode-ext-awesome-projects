@@ -20,10 +20,6 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
              class="dropdown project-info-dropdown"
              style="border-left: 1px solid ${borderColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor};"
         >
-            <div class="info-section">
-                <div class="info-label">Path</div>
-                <div class="info-value">${project.path}</div>
-            </div>
             ${ project.productionUrl || project.devUrl || project.stagingUrl || project.managementUrl
                     ? `
             <div class="info-section">
