@@ -27,7 +27,7 @@ export async function getProjectListHtml(context: vscode.ExtensionContext): Prom
             </div>
         </section>
         <section id="b">
-            ${await getAddToHtml(context)}
+            ${await getAddToHtml()}
         </section>
 
         <script>

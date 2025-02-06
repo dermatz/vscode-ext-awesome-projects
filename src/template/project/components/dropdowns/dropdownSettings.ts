@@ -110,7 +110,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     </svg>
                     Save
                 </button>
-                <button class="button small secondary remove" onclick="deleteProject('${project.path.replace(/'/g, "\\'")}', '${projectId}')">
+                <button class="button small secondary remove" onclick="handleDeleteProject('${project.path.replace(/'/g, "\\'")}')">
                     <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z"/>
                     </svg>
@@ -176,13 +176,12 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                 }
             }
 
-            function deleteProject(projectPath, projectId) {
-                const settingsDropdown = document.querySelector(\`#settings-\${projectId}\`);
+            function handleDeleteProject(projectPath) {
+                if (!projectPath) return;
 
                 vscode.postMessage({
                     command: 'deleteProject',
-                    projectPath: projectPath,
-                    projectId: projectId
+                    projectPath: projectPath
                 });
             }
 
