@@ -10,9 +10,6 @@ import { getProjectItemHtml } from './template/project/components/project-item';
  * Project Components
  */
 
-import { getAddToHtml } from './template/project/components/add-to';
-
-
 export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'awesomeProjectsView';
     private _view?: vscode.WebviewView;
