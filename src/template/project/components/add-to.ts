@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-export async function getAddToHtml(context: vscode.ExtensionContext): Promise<string> {
+export async function getAddToHtml(): Promise<string> {
     return `
         <button class="button addto" onclick="addProject()">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">

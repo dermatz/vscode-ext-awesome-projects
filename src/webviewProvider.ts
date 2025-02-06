@@ -61,44 +61,29 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 const configuration = vscode.workspace.getConfiguration('awesomeProjects');
                                 const projects: Project[] = configuration.get('projects') || [];
 
-                                // Check if project already exists
-                                if (projects.some(p => p.path === projectPath)) {
-                                    throw new Error('Project with this path already exists');
-                                }
-
-                                const projectName = await vscode.window.showInputBox({
-                                    prompt: 'Enter project name',
-                                    value: projectPath.split('/').pop(),
-                                    validateInput: input => {
-                                        return input && input.trim().length > 0 ? null : 'Project name cannot be empty';
-                                    }
-                                });
-
-                                if (!projectName) {
-                                    throw new Error('Project name is required');
-                                }
-
                                 const newProject: Project = {
                                     path: projectPath,
-                                    name: projectName,
-                                    color: null
+                                    name: await vscode.window.showInputBox({
+                                        prompt: 'Enter project name',
+                                        value: projectPath.split('/').pop()
+                                    }) || projectPath.split('/').pop() || '',
+                                    color: null  // Set default color to null
                                 };
 
-                                // Use await to ensure the update completes
                                 await configuration.update(
                                     'projects',
                                     [...projects, newProject],
                                     vscode.ConfigurationTarget.Global
                                 );
 
-                                // Verify the update and refresh
-                                this.refresh();
-
-                            } catch (error: unknown) {
-                                const errorMessage = error instanceof Error
-                                    ? error.message
-                                    : 'An unknown error occurred';
-                                vscode.window.showErrorMessage(`Failed to add project: ${errorMessage}`);
+                                const updatedProjects = configuration.get<Project[]>('projects');
+                                if (updatedProjects?.some(p => p.path === newProject.path)) {
+                                    this.refresh();
+                                } else {
+                                    throw new Error('Failed to save project to settings');
+                                }
+                            } catch (error) {
+                                vscode.window.showErrorMessage(`Failed to add project: ${error}`);
                             }
                         }
                     });
@@ -179,11 +164,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
                 this.refresh(); // Wichtig: Aktualisiert die gesamte Ansicht
             }
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error
-                ? error.message
-                : 'An unknown error occurred';
-            vscode.window.showErrorMessage(`Failed to update project: ${errorMessage}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to update project: ${error}`);
         }
     }
 
@@ -196,11 +178,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             projects.splice(newIndex, 0, movedProject);
             await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
             this.refresh();
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error
-                ? error.message
-                : 'An unknown error occurred';
-            vscode.window.showErrorMessage(`Failed to reorder projects: ${errorMessage}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to reorder projects: ${error}`);
         } finally {
             this._setLoading(false);
         }
@@ -217,11 +196,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
                 this.refresh();
             }
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error
-                ? error.message
-                : 'An unknown error occurred';
-            vscode.window.showErrorMessage(`Failed to delete project: ${errorMessage}`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to delete project: ${error}`);
         }
     }
 
