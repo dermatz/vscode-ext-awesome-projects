@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Project } from '../extension';
+import { getFooterHtml } from '../template/webview/footer';
 
 const extensionId = 'MathiasElle.awesome-projects';
 
@@ -18,7 +19,6 @@ suite('Awesome Projects Extension Test Suite', () => {
 
     suiteSetup(() => {
         // Mock createWebviewPanel to avoid actual webview creation
-        const originalCreateWebviewPanel = vscode.window.createWebviewPanel;
         vscode.window.createWebviewPanel = (viewType: string, title: string, showOptions: any, options?: any) => {
             return {
                 webview: mockWebview,
@@ -131,5 +131,28 @@ suite('Awesome Projects Extension Test Suite', () => {
 
         // Clean up
         await config.update('projects', initialProjects, vscode.ConfigurationTarget.Global);
+    });
+
+    test('Should handle project deletion', async () => {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const initialProjects = config.get<Project[]>('projects') || [];
+
+        const testProject: Project = {
+            name: "Delete Test",
+            path: "/delete/test",
+            color: "#00ff00"
+        };
+
+        // Add test project
+        await config.update('projects', [...initialProjects, testProject], vscode.ConfigurationTarget.Global);
+
+        // Delete test project
+        const updatedProjects = initialProjects.filter(p => p.path !== testProject.path);
+        await config.update('projects', updatedProjects, vscode.ConfigurationTarget.Global);
+
+        // Verify deletion
+        const finalProjects = config.get<Project[]>('projects') || [];
+        const deletedProject = finalProjects.find(p => p.path === testProject.path);
+        assert.strictEqual(deletedProject, undefined, "Project was not deleted");
     });
 });
