@@ -4,6 +4,12 @@ All notable changes to the "awesome-projects" extension will be documented in th
 
 ## Unreleased
 
+## [0.2.1] - 2025-02-06
+
+### Changes
+
+- style: adjust project icon background
+
 ## [0.2.0] - 2025-02-06
 
 ### Added
