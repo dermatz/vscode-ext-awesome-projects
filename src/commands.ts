@@ -24,12 +24,26 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                     const configuration = vscode.workspace.getConfiguration('awesomeProjects');
                     const projects: Project[] = configuration.get('projects') || [];
 
+                    // Check if project already exists
+                    if (projects.some(p => p.path === projectPath)) {
+                        throw new Error('Project with this path already exists');
+                    }
+
+                    const projectName = await vscode.window.showInputBox({
+                        prompt: 'Enter project name',
+                        value: projectPath.split('/').pop(),
+                        validateInput: input => {
+                            return input && input.trim().length > 0 ? null : 'Project name cannot be empty';
+                        }
+                    });
+
+                    if (!projectName) {
+                        throw new Error('Project name is required');
+                    }
+
                     const newProject: Project = {
                         path: projectPath,
-                        name: await vscode.window.showInputBox({
-                            prompt: 'Enter project name',
-                            value: projectPath.split('/').pop()
-                        }) || projectPath.split('/').pop() || ''
+                        name: projectName
                     };
 
                     await configuration.update(
@@ -38,14 +52,12 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                         vscode.ConfigurationTarget.Global
                     );
 
-                    const updatedProjects = configuration.get<Project[]>('projects');
-                    if (updatedProjects?.some(p => p.path === newProject.path)) {
-                        projectsProvider.refresh();
-                    } else {
-                        throw new Error('Failed to save project to settings');
-                    }
-                } catch (error) {
-                    vscode.window.showErrorMessage(`Failed to add project: ${error}`);
+                    projectsProvider.refresh();
+                } catch (error: unknown) {
+                    const errorMessage = error instanceof Error
+                        ? error.message
+                        : 'An unknown error occurred';
+                    vscode.window.showErrorMessage(`Failed to add project: ${errorMessage}`);
                 }
             }
         }),
