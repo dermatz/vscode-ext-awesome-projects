@@ -1,7 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Project } from '../extension';
-import { getFooterHtml } from '../template/webview/footer';
 
 const extensionId = 'MathiasElle.awesome-projects';
 
