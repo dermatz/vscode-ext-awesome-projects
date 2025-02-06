@@ -11,10 +11,9 @@ The "awesome-projects" extension for Visual Studio Code revolutionizes project m
 ## Key Features
 
 ### Project Management
-- 📂 Advanced project organization with drag & drop functionality
+- 📂 Advanced project organization with drag & drop sort functionality
 - 🎨 Customizable project colors with random color generator
-- 🏷️ Project categorization and tagging system
-- 📝 Project notes and documentation support
+- 🏷️ Project categorization and naming system
 - 🔄 Multi-workspace support
 
 ### Git Integration
@@ -33,10 +32,8 @@ The "awesome-projects" extension for Visual Studio Code revolutionizes project m
 - 🪟 Cross-platform file manager integration (Windows, macOS, Linux)
 - 🔒 Secure data storage
 - ⚡ Performance-optimized for large project collections
-- 🎯 Quick access through keyboard shortcuts
 
 ## Requirements
-
 - Visual Studio Code version 1.96.0 or higher
 - Git (optional, for repository features)
 
@@ -45,7 +42,7 @@ The "awesome-projects" extension for Visual Studio Code revolutionizes project m
 1. Install from VS Code Marketplace
 2. Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
 3. Search for "Awesome Projects"
-4. Click the "+" button to add your first project
+4. Click the "+ Add Project" button to add your first project
 
 ## Configuration
 
@@ -76,14 +73,6 @@ The extension can be customized through VS Code settings:
 | `awesomeProjects.useFavicons` | boolean | `true` | Enable/disable favicon display |
 | `awesomeProjects.showGitInfo` | boolean | `true` | Show Git repository information |
 | `awesomeProjects.projects` | array | `[]` | List of configured projects |
-
-## Keyboard Shortcuts
-
-| Command | Windows/Linux | macOS | Description |
-|---------|--------------|-------|-------------|
-| Add Project | `Ctrl+Alt+P` | `Cmd+Alt+P` | Open add project dialog |
-| Refresh Projects | `Ctrl+Alt+R` | `Cmd+Alt+R` | Refresh project list |
-| Toggle Sidebar | `Ctrl+Alt+B` | `Cmd+Alt+B` | Toggle projects sidebar |
 
 ## Contributing
 

@@ -4,7 +4,7 @@ All notable changes to the "awesome-projects" extension will be documented in th
 
 ## Unreleased
 
-## [3.0.0] - 2025-02-06
+## [0.3.0] - 2025-02-06
 
 ### Added
 - feat: add public beta version flag
