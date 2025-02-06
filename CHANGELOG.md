@@ -4,6 +4,23 @@ All notable changes to the "awesome-projects" extension will be documented in th
 
 ## Unreleased
 
+## [3.0.0] - 2025-02-06
+
+### Added
+- feat: add public beta version flag
+- feat: add Git Repository & Sub-Modul detection in product info dashboard
+- style: add new header gradiends
+
+### Changed
+- style: update webview layout for better usability
+
+### Remove
+- remove project path on project info dashboard
+- remove preview flag
+
+### Bug Fixed
+- fix: integration tests for core features
+
 ## [0.2.1] - 2025-02-06
 
 ### Changes

@@ -4,85 +4,96 @@
 
 ![Awesome Projects](resources/image.png)
 
-## Note
-
-This project is now a public Preview.
-Please report Issues
-
-
 ## Description
 
-The "awesome-projects" extension for Visual Studio Code helps you manage and organize your projects efficiently.
-With this extension, you can easily add, open, and manage project urls directly from the VS Code sidebar.
+The "awesome-projects" extension for Visual Studio Code revolutionizes project management with an intuitive, feature-rich interface. Designed for developers who juggle multiple projects, it provides seamless organization and quick access to all your development environments.
 
-## Features
+## Key Features
 
-- Add new projects to your list
-- Open existing projects
-- Refresh the list of projects
-- Organize projects into categories such as Recent Projects and Favorites
-- Manage project URLs (production, staging, development, and management)
-- Assign custom colors to projects
-- Create project shortcuts for quick access
-- Sort projects with drag and drop
+### Project Management
+- 📂 Advanced project organization with drag & drop functionality
+- 🎨 Customizable project colors with random color generator
+- 🏷️ Project categorization and tagging system
+- 📝 Project notes and documentation support
+- 🔄 Multi-workspace support
+
+### Git Integration
+- 🔗 Automatic Git repository detection
+- 📦 Git submodules support
+- 🔍 Repository URL detection and conversion (SSH/HTTPS)
+- 🌐 Integration with major Git platforms (GitHub, GitLab, Bitbucket)
+
+### Environment Management
+- 🌍 Multiple environment URL management (Production, Staging, Development)
+- 🛠️ Project management tool integration
+- 🖼️ Automatic favicon detection for quick visual recognition
+- 📱 Responsive webview design
+
+### System Integration
+- 🪟 Cross-platform file manager integration (Windows, macOS, Linux)
+- 🔒 Secure data storage
+- ⚡ Performance-optimized for large project collections
+- 🎯 Quick access through keyboard shortcuts
 
 ## Requirements
 
 - Visual Studio Code version 1.96.0 or higher
+- Git (optional, for repository features)
 
-## Getting Started
+## Installation & Setup
 
-1. **Installation**
-    - Open Visual Studio Code
-    - Go to the Extensions view by clicking on the Extensions icon in the Activity Bar on the side of the window or by pressing `Ctrl+Shift+X`
-    - Search for "awesome-projects"
-    - Click Install
+1. Install from VS Code Marketplace
+2. Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+3. Search for "Awesome Projects"
+4. Click the "+" button to add your first project
 
-2. **Usage**
-    - After installation, you can find the "awesome-projects" view in the sidebar.
-    - Use the "Add Project" button to add new projects.
-    - Click on a project to open it.
-    - Use the refresh button to update the list of projects.
-    - Manage project URLs directly from the sidebar by clicking on the project and editing the URLs.
-    - Assign custom colors to projects for better organization.
-    - Create shortcuts for quick access to frequently used projects.
+## Configuration
 
-## Settings
+The extension can be customized through VS Code settings:
 
-You can configure the extension using the `settings.json` file in Visual Studio Code. The following parameters are available:
-
-- `awesomeProjects.projects`: An array of project objects. Each project object can have the following properties:
-  - `path`: The file path of the project.
-  - `name`: The name of the project.
-  - `color`: (Optional) A color associated with the project.
-  - `productionUrl`: (Optional) The production URL of the project.
-  - `devUrl`: (Optional) The development URL of the project.
-  - `stagingUrl`: (Optional) The staging URL of the project.
-  - `managementUrl`: (Optional) The management URL of the project. Like Jira or other Project-Management Tools.
-
-- `awesomeProjects.useFavicons`: A boolean value to enable or disable the use of favicons for projects. When enabled, the extension will attempt to fetch and display the favicon of the project's URL.
-
-Example configuration:
 ```json
 {
     "awesomeProjects.projects": [
         {
-            "path": "/path/to/project1",
-            "name": "Project 1",
+            "path": "/path/to/project",
+            "name": "Project Name",
             "color": "#ff0000",
-            "productionUrl": "https://production-url.tld",
-            "devUrl": "https://dev-url.tld",
-            "stagingUrl": "https://staging-url.tld",
-            "managementUrl": "https://management-url.tld"
-        },
-        {
-            "path": "/path/to/project2",
-            "name": "Project 2"
+            "productionUrl": "https://prod.example.com",
+            "stagingUrl": "https://staging.example.com",
+            "devUrl": "http://localhost:3000",
+            "managementUrl": "https://jira.example.com"
         }
     ],
-    "awesomeProjects.useFavicons": true
+    "awesomeProjects.useFavicons": true,
+    "awesomeProjects.showGitInfo": true
 }
 ```
 
-## Included Software
-Icons provided by [Tabler Icons](https://tabler.io) under the [MIT License](https://tabler.io/license).
+### Settings Reference
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `awesomeProjects.useFavicons` | boolean | `true` | Enable/disable favicon display |
+| `awesomeProjects.showGitInfo` | boolean | `true` | Show Git repository information |
+| `awesomeProjects.projects` | array | `[]` | List of configured projects |
+
+## Keyboard Shortcuts
+
+| Command | Windows/Linux | macOS | Description |
+|---------|--------------|-------|-------------|
+| Add Project | `Ctrl+Alt+P` | `Cmd+Alt+P` | Open add project dialog |
+| Refresh Projects | `Ctrl+Alt+R` | `Cmd+Alt+R` | Refresh project list |
+| Toggle Sidebar | `Ctrl+Alt+B` | `Cmd+Alt+B` | Toggle projects sidebar |
+
+## Contributing
+
+Contributions are welcome! Please check our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+## License
+
+This extension is released under the [MIT License](LICENSE).
+
+## Acknowledgments
+
+- Icons provided by [Tabler Icons](https://tabler.io) under the [MIT License](https://tabler.io/license)
+- Color picker implementation inspired by VS Code's built-in color picker
