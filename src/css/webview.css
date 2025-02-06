@@ -556,3 +556,42 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
 .settings-item:last-child {
     margin-bottom: 0;
 }
+
+
+ul.submodules {
+    margin: 0;
+    padding: 0;
+}
+ul.submodules li + li {
+    margin-top: 0.125rem;
+}
+
+a.info-item-value {
+    text-decoration: none;
+    transition: opacity 0.4s ease-in-out;
+    opacity: 0.8;
+}
+a.info-item-value:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+
+.repository-link {
+    display: flex;
+    justify-items: start;
+    gap: 0.5rem;
+    padding: 0.25rem 0 0;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.repository-link svg {
+    height: .8rem;
+    width: .8rem;
+    min-height: .8rem;
+    min-width: .8rem;
+}

@@ -1,5 +1,6 @@
 import { Project } from '../../../../extension';
 import { getProjectId } from '../../utils/project-id';
+import { getGitRepositoriesHtml } from '../../utils/getGitRepositories';
 
 export async function getProjectInfoDropdownHtml(project: Project, color?: string): Promise<string> {
     const getBaseUrl = (url?: string) => {
@@ -75,9 +76,13 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
                     }
                 </div>
             </div>
+
             `
-                    : ""
+            : ""
             }
+            <div class="info-section">
+                ${getGitRepositoriesHtml(project)}
+            </div>
             <div class="info-actions">
                 <button class="button info-action" onclick="openProject('${project.path.replace(/'/g, "\\'")}')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
