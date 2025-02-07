@@ -4,12 +4,12 @@ All notable changes to the "awesome-projects" extension will be documented in th
 
 ## Unreleased
 
-## [0.3.1] - 2025-02-06
+## [0.3.1] - 2025-02-07
 
 ### Added
 
 - feat: add a whats new overlay in footer links
-- feat: add new readme video
+- add new readme video
 
 ### Bugfix
 
