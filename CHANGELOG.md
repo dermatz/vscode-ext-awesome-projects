@@ -9,6 +9,7 @@ All notable changes to the "awesome-projects" extension will be documented in th
 ### Added
 
 - feat: add a whats new overlay in footer links
+- feat: add new readme video
 
 ### Bugfix
 
