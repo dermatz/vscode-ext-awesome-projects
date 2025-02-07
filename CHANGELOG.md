@@ -4,6 +4,17 @@ All notable changes to the "awesome-projects" extension will be documented in th
 
 ## Unreleased
 
+## [0.3.2] - 2025-02-07
+
+### Changes
+
+- Show latest 3 Versions in changelog overlay
+
+### Bug Fixes
+
+- fix: resolve hover styles issue in changelog overlay
+- fix: prevent link click propagation in changelog overlay
+
 ## [0.3.1] - 2025-02-07
 
 ### Added

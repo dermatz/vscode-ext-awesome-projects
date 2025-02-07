@@ -606,10 +606,9 @@ a.info-item-value:hover {
 .whats-new-content {
     display: none;
     position: fixed !important;
-    cursor: pointer;
     left: 1rem;
     right: 1rem;
-    top: 1rem;
+    top: 4rem;
     background: var(--vscode-editor-background);
     border: 1px solid var(--vscode-widget-border);
     border-radius: 4px;
