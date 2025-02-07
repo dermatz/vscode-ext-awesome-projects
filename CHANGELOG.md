@@ -3,6 +3,10 @@
 All notable changes to the "awesome-projects" extension will be documented in this file.
 
 ## Unreleased
+...
+
+---
+## Latest Release
 
 ## [0.3.2] - 2025-02-07
 
