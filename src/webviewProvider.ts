@@ -227,9 +227,12 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             console.error('Failed to load CSS:', error);
         }
 
+        // Get current workspace folder path
+        const currentWorkspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+
         // Pre-load all HTML components
         const headerHtml = await getHeaderHtml(this._context);
-        const projectListHtml = await getProjectListHtml(this._context);
+        const projectListHtml = await getProjectListHtml(this._context, currentWorkspace);
         const footerHtml = await getFooterHtml(this._context);
 
         return `<!DOCTYPE html>

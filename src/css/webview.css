@@ -704,3 +704,21 @@ a.info-item-value:hover {
     opacity: 1;
     text-decoration: underline;
 }
+
+/* Current Project Highlight */
+.project-item-wrapper.current-project {
+    position: relative;
+}
+
+.project-item-wrapper.current-project::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 30px;
+    max-height: 100px;
+    top: 20px;
+    background: var(--vscode-activityBar-activeBorder);
+    border-radius: 2px;
+}
