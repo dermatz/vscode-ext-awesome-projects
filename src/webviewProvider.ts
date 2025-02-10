@@ -5,6 +5,7 @@ import { getHeaderHtml } from './template/webview/header';
 import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
 import { getProjectItemHtml } from './template/project/components/project-item';
+import { scanForGitProjects, addScannedProjects } from './utils/scanForProjects';
 
 /**
  * Project Components
@@ -108,6 +109,26 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     break;
                 case 'deleteProject':
                     this._handleProjectDeletion(message.projectPath);
+                    break;
+                case 'scanProjects':
+                    vscode.window.showOpenDialog({
+                        canSelectFolders: true,
+                        canSelectMany: false,
+                        title: 'Select folder to scan for Git projects'
+                    }).then(async folderUri => {
+                        if (folderUri && folderUri[0]) {
+                            try {
+                                this._setLoading(true);
+                                const projects = await scanForGitProjects(folderUri[0].fsPath);
+                                await addScannedProjects(projects);
+                                this.refresh();
+                            } catch (error) {
+                                vscode.window.showErrorMessage(`Failed to scan for projects: ${error}`);
+                            } finally {
+                                this._setLoading(false);
+                            }
+                        }
+                    });
                     break;
             }
         });

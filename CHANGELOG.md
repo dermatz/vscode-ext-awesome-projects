@@ -8,6 +8,12 @@ All notable changes to the "awesome-projects" extension will be documented in th
 ---
 ## Latest Release
 
+## [0.5.0] - 2025-02-10
+
+### Added
+
+- feat: add "Scan for Projects" button to recursively scan a folder for projects
+
 ## [0.4.0] - 2025-02-10
 
 ### Added
