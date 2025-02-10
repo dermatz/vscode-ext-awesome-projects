@@ -6,6 +6,7 @@ import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
 import { getProjectItemHtml } from './template/project/components/project-item';
 import { scanForGitProjects, addScannedProjects } from './utils/scanForProjects';
+import { openProjectInNewWindow, openInFileManager, openUrl } from './template/project/utils/projectOpener';
 
 /**
  * Project Components
@@ -87,7 +88,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     });
                     break;
                 case 'openProject':
-                    vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(message.project));
+                    openProjectInNewWindow(message.project);
                     break;
                 case 'projectSelected':
                     vscode.window.showInformationMessage(`Project selected: ${message.path}`);
@@ -96,16 +97,16 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     this._updateProject(message.projectPath, message.updates);
                     break;
                 case 'openUrl':
-                    vscode.env.openExternal(vscode.Uri.parse(message.url));
+                    openUrl(message.url);
                     break;
                 case 'openInFinder':
-                    vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.path));
+                    openInFileManager(message.path);
                     break;
                 case 'reorderProjects':
                     this._reorderProjects(message.oldIndex, message.newIndex);
                     break;
                 case 'showInFileManager':
-                    vscode.commands.executeCommand('awesome-projects.showInFileManager', message.project);
+                    openInFileManager(message.project.path);
                     break;
                 case 'deleteProject':
                     this._handleProjectDeletion(message.projectPath);

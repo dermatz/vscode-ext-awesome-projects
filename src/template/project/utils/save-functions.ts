@@ -1,15 +1,15 @@
 export function getSaveFunctionsScript(): string {
     return `
-        function updateSaveButtonState(projectPath, projectId) {
+        function updateSaveButtonState(projectId) {
             const saveButton = document.getElementById('save-' + projectId);
             if (saveButton) {
-                const hasChanges = pendingChanges[projectPath] && Object.keys(pendingChanges[projectPath]).length > 0;
+                const hasChanges = pendingChanges[projectId] && Object.keys(pendingChanges[projectId]).length > 0;
                 saveButton.classList.toggle('show', hasChanges);
                 saveButton.disabled = !hasChanges;
             }
         }
 
-        function showSaveButton(projectPath, projectId) {
+        function showSaveButton(projectId) {
             const saveButton = document.getElementById('save-' + projectId);
             if (saveButton) {
                 saveButton.classList.add('show');
