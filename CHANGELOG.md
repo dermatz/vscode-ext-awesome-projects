@@ -8,6 +8,12 @@ All notable changes to the "awesome-projects" extension will be documented in th
 ---
 ## Latest Release
 
+## [0.4.0] - 2025-02-10
+
+### Added
+
+- feat: add project highlighting to display the currently opened project
+
 ## [0.3.2] - 2025-02-07
 
 ### Changes
