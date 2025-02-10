@@ -9,13 +9,17 @@ export interface ProjectItemProps {
     project: Project;
     index: number;
     useFavicons: boolean;
+    currentWorkspace?: string;
 }
 
 export async function getProjectItemHtml(context: vscode.ExtensionContext, props: ProjectItemProps): Promise<string> {
-    const { project, index, useFavicons } = props;
+    const { project, index, useFavicons, currentWorkspace } = props;
     const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
     const gradientColor = project.color ? generateGradient(project.color) : "var(--vscode-list-activeSelectionBackground)";
     const textColor = project.color ? getContrastColor(project.color) : "#ffffff";
+
+    const isCurrentProject = currentWorkspace === project.path;
+    const currentProjectClass = isCurrentProject ? 'current-project' : '';
 
     const getBaseUrl = (url?: string) => {
         if (!url) { return null; }
@@ -36,7 +40,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor);
 
     return `
-        <div class="project-item-wrapper" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}"
+        <div class="project-item-wrapper ${currentProjectClass}" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}"
         >
             <div class="project-item"
                 style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"

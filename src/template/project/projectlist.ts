@@ -7,16 +7,17 @@ import { getDropdownToggleScript } from "./utils/dropdownUtils";
 /**
  * Returns footer HTML for the webview.
  * @param context Includes all structured elements to render the project list.
+ * @param currentWorkspace The current workspace.
  */
 
-export async function getProjectListHtml(context: vscode.ExtensionContext): Promise<string> {
+export async function getProjectListHtml(context: vscode.ExtensionContext, currentWorkspace: string = ''): Promise<string> {
     const configuration = vscode.workspace.getConfiguration('awesomeProjects');
     const projects = configuration.get<Project[]>('projects') || [];
     const useFavicons = configuration.get<boolean>('useFavicons') ?? true;
 
     const projectsHtml = await Promise.all(
         projects.map((project, index) =>
-            getProjectItemHtml(context, { project, index, useFavicons })
+            getProjectItemHtml(context, { project, index, useFavicons, currentWorkspace })
         )
     );
 
