@@ -9,6 +9,19 @@ interface VersionChanges {
     };
 }
 
+function convertMarkdownLinksToHtml(text: string): string {
+    // Convert issue/PR links: [#30](url) -> <a href="url">#$1</a>
+    text = text.replace(/\[#(\d+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2">#$1</a>');
+
+    // Convert user mentions: [@username](url) -> <a href="url">@username</a>
+    text = text.replace(/\[@([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2">@$1</a>');
+
+    // Convert regular markdown links: [text](url) -> <a href="url">$1</a>
+    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2">$1</a>');
+
+    return text;
+}
+
 export function getChangesSinceLastTag(context: any): VersionChanges[] {
     const changelogPath = path.join(context.extensionPath, 'CHANGELOG.md');
     const content = fs.readFileSync(changelogPath, 'utf8');
@@ -37,7 +50,8 @@ export function getChangesSinceLastTag(context: any): VersionChanges[] {
                 currentType = line.replace('### ', '').trim();
                 changes[currentType] = [];
             } else if (line.trim().startsWith('- ') && currentType) {
-                changes[currentType].push(line.trim().substring(2));
+                const changeText = line.trim().substring(2);
+                changes[currentType].push(convertMarkdownLinksToHtml(changeText));
             }
         }
 
