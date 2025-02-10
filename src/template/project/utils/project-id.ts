@@ -2,15 +2,14 @@ import { Project } from '../../../extension';
 import * as crypto from 'crypto';
 
 /**
- * Generates a unique ID for a project based on its path and name
+ * Generates a unique ID for a project based on its name
  * @param project The project to generate an ID for
  * @returns A URL-safe unique ID string
  */
 export function generateProjectId(project: Project): string {
-    const input = `${project.path}-${project.name}`;
     return crypto
         .createHash('md5')
-        .update(input)
+        .update(project.name)
         .digest('base64')
         .replace(/[+/=]/g, '')  // Make URL-safe
         .substring(0, 12);      // Keep it reasonably short
