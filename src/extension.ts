@@ -3,6 +3,7 @@ import * as path from 'path';
 import { ProjectsWebviewProvider } from './webviewProvider';
 import { registerCommands } from './commands';
 import { getProjectId } from './template/project/utils/project-id';
+import { WebviewMessage } from './types/webviewMessages';
 
 export interface Project {
     id?: string;
@@ -36,9 +37,12 @@ export function activate(context: vscode.ExtensionContext) {
     registerCommands(context, projectsProvider);
 
     // Handle messages from the webview
-    projectsProvider.onDidReceiveMessage(async (message: any) => {
+    projectsProvider.onDidReceiveMessage(async (message: WebviewMessage) => {
         switch (message.command) {
             case 'deleteProject':
+                if (!message.projectId) {
+                    return;
+                }
                 const projects = [...(configuration.get<Project[]>('projects') || [])];
                 const projectIndex = projects.findIndex(p => getProjectId(p) === message.projectId);
 

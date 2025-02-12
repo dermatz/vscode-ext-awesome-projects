@@ -7,6 +7,7 @@ import { getProjectListHtml } from './template/project/projectlist';
 import { getProjectItemHtml } from './template/project/components/project-item';
 import { scanForGitProjects, addScannedProjects } from './utils/scanForProjects';
 import { openProjectInNewWindow, openInFileManager, openUrl } from './template/project/utils/projectOpener';
+import { WebviewMessage } from './types/webviewMessages';
 
 /**
  * Project Components
@@ -16,7 +17,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'awesomeProjectsView';
     private _view?: vscode.WebviewView;
     private _disposables: vscode.Disposable[] = [];
-    private _messageHandlers: ((message: any) => void)[] = [];
+    private _messageHandlers: ((message: WebviewMessage) => void)[] = [];
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -137,7 +138,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         });
     }
 
-    public onDidReceiveMessage(handler: (message: any) => void): vscode.Disposable {
+    public onDidReceiveMessage(handler: (message: WebviewMessage) => void): vscode.Disposable {
         this._messageHandlers.push(handler);
         return {
             dispose: () => {
@@ -149,7 +150,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         };
     }
 
-    private handleMessage(message: any) {
+    private handleMessage(message: WebviewMessage): void {
         if (!message || typeof message !== 'object' || !message.command) {
             console.error('WebviewProvider: Invalid message received:', message);
             return;
