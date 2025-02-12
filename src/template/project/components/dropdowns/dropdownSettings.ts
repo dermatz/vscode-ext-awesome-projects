@@ -4,11 +4,11 @@ import { getColorPickerHtml } from '../colorpicker/colorPicker';
 import { getProjectId } from '../../utils/project-id';
 import { getSaveFunctionsScript } from '../../utils/save-functions';
 
-async function handleDeleteProject(projectPath: string) {
+async function handleDeleteProject(projectId: string) {
     try {
         const configuration = vscode.workspace.getConfiguration('awesomeProjects');
         const projects = [...(configuration.get<Project[]>('projects') || [])];
-        const projectIndex = projects.findIndex(p => p.path === projectPath);
+        const projectIndex = projects.findIndex(p => getProjectId(p) === projectId);
 
         if (projectIndex !== -1) {
             projects.splice(projectIndex, 1);
@@ -55,7 +55,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                     ${basicInputs.map(input => `
                     <div class="settings-item">
                         <label>${input.label}</label>
-                        <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" data-field="${input.field}" oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}', '${projectId}')">
+                        <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" data-field="${input.field}" oninput="handleInput(event, '${projectId}')">
                     </div>
                 `).join('')}
                 </div>
@@ -96,21 +96,21 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                                    value="${url.value}"
                                    data-field="${url.field}"
                                    data-initial-value="${url.value}"
-                                   oninput="handleInput(event, '${project.path.replace(/'/g, "\\'")}', '${projectId}')">
+                                   oninput="handleInput(event, '${projectId}')">
                         </div>
                     `).join('')}
                 </div>
             </div>
 
             <div class="actions">
-                <button class="button small save-button" id="save-${projectId}" onclick="saveChanges('${project.path.replace(/'/g, "\\'")}', '${projectId}')">
+                <button class="button small save-button" id="save-${projectId}" onclick="saveChanges('${projectId}')">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke="none" d="M0 0h24v24H0z"/>
                         <path d="M8.56 3.69a9 9 0 0 0-2.92 1.95M3.69 8.56A9 9 0 0 0 3 12M3.69 15.44a9 9 0 0 0 1.95 2.92M8.56 20.31A9 9 0 0 0 12 21M15.44 20.31a9 9 0 0 0 2.92-1.95M20.31 15.44A9 9 0 0 0 21 12M20.31 8.56a9 9 0 0 0-1.95-2.92M15.44 3.69A9 9 0 0 0 12 3M9 12l2 2 4-4"/>
                     </svg>
                     Save
                 </button>
-                <button class="button small secondary remove" onclick="handleDeleteProject('${project.path.replace(/'/g, "\\'")}')">
+                <button class="button small secondary remove" onclick="handleDeleteProject('${projectId}')">
                     <svg width="14" height="14" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z"/>
                     </svg>
@@ -122,23 +122,23 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
         <script>
             ${getSaveFunctionsScript()}
 
-            function handleInput(event, projectPath, projectId) {
+            function handleInput(event, projectId) {
                 const input = event.target;
                 const field = input.dataset.field;
                 const value = input.value;
                 const initialValue = input.dataset.initialValue || '';
 
-                if (!pendingChanges[projectPath]) {
-                    pendingChanges[projectPath] = {};
+                if (!pendingChanges[projectId]) {
+                    pendingChanges[projectId] = {};
                 }
 
                 if (value !== initialValue) {
-                    pendingChanges[projectPath][field] = value || null;
+                    pendingChanges[projectId][field] = value || null;
                 } else {
-                    delete pendingChanges[projectPath][field];
+                    delete pendingChanges[projectId][field];
                 }
 
-                updateSaveButtonState(projectPath, projectId);
+                updateSaveButtonState(projectId);
             }
 
             function refreshInputStates(settingsElement) {
@@ -149,39 +149,36 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
                 });
             }
 
-            function saveChanges(projectPath, projectId) {
-                if (pendingChanges[projectPath]) {
+            function saveChanges(projectId) {
+                if (pendingChanges[projectId]) {
                     vscode.postMessage({
                         command: 'updateProject',
-                        projectPath: projectPath,
                         projectId: projectId,
-                        updates: pendingChanges[projectPath]
+                        updates: pendingChanges[projectId]
                     });
 
                     const settingsElement = document.getElementById('settings-' + projectId);
                     if (settingsElement) {
-                        Object.entries(pendingChanges[projectPath]).forEach(([field, value]) => {
-                            // Fixed string concatenation for querySelector
+                        Object.entries(pendingChanges[projectId]).forEach(([field, value]) => {
                             const input = settingsElement.querySelector('input[data-field="' + field + '"]');
                             if (input) {
                                 input.value = value ?? '';
                             }
                         });
-                        // Refresh all input states after saving
                         refreshInputStates(settingsElement);
                     }
 
-                    delete pendingChanges[projectPath];
-                    updateSaveButtonState(projectPath, projectId);
+                    delete pendingChanges[projectId];
+                    updateSaveButtonState(projectId);
                 }
             }
 
-            function handleDeleteProject(projectPath) {
-                if (!projectPath) return;
+            function handleDeleteProject(projectId) {
+                if (!projectId) return;
 
                 vscode.postMessage({
                     command: 'deleteProject',
-                    projectPath: projectPath
+                    projectId: projectId
                 });
             }
 
