@@ -38,16 +38,20 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Handle messages from the webview
     projectsProvider.onDidReceiveMessage(async (message: WebviewMessage) => {
+        let projects: Project[];
+        let projectIndex: number;
+        let project: Project;
+
         switch (message.command) {
             case 'deleteProject':
                 if (!message.projectId) {
                     return;
                 }
-                const projects = [...(configuration.get<Project[]>('projects') || [])];
-                const projectIndex = projects.findIndex(p => getProjectId(p) === message.projectId);
+                projects = [...(configuration.get<Project[]>('projects') || [])];
+                projectIndex = projects.findIndex(p => getProjectId(p) === message.projectId);
 
                 if (projectIndex !== -1) {
-                    const project = projects[projectIndex];
+                    project = projects[projectIndex];
                     // Normalize path for platform compatibility
                     project.path = path.normalize(project.path);
 
