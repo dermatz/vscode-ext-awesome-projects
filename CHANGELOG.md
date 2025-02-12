@@ -8,9 +8,17 @@ All notable changes to the "awesome-projects" extension will be documented in th
 ---
 ## Latest Release
 
+## [0.5.2] - 2025-02-12
+
+### Bug Fixes
+
+- fix: improve changelog overlay performance
+- fix: resolve an issue where the "Remove Project" button did not work on Windows Platform (win32)
+
 ## [0.5.1] - 2025-02-10
 
 ### Bug Fixes
+
 - fix: changelog parser to render markdown links correctly in "What's New" overlay
 - fix: resolve Windows (win32) path handling issue for "Open Project" button. ([#30](https://github.com/dermatz/vscode-ext-awesome-projects/issues/30)) thanks to [@K-eL](https://github.com/K-eL)
 
