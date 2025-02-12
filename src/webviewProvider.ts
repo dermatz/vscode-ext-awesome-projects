@@ -150,6 +150,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     private handleMessage(message: any) {
+        if (!message || typeof message !== 'object' || !message.command) {
+            console.error('WebviewProvider: Invalid message received:', message);
+            return;
+        }
         this._messageHandlers.forEach(handler => handler(message));
     }
 
