@@ -16,6 +16,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'awesomeProjectsView';
     private _view?: vscode.WebviewView;
     private _disposables: vscode.Disposable[] = [];
+    private _messageHandlers: ((message: any) => void)[] = [];
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -48,6 +49,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
 
         webviewView.webview.onDidReceiveMessage(message => {
+            // Forward all messages to message handlers first
+            this.handleMessage(message);
+
+            // Then handle local commands
             switch (message.command) {
                 case 'addProject':
                     vscode.window.showOpenDialog({
@@ -108,9 +113,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'showInFileManager':
                     openInFileManager(message.project.path);
                     break;
-                case 'deleteProject':
-                    this._handleProjectDeletion(message.projectPath);
-                    break;
                 case 'scanProjects':
                     vscode.window.showOpenDialog({
                         canSelectFolders: true,
@@ -135,16 +137,20 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         });
     }
 
-    private async _handleProjectDeletion(projectPath: string) {
-        const selection = await vscode.window.showWarningMessage(
-            'Do you really want to delete this project?',
-            'Yes',
-            'No'
-        );
+    public onDidReceiveMessage(handler: (message: any) => void): vscode.Disposable {
+        this._messageHandlers.push(handler);
+        return {
+            dispose: () => {
+                const index = this._messageHandlers.indexOf(handler);
+                if (index !== -1) {
+                    this._messageHandlers.splice(index, 1);
+                }
+            }
+        };
+    }
 
-        if (selection === 'Yes') {
-            await this._deleteProject(projectPath);
-        }
+    private handleMessage(message: any) {
+        this._messageHandlers.forEach(handler => handler(message));
     }
 
     private async _updateProject(projectPath: string, updates: Partial<Project>) {
@@ -201,22 +207,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             vscode.window.showErrorMessage(`Failed to reorder projects: ${error}`);
         } finally {
             this._setLoading(false);
-        }
-    }
-
-    private async _deleteProject(projectPath: string) {
-        try {
-            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
-            const projects = [...(configuration.get<Project[]>('projects') || [])];
-            const projectIndex = projects.findIndex(p => p.path === projectPath);
-
-            if (projectIndex !== -1) {
-                projects.splice(projectIndex, 1);
-                await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
-                this.refresh();
-            }
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to delete project: ${error}`);
         }
     }
 
