@@ -48,7 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
                     project.path = path.normalize(project.path);
 
                     const answer = await vscode.window.showWarningMessage(
-                        `Are you sure you want to delete project "${project.name}"?`,
+                        `Are you sure you want to remove project "${project.name}"?`,
                         { modal: true },
                         'Yes',
                         'No'
