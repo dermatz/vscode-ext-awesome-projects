@@ -1,5 +1,8 @@
 export function getSaveFunctionsScript(): string {
     return `
+        if (!window.vscodeApi) {
+            window.vscodeApi = acquireVsCodeApi();
+        }
         if (!window.pendingChanges) {
             window.pendingChanges = {};
         }
@@ -49,7 +52,7 @@ export function getSaveFunctionsScript(): string {
 
         function saveChanges(projectId) {
             if (window.pendingChanges[projectId]) {
-                acquireVsCodeApi().postMessage({
+                window.vscodeApi.postMessage({
                     command: 'updateProject',
                     projectId: projectId,
                     updates: window.pendingChanges[projectId]
@@ -73,7 +76,7 @@ export function getSaveFunctionsScript(): string {
 
         function openProject(projectPath) {
             const normalizedPath = projectPath.replace(/\\\\/g, '\\\\');
-            acquireVsCodeApi().postMessage({
+            window.vscodeApi.postMessage({
                 command: 'openProject',
                 project: normalizedPath
             });
