@@ -1,6 +1,5 @@
 export function getSaveFunctionsScript(): string {
     return `
-        const vscode = acquireVsCodeApi();
         const pendingChanges = {};
 
         function updateSaveButtonState(projectId) {
@@ -48,7 +47,7 @@ export function getSaveFunctionsScript(): string {
 
         function saveChanges(projectId) {
             if (pendingChanges[projectId]) {
-                vscode.postMessage({
+                acquireVsCodeApi().postMessage({
                     command: 'updateProject',
                     projectId: projectId,
                     updates: pendingChanges[projectId]
@@ -72,7 +71,7 @@ export function getSaveFunctionsScript(): string {
 
         function openProject(projectPath) {
             const normalizedPath = projectPath.replace(/\\\\/g, '\\\\');
-            vscode.postMessage({
+            acquireVsCodeApi().postMessage({
                 command: 'openProject',
                 project: normalizedPath
             });
