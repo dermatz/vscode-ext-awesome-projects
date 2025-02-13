@@ -46,7 +46,6 @@ export const getContrastColor = (hexColor: string | null): string => {
 
 export function getColorPickerHtml(props: ColorPickerProps): string {
     const { projectPath, projectId, currentColor, defaultColor } = props;
-    const escapedPath = projectPath.replace(/'/g, "\\'");
 
     return `
         <div class="color-container">
@@ -54,15 +53,16 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 class="project-color-input"
                 value="${currentColor || defaultColor}"
                 data-uses-theme-color="${!currentColor}"
-                oninput="handleColorChange(event, '${escapedPath}', '${projectId}')"
-                onchange="handleColorChange(event, '${escapedPath}', '${projectId}')">
-            <button class="button small secondary random-color" onclick="setRandomColor(event, '${escapedPath}', '${projectId}')" style="display:flex; align-items:center; gap:4px;">
+                data-field="color"
+                oninput="handleInput(event, '${projectId}')"
+                onchange="handleInput(event, '${projectId}')">
+            <button class="button small secondary random-color" onclick="setRandomColor(event, '${projectId}')" style="display:flex; align-items:center; gap:4px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 4l3 3l-3 3" /><path d="M18 20l3 -3l-3 -3" /><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" /><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3" />
                 </svg>
                 <span style="pointer-events: none">Randomize</span>
             </button>
-            <button class="button small secondary" onclick="resetColor(event, '${escapedPath}', '${projectId}')">
+            <button class="button small secondary" onclick="resetColor(event, '${projectId}')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" />
                 </svg>
@@ -72,7 +72,7 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
         <script>
             ${getSaveFunctionsScript()}
 
-            function resetColor(event, projectPath, projectId) {
+            function resetColor(event, projectId) {
                 event.preventDefault();
                 const colorInput = event.target.closest('.color-container').querySelector('input[type="color"]');
                 const themeColor = getComputedStyle(document.documentElement)
@@ -90,10 +90,10 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 colorInput.value = hexColor;
                 colorInput.setAttribute('data-uses-theme-color', 'true');
 
-                if (!pendingChanges[projectPath]) {
-                    pendingChanges[projectPath] = {};
+                if (!pendingChanges[projectId]) {
+                    pendingChanges[projectId] = {};
                 }
-                pendingChanges[projectPath]['color'] = null;
+                pendingChanges[projectId]['color'] = null;
 
                 const projectItem = colorInput.closest('.project-item-wrapper').querySelector('.project-item');
                 if (projectItem) {
@@ -106,7 +106,7 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 }
 
                 const saveButton = document.getElementById('save-' + projectId);
-                updateSaveButtonState(projectPath, projectId);
+                updateSaveButtonState(projectId);
             }
 
             function generateGradient(baseColor) {
@@ -133,7 +133,7 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 return brightness > 128 ? '#000000' : '#ffffff';
             }
 
-            function setRandomColor(event, projectPath, projectId) {
+            function setRandomColor(event, projectId) {
                 event.preventDefault();
                 event.stopPropagation();
 
@@ -143,10 +143,10 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 colorInput.value = randomColor;
                 colorInput.setAttribute('data-uses-theme-color', 'false');
 
-                if (!pendingChanges[projectPath]) {
-                    pendingChanges[projectPath] = {};
+                if (!pendingChanges[projectId]) {
+                    pendingChanges[projectId] = {};
                 }
-                pendingChanges[projectPath]['color'] = randomColor;
+                pendingChanges[projectId]['color'] = randomColor;
 
                 const projectItem = button.closest('.project-item-wrapper').querySelector('.project-item');
                 if (projectItem) {
@@ -166,23 +166,23 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                     saveButton.classList.add('show');
                 }
 
-                updateSaveButtonState(projectPath, projectId);
+                updateSaveButtonState(projectId);
             }
 
-            function handleColorChange(event, projectPath, projectId) {
+            function handleColorChange(event, projectId) {
                 const value = event.target.value;
                 const oldValue = event.target.defaultValue;
                 event.target.setAttribute('data-uses-theme-color', 'false');
 
-                if (!pendingChanges[projectPath]) {
-                    pendingChanges[projectPath] = {};
+                if (!pendingChanges[projectId]) {
+                    pendingChanges[projectId] = {};
                 }
 
                 // Nur speichern wenn sich der Wert tatsächlich geändert hat
                 if (value !== oldValue) {
-                    pendingChanges[projectPath]['color'] = value;
+                    pendingChanges[projectId]['color'] = value;
                 } else {
-                    delete pendingChanges[projectPath]['color'];
+                    delete pendingChanges[projectId]['color'];
                 }
 
                 const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
@@ -196,7 +196,7 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                     }
                 }
 
-                updateSaveButtonState(projectPath, projectId);
+                updateSaveButtonState(projectId);
             }
 
             function showSaveButton(projectPath, projectId) {
@@ -206,10 +206,10 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 }
             }
 
-            function updateSaveButtonState(projectPath, projectId) {
+            function updateSaveButtonState(projectId) {
                 const saveButton = document.getElementById('save-' + projectId);
                 if (saveButton) {
-                    const hasChanges = pendingChanges[projectPath] && Object.keys(pendingChanges[projectPath]).length > 0;
+                    const hasChanges = pendingChanges[projectId] && Object.keys(pendingChanges[projectId]).length > 0;
                     saveButton.classList.toggle('show', hasChanges);
                     saveButton.disabled = !hasChanges;
                 }

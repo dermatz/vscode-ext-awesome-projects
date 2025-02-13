@@ -6,7 +6,7 @@ import { getProjectId } from './template/project/utils/project-id';
 import { WebviewMessage } from './types/webviewMessages';
 
 export interface Project {
-    id?: string;
+    id: string;  // Make id required instead of optional
     path: string;
     name: string;
     color?: string | null;  // Make color optional
@@ -35,6 +35,18 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     registerCommands(context, projectsProvider);
+
+    // Ensure all existing projects have IDs
+    const projects = configuration.get<Project[]>('projects') || [];
+    const needsUpdate = projects.some(p => !p.id);
+
+    if (needsUpdate) {
+        const updatedProjects = projects.map(project => ({
+            ...project,
+            id: project.id || getProjectId(project)
+        }));
+        configuration.update('projects', updatedProjects, vscode.ConfigurationTarget.Global);
+    }
 
     // Handle messages from the webview
     projectsProvider.onDidReceiveMessage(async (message: WebviewMessage) => {

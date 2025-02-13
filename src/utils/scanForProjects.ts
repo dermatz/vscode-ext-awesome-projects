@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Project } from '../extension';
+import { getProjectId } from '../template/project/utils/project-id';
 
 export async function scanForGitProjects(startPath: string): Promise<string[]> {
     const gitProjects: string[] = [];
@@ -70,6 +71,7 @@ export async function addScannedProjects(projects: string[]): Promise<void> {
 
     // Create new project entries
     const projectsToAdd: Project[] = selectedPaths.map(selection => ({
+        id: getProjectId({ path: selection.path, name: selection.label, color: null } as Project),
         name: selection.label,
         path: selection.path,
         color: null

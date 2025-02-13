@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Project } from '../extension';
+import { getProjectId } from '../template/project/utils/project-id';
 
 const extensionId = 'MathiasElle.awesome-projects';
 
@@ -49,16 +50,20 @@ suite('Awesome Projects Extension Test Suite', () => {
     });
 
     test('Should be able to add a project', async () => {
-        // Get initial configuration
         const config = vscode.workspace.getConfiguration('awesomeProjects');
         const initialProjects = config.get<Project[]>('projects') || [];
 
         try {
-            const newProject: Project = {
+            const projectData = {
                 name: "Test Project",
                 path: "/test/path",
                 color: "#ff0000",
                 productionUrl: "https://test.com"
+            };
+
+            const newProject: Project = {
+                ...projectData,
+                id: getProjectId({ ...projectData, id: '' } as Project)
             };
 
             // Ensure we're starting with a clean slate
@@ -107,10 +112,15 @@ suite('Awesome Projects Extension Test Suite', () => {
         const config = vscode.workspace.getConfiguration('awesomeProjects');
         const initialProjects = config.get<Project[]>('projects') || [];
 
-        const testProject: Project = {
+        const projectData = {
             name: "Update Test",
             path: "/update/test",
             color: "#00ff00"
+        };
+
+        const testProject: Project = {
+            ...projectData,
+            id: getProjectId({ ...projectData, id: '' } as Project)
         };
 
         await config.update('projects', [...initialProjects, testProject], vscode.ConfigurationTarget.Global);
@@ -136,10 +146,15 @@ suite('Awesome Projects Extension Test Suite', () => {
         const config = vscode.workspace.getConfiguration('awesomeProjects');
         const initialProjects = config.get<Project[]>('projects') || [];
 
-        const testProject: Project = {
+        const projectData = {
             name: "Delete Test",
             path: "/delete/test",
             color: "#00ff00"
+        };
+
+        const testProject: Project = {
+            ...projectData,
+            id: getProjectId({ ...projectData, id: '' } as Project)
         };
 
         // Add test project
