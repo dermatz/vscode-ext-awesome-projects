@@ -8,6 +8,12 @@ All notable changes to the "awesome-projects" extension will be documented in th
 ---
 ## Latest Release
 
+## [0.6.0] - 2025-02-13
+
+### Added Feature Request
+
+- Added a quick jump button when hovering over a project, allowing users to quickly navigate to the project - thanks to [@Morgy93](https://github.com/Morgy93) for suggest
+
 ## [0.5.2] - 2025-02-12
 
 ### Bug Fixes

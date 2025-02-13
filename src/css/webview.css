@@ -140,6 +140,11 @@ header .button {
     left: 100%;
 }
 
+.button.mini {
+    border: 0;
+    padding: 0.25rem 0.4rem;
+}
+
 
 /* Project Item Styles */
 .project-item {
@@ -256,19 +261,18 @@ header .button {
 /* Settings Styles */
 .project-settings {
     position: absolute;
-    right: 12px;
     top: 50%;
+    right: 0;
     transform: translateY(-50%) scale(0.9);
     cursor: pointer;
     opacity: 0;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 6px;
+    padding: 2px 8px;
     border-radius: 4px;
     z-index: 1;
     display: flex;
     align-items: center;
-    background: var(--vscode-editor-background);
-    border: 1px solid var(--vscode-input-border);
+    gap: 0.25rem;
 }
 
 .project-item:hover .project-settings {
