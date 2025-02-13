@@ -2,11 +2,22 @@
 
 All notable changes to the "awesome-projects" extension will be documented in this file.
 
-## Unreleased
-...
-
 ---
 ## Latest Release
+
+## [0.6.2] - 2025-02-14
+
+### Bug Fixes
+
+- Fixed an issue where the Open Folder and Save buttons did not function correctly in certain situations.
+- Fixed an issue where the Color Picker value could not be saved.
+- Fixed an issue where the vscode API was initialized too frequently, leading to performance degradation.
+- Fixed an issue that prevented path normalization from working correctly on Windows platforms.
+- Save functions have been completely overhauled and are now stored with unique project IDs instead of generated hashes.
+
+### Removed
+
+- The Open Folder button has been removed and will be reintroduced in a future update after a complete overhaul.
 
 ## [0.6.1] - 2025-02-13
 

@@ -2,14 +2,14 @@
   "name": "awesome-projects",
   "displayName": "Awesome Projects",
   "description": "Manage and organize your VS Code projects with ease. Quick access to project URLs, custom colors, and project shortcuts.",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "license": "GNU General Public License v3.0",
   "bugs": {
     "url": "https://github.com/dermatz/vscode-ext-awesome-projects/issues"
   },
-  "hompage": "https://github.com/dermatz/vscode-ext-awesome-projects#readme",
+  "homepage": "https://github.com/dermatz/vscode-ext-awesome-projects#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/dermatz/vscode-ext-awesome-projects"
