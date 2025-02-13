@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
 import { Project } from './types';
 import { ProjectsWebviewProvider } from './webviewProvider';
-import { showInFileManager } from './template/project/utils/fileManager';
 
 export const Commands = {
     ADD_PROJECT: 'awesome-projects.addProject',
     OPEN_PROJECT: 'awesome-projects.openProject',
-    REFRESH_PROJECTS: 'awesome-projects.refreshProjects',
-    SHOW_IN_FILE_MANAGER: 'awesome-projects.showInFileManager'
+    REFRESH_PROJECTS: 'awesome-projects.refreshProjects'
 };
 
 export const registerCommands = (context: vscode.ExtensionContext, projectsProvider: ProjectsWebviewProvider): void => {
@@ -68,20 +66,6 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
 
         vscode.commands.registerCommand(Commands.REFRESH_PROJECTS, () => {
             projectsProvider.refresh();
-        }),
-
-        vscode.commands.registerCommand(Commands.SHOW_IN_FILE_MANAGER, (project: Project) => {
-            if (!project?.path) {
-                vscode.window.showErrorMessage('No valid project path provided');
-                return;
-            }
-
-            try {
-                const normalizedPath = vscode.Uri.file(project.path).fsPath;
-                showInFileManager(normalizedPath);
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to open file manager: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            }
         })
     );
 };
