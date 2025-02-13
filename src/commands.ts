@@ -1,13 +1,12 @@
 import * as vscode from 'vscode';
 import { Project } from './types';
 import { ProjectsWebviewProvider } from './webviewProvider';
-import { showInFileManager } from './template/project/utils/fileManager';
 
 export const Commands = {
     ADD_PROJECT: 'awesome-projects.addProject',
     OPEN_PROJECT: 'awesome-projects.openProject',
     REFRESH_PROJECTS: 'awesome-projects.refreshProjects',
-    SHOW_IN_FILE_MANAGER: 'awesome-projects.showInFileManager'
+    UPDATE_PROJECT: 'awesome-projects.updateProject'  // Add this line
 };
 
 export const registerCommands = (context: vscode.ExtensionContext, projectsProvider: ProjectsWebviewProvider): void => {
@@ -70,11 +69,27 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
             projectsProvider.refresh();
         }),
 
-        vscode.commands.registerCommand(Commands.SHOW_IN_FILE_MANAGER, (project: Project) => {
-            if (project && project.path) {
-                showInFileManager(project.path);
-            } else {
-                vscode.window.showErrorMessage('No valid project path provided');
+        // Add new command
+        vscode.commands.registerCommand(Commands.UPDATE_PROJECT, async ({ projectId, updates }) => {
+            try {
+                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                const projects = [...(configuration.get<Project[]>('projects') || [])];
+                const projectIndex = projects.findIndex(p => p.id === projectId);
+
+                if (projectIndex !== -1) {
+                    projects[projectIndex] = {
+                        ...projects[projectIndex],
+                        ...updates,
+                    };
+
+                    await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+                    projectsProvider.refresh();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to update project: ${error}`);
+                return false;
             }
         })
     );

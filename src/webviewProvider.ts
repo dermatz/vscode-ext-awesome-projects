@@ -6,8 +6,10 @@ import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
 import { getProjectItemHtml } from './template/project/components/project-item';
 import { scanForGitProjects, addScannedProjects } from './utils/scanForProjects';
-import { openProjectInNewWindow, openInFileManager, openUrl } from './template/project/utils/projectOpener';
+import { openProjectInNewWindow, openUrl } from './template/project/utils/projectOpener';
 import { WebviewMessage } from './types/webviewMessages';
+import { getProjectId } from './template/project/utils/project-id';
+import * as path from 'path';
 
 /**
  * Project Components
@@ -66,13 +68,16 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 const configuration = vscode.workspace.getConfiguration('awesomeProjects');
                                 const projects: Project[] = configuration.get('projects') || [];
 
+                                const name = await vscode.window.showInputBox({
+                                    prompt: 'Enter project name',
+                                    value: projectPath.split('/').pop()
+                                }) || projectPath.split('/').pop() || '';
+
                                 const newProject: Project = {
+                                    id: getProjectId({ path: projectPath, name, color: null } as Project),
                                     path: projectPath,
-                                    name: await vscode.window.showInputBox({
-                                        prompt: 'Enter project name',
-                                        value: projectPath.split('/').pop()
-                                    }) || projectPath.split('/').pop() || '',
-                                    color: null  // Set default color to null
+                                    name,
+                                    color: null
                                 };
 
                                 await configuration.update(
@@ -100,19 +105,13 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     vscode.window.showInformationMessage(`Project selected: ${message.path}`);
                     break;
                 case 'updateProject':
-                    this._updateProject(message.projectPath, message.updates);
+                    this._updateProject(message.projectId, message.updates);
                     break;
                 case 'openUrl':
                     openUrl(message.url);
                     break;
-                case 'openInFinder':
-                    openInFileManager(message.path);
-                    break;
                 case 'reorderProjects':
                     this._reorderProjects(message.oldIndex, message.newIndex);
-                    break;
-                case 'showInFileManager':
-                    openInFileManager(message.project.path);
                     break;
                 case 'scanProjects':
                     vscode.window.showOpenDialog({
@@ -158,41 +157,25 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         this._messageHandlers.forEach(handler => handler(message));
     }
 
-    private async _updateProject(projectPath: string, updates: Partial<Project>) {
+    private async _updateProject(projectId: string, updates: Partial<Project>) {
         try {
-            if ('color' in updates) {
-                if (updates.color === null) {
-                    updates.color = undefined; // Ermöglicht das Zurücksetzen auf den Standardwert
-                } else if (updates.color) {
-                    const isValidHex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-                    if (!isValidHex.test(updates.color)) {
-                        throw new Error('Invalid color format');
-                    }
-                }
-            }
-
-            const urlFields: (keyof Pick<Project, 'productionUrl' | 'devUrl' | 'stagingUrl' | 'managementUrl'>)[] = [
-                'productionUrl',
-                'devUrl',
-                'stagingUrl',
-                'managementUrl'
-            ];
-
-            urlFields.forEach(field => {
-                const value = updates[field];
-                if (typeof value === 'string' && value && !/^https?:\/\//i.test(value)) {
-                    updates[field] = `https://${value}`;
-                }
-            });
-
             const configuration = vscode.workspace.getConfiguration('awesomeProjects');
             const projects = [...(configuration.get<Project[]>('projects') || [])];
-            const projectIndex = projects.findIndex(p => p.path === projectPath);
+            const projectIndex = projects.findIndex(p => getProjectId(p) === projectId);
 
             if (projectIndex !== -1) {
-                projects[projectIndex] = { ...projects[projectIndex], ...updates };
+                // Normalize path if it's being updated
+                if (updates.path) {
+                    updates.path = path.normalize(updates.path);
+                }
+
+                projects[projectIndex] = {
+                    ...projects[projectIndex],
+                    ...updates,
+                };
+
                 await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
-                this.refresh(); // Wichtig: Aktualisiert die gesamte Ansicht
+                this.refresh();
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to update project: ${error}`);
@@ -256,19 +239,36 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             <html>
             <head>
                 <style>${cssContent}</style>
+                <script>
+                    const vscode = acquireVsCodeApi();
+
+                    window.openProject = function(project) {
+                        const normalizedPath = project.replace(/\\/g, '\\\\');
+                        vscode.postMessage({
+                            command: 'openProject',
+                            project: normalizedPath
+                        });
+                    };
+
+                    window.openUrl = function(event, url) {
+                        event.preventDefault();
+                        vscode.postMessage({
+                            command: 'openUrl',
+                            url: url
+                        });
+                    };
+                </script>
             </head>
             <body>
                 ${headerHtml}
-
                 <div class="projects-wrapper">
                     <div id="loading-spinner" class="loading-spinner hidden"></div>
                     ${projectListHtml}
                 </div>
 
                 <script>
-                    const vscode = acquireVsCodeApi();
-                    const pendingChanges = {};
-
+                    // Rest of the existing script code, but remove the function definitions
+                    // that we moved to the head section
                     document.addEventListener('DOMContentLoaded', () => {
                         document.querySelectorAll('.project-color-input').forEach(input => {
                         if (input.getAttribute('data-uses-theme-color') === 'true') {
@@ -287,18 +287,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         }
                         });
                     });
-
-                    function openProject(project) {
-                        vscode.postMessage({ command: 'openProject', project });
-                    }
-
-                    function openUrl(event, url) {
-                        event.preventDefault();
-                        vscode.postMessage({
-                        command: 'openUrl',
-                        url: url
-                        });
-                    }
 
                     const list = document.getElementById('projects-list');
                     const loadingSpinner = document.getElementById('loading-spinner');

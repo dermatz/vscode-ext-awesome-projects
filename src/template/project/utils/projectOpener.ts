@@ -51,17 +51,6 @@ export async function openProjectInNewWindow(projectPath: string): Promise<void>
     }
 }
 
-export async function openInFileManager(projectPath: string): Promise<void> {
-    try {
-        const normalizedPath = normalizePath(projectPath);
-        await validatePath(normalizedPath);
-        await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(normalizedPath));
-    } catch (error) {
-        console.error('Error opening file manager:', error);
-        vscode.window.showErrorMessage(`Failed to open file manager: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-}
-
 export async function openUrl(url: string): Promise<void> {
     await vscode.env.openExternal(vscode.Uri.parse(url));
 }

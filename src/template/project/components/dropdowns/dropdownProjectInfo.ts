@@ -90,12 +90,6 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
                     </svg>
                     Open Project
                 </button>
-                <button class="button show-in-file-manager" data-path="${project.path.replace(/'/g, "\\'")}" data-name="${project.name}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                    </svg>
-                    Open Folder
-                </button>
             </div>
         </div>
     `;

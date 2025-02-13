@@ -150,11 +150,11 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
             }
 
             function saveChanges(projectId) {
-                if (pendingChanges[projectId]) {
-                    vscode.postMessage({
+                if (window.pendingChanges[projectId]) {
+                    window.vscodeApi.postMessage({
                         command: 'updateProject',
                         projectId: projectId,
-                        updates: pendingChanges[projectId]
+                        updates: window.pendingChanges[projectId]
                     });
 
                     const settingsElement = document.getElementById('settings-' + projectId);
@@ -176,7 +176,7 @@ export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, 
             function handleDeleteProject(projectId) {
                 if (!projectId) return;
 
-                vscode.postMessage({
+                window.vscodeApi.postMessage({
                     command: 'deleteProject',
                     projectId: projectId
                 });
