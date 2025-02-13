@@ -80,31 +80,35 @@ export async function showInFileManager(filePath: string): Promise<void> {
         return;
     }
 
-    // Sanitize the file path
-    const sanitizedPath = sanitizePath(filePath);
-
-    // Validate the path exists
     try {
-        const stats = await fs.stat(sanitizedPath);
+        // Sanitize and normalize the path
+        const sanitizedPath = sanitizePath(filePath);
+        const normalizedPath = path.normalize(sanitizedPath);
+
+        // Validate the path exists
+        const stats = await fs.stat(normalizedPath);
         if (!stats.isDirectory() && !stats.isFile()) {
             throw new Error('Invalid path');
         }
-    } catch (error) {
-        vscode.window.showErrorMessage('Invalid path specified');
-        return;
-    }
 
-    const platform = process.platform;
+        const platform = process.platform;
 
-    try {
-        if (platform === 'linux' && sanitizedPath.startsWith('/mnt/')) {
-            await openInWSL(sanitizedPath);
-        } else if (platform === 'win32') {
-            await openInWindows(sanitizedPath);
-        } else if (platform === 'darwin') {
-            await openInMacOS(sanitizedPath);
-        } else {
-            await openInLinux(sanitizedPath);
+        switch (platform) {
+            case 'win32':
+                await openInWindows(normalizedPath);
+                break;
+            case 'darwin':
+                await openInMacOS(normalizedPath);
+                break;
+            case 'linux':
+                if (normalizedPath.startsWith('/mnt/')) {
+                    await openInWSL(normalizedPath);
+                } else {
+                    await openInLinux(normalizedPath);
+                }
+                break;
+            default:
+                throw new Error(`Unsupported platform: ${platform}`);
         }
     } catch (error) {
         handleError(error);

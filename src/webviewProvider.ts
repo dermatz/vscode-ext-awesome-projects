@@ -6,7 +6,7 @@ import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
 import { getProjectItemHtml } from './template/project/components/project-item';
 import { scanForGitProjects, addScannedProjects } from './utils/scanForProjects';
-import { openProjectInNewWindow, openInFileManager, openUrl } from './template/project/utils/projectOpener';
+import { openProjectInNewWindow, openUrl } from './template/project/utils/projectOpener';
 import { WebviewMessage } from './types/webviewMessages';
 import { getProjectId } from './template/project/utils/project-id';
 import * as path from 'path';
@@ -110,14 +110,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'openUrl':
                     openUrl(message.url);
                     break;
-                case 'openInFinder':
-                    openInFileManager(message.path);
-                    break;
                 case 'reorderProjects':
                     this._reorderProjects(message.oldIndex, message.newIndex);
-                    break;
-                case 'showInFileManager':
-                    openInFileManager(message.project.path);
                     break;
                 case 'scanProjects':
                     vscode.window.showOpenDialog({
@@ -245,19 +239,36 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             <html>
             <head>
                 <style>${cssContent}</style>
+                <script>
+                    const vscode = acquireVsCodeApi();
+
+                    window.openProject = function(project) {
+                        const normalizedPath = project.replace(/\\/g, '\\\\');
+                        vscode.postMessage({
+                            command: 'openProject',
+                            project: normalizedPath
+                        });
+                    };
+
+                    window.openUrl = function(event, url) {
+                        event.preventDefault();
+                        vscode.postMessage({
+                            command: 'openUrl',
+                            url: url
+                        });
+                    };
+                </script>
             </head>
             <body>
                 ${headerHtml}
-
                 <div class="projects-wrapper">
                     <div id="loading-spinner" class="loading-spinner hidden"></div>
                     ${projectListHtml}
                 </div>
 
                 <script>
-                    const vscode = acquireVsCodeApi();
-                    // Remove pendingChanges definition as it's now in save-functions.ts
-
+                    // Rest of the existing script code, but remove the function definitions
+                    // that we moved to the head section
                     document.addEventListener('DOMContentLoaded', () => {
                         document.querySelectorAll('.project-color-input').forEach(input => {
                         if (input.getAttribute('data-uses-theme-color') === 'true') {
@@ -276,22 +287,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         }
                         });
                     });
-
-                    function openProject(project) {
-                        const normalizedPath = project.replace(/\\/g, '\\\\');
-                        vscode.postMessage({
-                            command: 'openProject',
-                            project: normalizedPath
-                        });
-                    }
-
-                    function openUrl(event, url) {
-                        event.preventDefault();
-                        vscode.postMessage({
-                        command: 'openUrl',
-                        url: url
-                        });
-                    }
 
                     const list = document.getElementById('projects-list');
                     const loadingSpinner = document.getElementById('loading-spinner');

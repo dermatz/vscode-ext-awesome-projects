@@ -2,8 +2,8 @@ import { Project } from '../extension';
 
 export interface WebviewMessage {
     command: 'deleteProject' | 'updateProject' | 'openProject' | 'openUrl' |
-             'showInFileManager' | 'addProject' | 'projectSelected' |
-             'openInFinder' | 'reorderProjects' | 'scanProjects' | 'setLoading';
+             'addProject' | 'projectSelected' |
+             'reorderProjects' | 'scanProjects' | 'setLoading';
     projectId?: string;
     projectPath?: string;
     project?: Project;

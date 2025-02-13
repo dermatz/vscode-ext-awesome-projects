@@ -71,10 +71,16 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
         }),
 
         vscode.commands.registerCommand(Commands.SHOW_IN_FILE_MANAGER, (project: Project) => {
-            if (project && project.path) {
-                showInFileManager(project.path);
-            } else {
+            if (!project?.path) {
                 vscode.window.showErrorMessage('No valid project path provided');
+                return;
+            }
+
+            try {
+                const normalizedPath = vscode.Uri.file(project.path).fsPath;
+                showInFileManager(normalizedPath);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to open file manager: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
         })
     );
