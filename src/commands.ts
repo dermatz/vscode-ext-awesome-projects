@@ -5,7 +5,8 @@ import { ProjectsWebviewProvider } from './webviewProvider';
 export const Commands = {
     ADD_PROJECT: 'awesome-projects.addProject',
     OPEN_PROJECT: 'awesome-projects.openProject',
-    REFRESH_PROJECTS: 'awesome-projects.refreshProjects'
+    REFRESH_PROJECTS: 'awesome-projects.refreshProjects',
+    UPDATE_PROJECT: 'awesome-projects.updateProject'  // Add this line
 };
 
 export const registerCommands = (context: vscode.ExtensionContext, projectsProvider: ProjectsWebviewProvider): void => {
@@ -66,6 +67,30 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
 
         vscode.commands.registerCommand(Commands.REFRESH_PROJECTS, () => {
             projectsProvider.refresh();
+        }),
+
+        // Add new command
+        vscode.commands.registerCommand(Commands.UPDATE_PROJECT, async ({ projectId, updates }) => {
+            try {
+                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                const projects = [...(configuration.get<Project[]>('projects') || [])];
+                const projectIndex = projects.findIndex(p => p.id === projectId);
+
+                if (projectIndex !== -1) {
+                    projects[projectIndex] = {
+                        ...projects[projectIndex],
+                        ...updates,
+                    };
+
+                    await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+                    projectsProvider.refresh();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to update project: ${error}`);
+                return false;
+            }
         })
     );
 };
