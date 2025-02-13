@@ -1,11 +1,13 @@
 export function getSaveFunctionsScript(): string {
     return `
-        const pendingChanges = {};
+        if (!window.pendingChanges) {
+            window.pendingChanges = {};
+        }
 
         function updateSaveButtonState(projectId) {
             const saveButton = document.getElementById('save-' + projectId);
             if (saveButton) {
-                const hasChanges = pendingChanges[projectId] && Object.keys(pendingChanges[projectId]).length > 0;
+                const hasChanges = window.pendingChanges[projectId] && Object.keys(window.pendingChanges[projectId]).length > 0;
                 saveButton.classList.toggle('show', hasChanges);
                 saveButton.disabled = !hasChanges;
             }
@@ -32,30 +34,30 @@ export function getSaveFunctionsScript(): string {
             const value = input.value;
             const initialValue = input.dataset.initialValue || '';
 
-            if (!pendingChanges[projectId]) {
-                pendingChanges[projectId] = {};
+            if (!window.pendingChanges[projectId]) {
+                window.pendingChanges[projectId] = {};
             }
 
             if (value !== initialValue) {
-                pendingChanges[projectId][field] = value || null;
+                window.pendingChanges[projectId][field] = value || null;
             } else {
-                delete pendingChanges[projectId][field];
+                delete window.pendingChanges[projectId][field];
             }
 
             updateSaveButtonState(projectId);
         }
 
         function saveChanges(projectId) {
-            if (pendingChanges[projectId]) {
+            if (window.pendingChanges[projectId]) {
                 acquireVsCodeApi().postMessage({
                     command: 'updateProject',
                     projectId: projectId,
-                    updates: pendingChanges[projectId]
+                    updates: window.pendingChanges[projectId]
                 });
 
                 const settingsElement = document.getElementById('settings-' + projectId);
                 if (settingsElement) {
-                    Object.entries(pendingChanges[projectId]).forEach(([field, value]) => {
+                    Object.entries(window.pendingChanges[projectId]).forEach(([field, value]) => {
                         const input = settingsElement.querySelector('input[data-field="' + field + '"]');
                         if (input) {
                             input.value = value ?? '';
@@ -64,7 +66,7 @@ export function getSaveFunctionsScript(): string {
                     });
                 }
 
-                delete pendingChanges[projectId];
+                delete window.pendingChanges[projectId];
                 updateSaveButtonState(projectId);
             }
         }
