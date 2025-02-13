@@ -69,7 +69,7 @@ export function getWhatsNewHtml(context: vscode.ExtensionContext): string {
                 });
 
                 content.addEventListener('click', (e) => {
-                    if (e.target !== changelogLink) {
+                    if (e.target !== changelogLink && !(e.target instanceof HTMLAnchorElement)) {
                         e.stopPropagation();
                     }
                 });

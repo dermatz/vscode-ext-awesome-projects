@@ -8,6 +8,12 @@ All notable changes to the "awesome-projects" extension will be documented in th
 ---
 ## Latest Release
 
+## [0.6.1] - 2025-02-13
+
+### Bug Fixes
+
+- Fixed an issue where links in the description text of the What's New overlay could not be opened in browser
+
 ## [0.6.0] - 2025-02-13
 
 ### Added Feature Request
