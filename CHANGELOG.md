@@ -5,6 +5,12 @@ All notable changes to the "awesome-projects" extension will be documented in th
 ---
 ## Latest Release
 
+## [0.6.3] - 2025-02-14
+
+### Refactoring
+
+- Removed complexity that caused stored URLs to be unreachable in certain situations
+
 ## [0.6.2] - 2025-02-14
 
 ### Bug Fixes
