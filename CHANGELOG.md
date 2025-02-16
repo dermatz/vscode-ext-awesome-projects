@@ -5,6 +5,12 @@ All notable changes to the "awesome-projects" extension will be documented in th
 ---
 ## Latest Release
 
+## [0.6.4] - 2025-02-16
+
+### Bug Fixes
+
+- QA: Fixed an issue where the path to open a project was not correctly assembled
+
 ## [0.6.3] - 2025-02-14
 
 ### Refactoring
