@@ -5,17 +5,24 @@ All notable changes to the "awesome-projects" extension will be documented in th
 ---
 ## Latest Release
 
+## [0.6.5] - 2025-02-18
+
+### Bug Fixes
+
+- Fixed an issue where the `+ Add Project` and `Scan for Project` buttons did not work correctly on the Windows platform.
+- Fixed wording in Changelog
+
 ## [0.6.4] - 2025-02-16
 
 ### Bug Fixes
 
-- QA: Fixed an issue where the path to open a project was not correctly assembled
+- QA: Fixed an issue where the path to open a project was not correctly assembled.
 
 ## [0.6.3] - 2025-02-14
 
 ### Refactoring
 
-- Removed complexity that caused stored URLs to be unreachable in certain situations
+- Removed complexity that caused stored URLs to be unreachable in certain situations.
 
 ## [0.6.2] - 2025-02-14
 
@@ -35,121 +42,124 @@ All notable changes to the "awesome-projects" extension will be documented in th
 
 ### Bug Fixes
 
-- Fixed an issue where links in the description text of the What's New overlay could not be opened in browser
+- Fixed an issue where links in the description text of the What's New overlay could not be opened in the browser.
 
 ## [0.6.0] - 2025-02-13
 
 ### Added Feature Request
 
-- Added a quick jump button when hovering over a project, allowing users to quickly navigate to the project - thanks to [@Morgy93](https://github.com/Morgy93) for suggest
+- Added a quick jump button when hovering over a project, allowing users to quickly navigate to the project - thanks to [@Morgy93](https://github.com/Morgy93) for the suggestion.
 
 ## [0.5.2] - 2025-02-12
 
 ### Bug Fixes
 
-- fix: improve changelog overlay performance
-- fix: resolve an issue where the "Remove Project" button did not work on Windows Platform (win32)
+- Improved changelog overlay performance.
+- Resolved an issue where the "Remove Project" button did not work on the Windows platform (win32).
 
 ## [0.5.1] - 2025-02-10
 
 ### Bug Fixes
 
-- fix: changelog parser to render markdown links correctly in "What's New" overlay
-- fix: resolve Windows (win32) path handling issue for "Open Project" button. ([#30](https://github.com/dermatz/vscode-ext-awesome-projects/issues/30)) thanks to [@K-eL](https://github.com/K-eL)
+- Fixed changelog parser to render markdown links correctly in the "What's New" overlay.
+- Resolved Windows (win32) path handling issue for the "Open Project" button. ([#30](https://github.com/dermatz/vscode-ext-awesome-projects/issues/30)) thanks to [@K-eL](https://github.com/K-eL).
 
 ## [0.5.0] - 2025-02-10
 
 ### Added
 
-- feat: add "Scan for Projects" button to recursively scan a folder for projects
+- Added "Scan for Projects" button to recursively scan a folder for projects.
 
 ## [0.4.0] - 2025-02-10
 
 ### Added
 
-- feat: add project highlighting to display the currently opened project
+- Added project highlighting to display the currently opened project.
 
 ## [0.3.2] - 2025-02-07
 
 ### Changes
 
-- Show latest 3 Versions in changelog overlay
+- Show latest 3 versions in changelog overlay.
 
 ### Bug Fixes
 
-- fix: resolve hover styles issue in changelog overlay
-- fix: prevent link click propagation in changelog overlay
+- Resolved hover styles issue in changelog overlay.
+- Prevented link click propagation in changelog overlay.
 
 ## [0.3.1] - 2025-02-07
 
 ### Added
 
-- feat: add a whats new overlay in footer links
-- add new readme video
+- Added a "What's New" overlay in footer links.
+- Added a new readme video.
 
-### Bugfix
+### Bug Fixes
 
-- style: fix hover styles
+- Fixed hover styles.
 
 ## [0.3.0] - 2025-02-06
 
 ### Added
-- feat: add public beta version flag
-- feat: add Git Repository & Sub-Modul detection in product info dashboard
-- style: add new header gradiends
+
+- Added public beta version flag.
+- Added Git Repository & Sub-Module detection in the product info dashboard.
+- Added new header gradients.
 
 ### Changed
-- style: update webview layout for better usability
 
-### Remove
-- remove project path on project info dashboard
-- remove preview flag
+- Updated webview layout for better usability.
 
-### Bug Fixed
-- fix: integration tests for core features
+### Removed
+
+- Removed project path on the project info dashboard.
+- Removed preview flag.
+
+### Bug Fixes
+
+- Fixed integration tests for core features.
 
 ## [0.2.1] - 2025-02-06
 
 ### Changes
 
-- style: adjust project icon background
+- Adjusted project icon background.
 
 ## [0.2.0] - 2025-02-06
 
 ### Added
 
-- feat: implement new webview design with improved UI/UX
-- feat: add new sidebar icon for better visibility
-- feat: enhance drag & drop functionality for project cards
-- feat: add improved error handling system
-- feat: update repository URL for better issue tracking
+- Implemented new webview design with improved UI/UX.
+- Added new sidebar icon for better visibility.
+- Enhanced drag & drop functionality for project cards.
+- Added improved error handling system.
+- Updated repository URL for better issue tracking.
 
 ### Refactoring
 
-- refactor: complete extension architecture overhaul
-- refactor: optimize project card management
-- refactor: improve state management system
-- refactor: enhance data persistence layer
+- Completed extension architecture overhaul.
+- Optimized project card management.
+- Improved state management system.
+- Enhanced data persistence layer.
 
 ### Bug Fixes
 
-- fix: resolve drag & drop edge cases
-- fix: correct repository links in documentation
-- fix: improve error messages for better user feedback
+- Resolved drag & drop edge cases.
+- Corrected repository links in documentation.
+- Improved error messages for better user feedback.
 
 ### Documentation
 
-- docs: update README with new features
-- docs: improve installation instructions
-- docs: add new screenshots of updated UI
+- Updated README with new features.
+- Improved installation instructions.
+- Added new screenshots of updated UI.
 
 ### Other Changes
 
-- chore: update dependencies to latest versions
-- chore: optimize build process
-- style: improve CSS organization
-- style: update color scheme for better contrast
-
+- Updated dependencies to the latest versions.
+- Optimized build process.
+- Improved CSS organization.
+- Updated color scheme for better contrast.
 
 ## [0.1.4] - 2025-01-16
 
@@ -160,33 +170,33 @@ All notable changes to the "awesome-projects" extension will be documented in th
 ### Added
 
 - Implemented automated tests to ensure the extension's quality and reliability.
-- Enhanced the extension's code handling capabilities for better user experience.
+- Enhanced the extension's code handling capabilities for a better user experience.
 
 ## [0.1.3] - 2025-01-13
 
 ### Fixed
 
-- Improved the color picker functionality to ensure it displays the correct reset color, enhancing user experience by providing accurate color selection [#4](https://github.com/dermatz/vscode-ext-awesome-projects/issues/4).
+- Improved the color picker functionality to ensure it displays the correct reset color, enhancing user experience by providing accurate color selection ([#4](https://github.com/dermatz/vscode-ext-awesome-projects/issues/4)).
 - Introduced support for Windows, allowing users to easily show files in Explorer, thereby improving accessibility and convenience for Windows users ([#5](https://github.com/dermatz/vscode-ext-awesome-projects/issues/5)).
 
 ## [0.1.2] - 2025-01-11
 
 ### Fixed
 
-- Fixed color picker fallback color (#4)
+- Fixed color picker fallback color ([#4](https://github.com/dermatz/vscode-ext-awesome-projects/issues/4)).
 
 ## [0.1.1] - 2025-01-10
 
 ### Fixed
 
-- Fixed + Button to add new Project
-- Add missing Input-Placehoder for increased accessibility
+- Fixed + button to add a new project.
+- Added missing input placeholder for increased accessibility.
 
 ## [0.1.0] - 2025-01-10
 
 ### Added
 
-- added Drag&Drop for Project Cards to rearrange
+- Added drag & drop for project cards to rearrange.
 
 ----
 
@@ -194,16 +204,16 @@ All notable changes to the "awesome-projects" extension will be documented in th
 
 ### Added
 
-- Marketplace Categories and Tags
+- Marketplace categories and tags.
 
 ### Fixed
 
-- Extension Bundeling
-- Extension Assets calls
-- Security Issues
-- Performance Bottlenecks
-- CSS loading issues in production build
+- Extension bundling.
+- Extension assets calls.
+- Security issues.
+- Performance bottlenecks.
+- CSS loading issues in the production build.
 
 ## [0.0.1] - 2025-01-09
 
-- Initial release
+- Initial release.
