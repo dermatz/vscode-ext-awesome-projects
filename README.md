@@ -80,7 +80,7 @@ Contributions are welcome! Please check our [Contributing Guidelines](CONTRIBUTI
 
 ## License
 
-This extension is released under the [MIT License](LICENSE).
+This extension is released under the [GNU General Public License v3.0](LICENSE).
 
 ## Acknowledgments
 
