@@ -20,14 +20,18 @@ export async function getAddToHtml(): Promise<string> {
             </button>
         </div>
         <script>
+            if (!window.vscodeApi) {
+                window.vscodeApi = acquireVsCodeApi();
+            }
+
             function addProject() {
-                vscode.postMessage({
+                window.vscodeApi.postMessage({
                     command: 'addProject'
                 });
             }
 
             function scanProjects() {
-                vscode.postMessage({
+                window.vscodeApi.postMessage({
                     command: 'scanProjects'
                 });
             }
