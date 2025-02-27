@@ -19,6 +19,9 @@ function convertMarkdownLinksToHtml(text: string): string {
     // Convert regular markdown links: [text](url) -> <a href="url">$1</a>
     text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2">$1</a>');
 
+    // Convert inline code blocks: `code` -> <code>code</code>
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
     return text;
 }
 

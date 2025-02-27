@@ -705,6 +705,31 @@ a.info-item-value:hover {
     text-decoration: underline;
 }
 
+.whats-new-content code {
+    background-color: var(--vscode-textBlockQuote-background);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    color: var(--vscode-textPreformat-foreground);
+    border: 1px solid var(--vscode-widget-border);
+}
+
+.whats-new-content pre {
+    background-color: var(--vscode-textBlockQuote-background);
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    border: 1px solid var(--vscode-widget-border);
+}
+
+.whats-new-content pre code {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    border: none;
+}
+
 /* Current Project Highlight */
 .project-item-wrapper.current-project {
     position: relative;
