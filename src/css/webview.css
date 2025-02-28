@@ -612,13 +612,19 @@ a.info-item-value:hover {
     background: var(--vscode-editor-background);
     border: 1px solid var(--vscode-widget-border);
     border-radius: 4px;
-    padding: 1rem;
     margin-bottom: 8px;
-    max-height: 60vh;
-    overflow-y: auto;
     z-index: 100;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     position: relative; /* Add this for absolute positioning of close button */
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.whats-new-content .content {
+    overflow-y: auto;
+    max-height: 60vh;
+    height: 100%;
+    padding: 1rem 1rem 4rem 1rem;
 }
 
 .whats-new-button {
@@ -683,26 +689,28 @@ a.info-item-value:hover {
 }
 
 .changelog-link {
+    position: sticky;
+    bottom: 0;
     text-align: center;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--vscode-widget-border);
+    padding: 1rem;
 }
 
 .changelog-link a {
-    color: var(--vscode-textLink-foreground);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
     text-decoration: none;
     font-size: 12px;
     opacity: 0.8;
-    transition: opacity 0.2s;
-    display: inline-flex;
-    align-items: center;
+    padding: 1rem;
     gap: 4px;
+    transition: opacity 0.2s;
 }
 
 .changelog-link a:hover {
     opacity: 1;
-    text-decoration: underline;
 }
 
 .whats-new-content code {

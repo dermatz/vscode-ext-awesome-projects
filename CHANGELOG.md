@@ -5,7 +5,7 @@
 ### Changes
 
 - The number of recent changes displayed in the What's New overlay has been increased from 3 to 6.
-
+- Improve Changelog styling
 ---
 
 

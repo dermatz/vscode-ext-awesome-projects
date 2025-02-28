@@ -34,9 +34,11 @@ export function getWhatsNewHtml(context: vscode.ExtensionContext): string {
                         <path d="M4 4L12 12M4 12L12 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
                 </button>
-                ${changesHtml}
+                <div class="content">
+                    ${changesHtml}
+                </div>
                 <div class="changelog-link">
-                    <a id="changeloglink" href="https://github.com/dermatz/vscode-ext-awesome-projects/blob/main/CHANGELOG.md" target="_blank">
+                    <a class="button" id="changeloglink" href="https://github.com/dermatz/vscode-ext-awesome-projects/blob/main/CHANGELOG.md" target="_blank">
                         View full changelog on GitHub
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M8.5 2H2.5C1.67157 2 1 2.67157 1 3.5V13.5C1 14.3284 1.67157 15 2.5 15H12.5C13.3284 15 14 14.3284 14 13.5V7.5M14 1H10M14 1V5M14 1L7 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
