@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+
+---
+
+## Latest Release
+
+## [0.6.8] - 2025-02-28
+
+### Changes
+
+- Updated changelog
+
+## [0.6.7] - 2025-02-28
+
 ### Changes
 
 - The number of recent changes displayed in the What's New overlay has been increased from 3 to 6.
@@ -10,10 +23,6 @@
 ### Bug Fixes
 
 - Improved the initial loading of the extension
-
----
-
-## Latest Release
 
 ## [0.6.6] - 2025-02-27
 
