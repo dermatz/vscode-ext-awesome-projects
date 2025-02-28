@@ -2,7 +2,7 @@
   "name": "awesome-projects",
   "displayName": "Awesome Projects",
   "description": "Manage and organize your VS Code projects with ease. Quick access to project URLs, custom colors, and project shortcuts.",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "license": "GNU General Public License v3.0",
@@ -21,9 +21,7 @@
     "vscode": "^1.96.0"
   },
   "categories": [
-    "Other",
-    "SCM Providers",
-    "Visualization"
+    "Other"
   ],
   "keywords": [
     "project",
@@ -38,7 +36,17 @@
     "development",
     "staging",
     "production",
-    "environment"
+    "environment",
+    "VS Code",
+    "extension",
+    "projects",
+    "quick access",
+    "custom colors",
+    "shortcuts",
+    "project URLs",
+    "file manager",
+    "webview",
+    "activity bar"
   ],
   "activationEvents": [
     "onStartupFinished"
