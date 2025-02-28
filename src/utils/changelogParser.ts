@@ -62,7 +62,7 @@ export function getChangesSinceLastTag(context: any): VersionChanges[] {
         tagsFound++;
 
         // Stop after finding two tags
-        if (tagsFound >= 3) {
+        if (tagsFound >= 6) {
             break;
         }
     }

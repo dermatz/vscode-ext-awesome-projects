@@ -1,12 +1,21 @@
 # Change Log
 
+## Unreleased
+
+### Changes
+
+- The number of recent changes displayed in the What's New overlay has been increased from 3 to 6.
+
+---
+
+
+## Latest Release
+
 ## [0.6.6] - 2025-02-27
 
 ### Bug Fixes
 
 - Fixed code blocks in the What's New overlay. Code elements wrapped in backticks (`) are now properly highlighted, making them easier to read.
-
-## Latest Release
 
 ## [0.6.5] - 2025-02-18
 
