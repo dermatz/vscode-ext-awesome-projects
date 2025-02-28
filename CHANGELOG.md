@@ -5,9 +5,13 @@
 ### Changes
 
 - The number of recent changes displayed in the What's New overlay has been increased from 3 to 6.
-- Improve Changelog styling
----
+- Improve Changelog styling and add user defined theme colors colors
 
+### Bug Fixes
+
+- Improved the initial loading of the extension
+
+---
 
 ## Latest Release
 
