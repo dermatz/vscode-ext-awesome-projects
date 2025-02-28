@@ -36,17 +36,19 @@ export function activate(context: vscode.ExtensionContext) {
 
     registerCommands(context, projectsProvider);
 
-    // Ensure all existing projects have IDs
-    const projects = configuration.get<Project[]>('projects') || [];
-    const needsUpdate = projects.some(p => !p.id);
+    // Delay the ID check
+    setTimeout(() => {
+        const projects = configuration.get<Project[]>('projects') || [];
+        const needsUpdate = projects.some(p => !p.id);
 
-    if (needsUpdate) {
-        const updatedProjects = projects.map(project => ({
-            ...project,
-            id: project.id || getProjectId(project)
-        }));
-        configuration.update('projects', updatedProjects, vscode.ConfigurationTarget.Global);
-    }
+        if (needsUpdate) {
+            const updatedProjects = projects.map(project => ({
+                ...project,
+                id: project.id || getProjectId(project)
+            }));
+            configuration.update('projects', updatedProjects, vscode.ConfigurationTarget.Global);
+        }
+    }, 1000);
 
     // Handle messages from the webview
     projectsProvider.onDidReceiveMessage(async (message: WebviewMessage) => {

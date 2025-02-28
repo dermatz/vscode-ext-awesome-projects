@@ -20,6 +20,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private _disposables: vscode.Disposable[] = [];
     private _messageHandlers: ((message: WebviewMessage) => void)[] = [];
+    private _isFirstLoad: boolean = true;
+    private _cachedCss: string = '';
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -49,7 +51,45 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [this._extensionUri]
         };
 
-        webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
+        // Initially only load a loading indicator
+        if (this._isFirstLoad) {
+            webviewView.webview.html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        .loading-spinner {
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            border: 4px solid rgba(0, 0, 0, 0.1);
+                            border-top: 4px solid var(--vscode-progressBar-background);
+                            border-radius: 50%;
+                            width: 40px;
+                            height: 40px;
+                            animation: spin 1s linear infinite;
+                        }
+                        @keyframes spin {
+                            0% { transform: translate(-50%, -50%) rotate(0deg); }
+                            100% { transform: translate(-50%, -50%) rotate(360deg); }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="loading-spinner"></div>
+                </body>
+                </html>
+            `;
+
+            // Delay loading the full content
+            setTimeout(async () => {
+                webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
+                this._isFirstLoad = false;
+            }, 100);
+        } else {
+            webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
+        }
 
         webviewView.webview.onDidReceiveMessage(message => {
             // Forward all messages to message handlers first
@@ -220,11 +260,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     private async _getHtmlForWebview(webview: vscode.Webview) {
-        let cssContent = '';
-        try {
-            cssContent = await loadResourceFile(this._context, 'dist/css/webview.css') || await loadResourceFile(this._context, 'src/css/webview.css');
-        } catch (error) {
-            console.error('Failed to load CSS:', error);
+        // Load CSS only once and cache it
+        if (!this._cachedCss) {
+            try {
+                this._cachedCss = await loadResourceFile(this._context, 'dist/css/webview.css') ||
+                                 await loadResourceFile(this._context, 'src/css/webview.css');
+            } catch (error) {
+                console.error('Failed to load CSS:', error);
+            }
         }
 
         // Get current workspace folder path
@@ -238,7 +281,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         return `<!DOCTYPE html>
             <html>
             <head>
-                <style>${cssContent}</style>
+                <style>${this._cachedCss}</style>
                 <script>
                     const vscode = acquireVsCodeApi();
 
