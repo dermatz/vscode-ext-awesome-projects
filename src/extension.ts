@@ -4,6 +4,7 @@ import { ProjectsWebviewProvider } from './webviewProvider';
 import { registerCommands } from './commands';
 import { getProjectId } from './template/project/utils/project-id';
 import { WebviewMessage } from './types/webviewMessages';
+import { showUpdateNotification } from './updateNotifier';
 
 export interface Project {
     id: string;  // Make id required instead of optional
@@ -23,6 +24,11 @@ export interface Project {
  * @param {vscode.ExtensionContext} context - The extension context.
  */
 export function activate(context: vscode.ExtensionContext) {
+
+    // Show Update-Popup
+    showUpdateNotification(context);
+
+
     const projectsProvider = new ProjectsWebviewProvider(context.extensionUri, context);
     const configuration = vscode.workspace.getConfiguration('awesomeProjects');
 

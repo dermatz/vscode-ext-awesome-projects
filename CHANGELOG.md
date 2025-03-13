@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat: add update notification feature to inform users of new versions
 
 ---
 
