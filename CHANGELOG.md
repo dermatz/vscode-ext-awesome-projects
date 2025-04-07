@@ -5,7 +5,15 @@
 
 ## Latest Release
 
+## [0.7.1] - 2025-04-07
+
+### Bug Fixes
+
+- Fixed an issue where the changelog was not displayed correctly
+
 ## [0.7.0] - 2025-04-07
+
+### Changes
 
 - feat: implement drag-and-drop functionality for project items
 - feat: add update notification feature to inform users of new versions
