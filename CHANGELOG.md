@@ -1,12 +1,14 @@
 # Change Log
 
 ## Unreleased
-
-- feat: add update notification feature to inform users of new versions
-
 ---
 
 ## Latest Release
+
+## [0.7.0] - 2025-04-07
+
+- feat: implement drag-and-drop functionality for project items
+- feat: add update notification feature to inform users of new versions
 
 ## [0.6.8] - 2025-02-28
 
