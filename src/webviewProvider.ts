@@ -285,6 +285,135 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 <script>
                     const vscode = acquireVsCodeApi();
 
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const list = document.getElementById('projects-list');
+                        let draggedItem = null;
+
+                        // Drag & Drop Event Listener hinzufügen
+                        document.querySelectorAll('.project-item-wrapper').forEach(item => {
+                            item.setAttribute('draggable', 'true');
+
+                            item.addEventListener('dragstart', (e) => {
+                                draggedItem = item;
+                                e.dataTransfer.effectAllowed = 'move';
+                                item.classList.add('dragging');
+                            });
+
+                            item.addEventListener('dragend', () => {
+                                item.classList.remove('dragging');
+                                draggedItem = null;
+                                // Alle Indikatoren entfernen
+                                document.querySelectorAll('.project-item-wrapper').forEach(item => {
+                                    item.classList.remove('insert-after');
+                                });
+                            });
+
+                            item.addEventListener('dragover', (e) => {
+                                e.preventDefault();
+                                if (draggedItem === item) return;
+
+                                // Nur den aktuellen Indikator zeigen
+                                document.querySelectorAll('.project-item-wrapper').forEach(item => {
+                                    item.classList.remove('insert-after');
+                                });
+                                item.classList.add('insert-after');
+                            });
+
+                            item.addEventListener('drop', (e) => {
+                                e.preventDefault();
+                                if (draggedItem === item) return;
+
+                                // Indizes für die Neuordnung ermitteln
+                                const items = [...list.querySelectorAll('.project-item-wrapper')];
+                                const fromIndex = items.indexOf(draggedItem);
+                                const toIndex = items.indexOf(item);
+
+                                // Element an neuer Position einfügen
+                                if (fromIndex !== -1 && toIndex !== -1) {
+                                    // Element an der alten Position entfernen
+                                    list.removeChild(draggedItem);
+
+                                    // Element an neuer Position einfügen
+                                    list.insertBefore(draggedItem, item);
+
+                                    // VS Code über die Änderung informieren
+                                    vscode.postMessage({
+                                        command: 'reorderProjects',
+                                        oldIndex: fromIndex,
+                                        newIndex: toIndex
+                                    });
+                                }
+
+                                // Aufräumen
+                                item.classList.remove('insert-after');
+                                draggedItem.classList.remove('dragging');
+                                draggedItem = null;
+                            });
+                        });
+
+                        // Rest der Event Listener
+                        document.querySelectorAll('.project-color-input').forEach(input => {
+                            if (input.getAttribute('data-uses-theme-color') === 'true') {
+                                const themeColor = getComputedStyle(document.documentElement)
+                                .getPropertyValue('--vscode-list-activeSelectionBackground')
+                                .trim();
+                                if (themeColor.startsWith('rgb')) {
+                                const rgb = themeColor.match(/d+/g);
+                                if (rgb && rgb.length === 3) {
+                                    const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+                                    input.value = hex;
+                                }
+                                } else if (themeColor.startsWith('#')) {
+                                input.value = themeColor;
+                                }
+                            }
+                        });
+
+                        document.addEventListener('click', (event) => {
+                            if (!event.target.closest('.project-item-wrapper')) {
+                            document.querySelectorAll('.settings-dropdown.show').forEach(el => {
+                                el.classList.remove('show');
+                                el.previousElementSibling.classList.remove('active');
+                            });
+                            }
+                        });
+
+                        document.querySelectorAll('.settings-dropdown').forEach(dropdown => {
+                            dropdown.addEventListener('click', (event) => {
+                            event.stopPropagation();
+                            });
+                        });
+
+                        document.addEventListener('click', (e) => {
+                            const target = e.target.closest('.show-in-file-manager');
+                            if (target) {
+                            const projectPath = target.getAttribute('data-path');
+                            const projectName = target.getAttribute('data-name');
+                            console.log('Sending showInFileManager command', { projectPath, projectName });
+                            vscode.postMessage({
+                                command: 'showInFileManager',
+                                project: {
+                                path: projectPath,
+                                name: projectName
+                                }
+                            });
+                            }
+                        });
+
+                        window.addEventListener('message', event => {
+                            const message = event.data;
+                            if (message.command === 'setLoading') {
+                            isSaving = message.isLoading;
+                            if (message.isLoading) {
+                                loadingSpinner.classList.remove('hidden');
+                            } else {
+                                loadingSpinner.classList.add('hidden');
+                            }
+                            }
+                        });
+                    });
+
+                    // Export Funktionen für globale Verwendung
                     window.openProject = function(project) {
                         const normalizedPath = project.replace(/\\/g, '\\\\');
                         vscode.postMessage({
@@ -295,10 +424,12 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
                     window.openUrl = function(event, url) {
                         event.preventDefault();
-                        vscode.postMessage({
-                            command: 'openUrl',
-                            url: url
-                        });
+                        if (vscode) {
+                            vscode.postMessage({
+                                command: 'openUrl',
+                                url: url
+                            });
+                        }
                     };
                 </script>
             </head>
@@ -308,158 +439,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     <div id="loading-spinner" class="loading-spinner hidden"></div>
                     ${projectListHtml}
                 </div>
-
-                <script>
-                    // Rest of the existing script code, but remove the function definitions
-                    // that we moved to the head section
-                    document.addEventListener('DOMContentLoaded', () => {
-                        document.querySelectorAll('.project-color-input').forEach(input => {
-                        if (input.getAttribute('data-uses-theme-color') === 'true') {
-                            const themeColor = getComputedStyle(document.documentElement)
-                            .getPropertyValue('--vscode-list-activeSelectionBackground')
-                            .trim();
-                            if (themeColor.startsWith('rgb')) {
-                            const rgb = themeColor.match(/d+/g);
-                            if (rgb && rgb.length === 3) {
-                                const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-                                input.value = hex;
-                            }
-                            } else if (themeColor.startsWith('#')) {
-                            input.value = themeColor;
-                            }
-                        }
-                        });
-                    });
-
-                    const list = document.getElementById('projects-list');
-                    const loadingSpinner = document.getElementById('loading-spinner');
-                    let dragSrcEl = null;
-                    let isSaving = false;
-
-                    function handleDragStart(e) {
-                        if (isSaving) return;
-                        dragSrcEl = this;
-                        e.dataTransfer.effectAllowed = 'move';
-                        e.dataTransfer.setData('text/html', this.innerHTML);
-                        this.classList.add('dragging');
-                    }
-
-                    function handleDragOver(e) {
-                        if (isSaving) return;
-                        if (e.preventDefault) {
-                        e.preventDefault();
-                        }
-                        e.dataTransfer.dropEffect = 'move';
-                        return false;
-                    }
-
-                    function handleDragEnter() {
-                        if (isSaving) return;
-                        this.classList.add('over');
-                    }
-
-                    function handleDragLeave() {
-                        if (isSaving) return;
-                        this.classList.remove('over');
-                    }
-
-                    function handleDrop(e) {
-                        if (isSaving) return;
-                        if (e.stopPropagation) {
-                        e.stopPropagation();
-                        }
-                        if (dragSrcEl !== this) {
-                        const oldIndex = parseInt(dragSrcEl.getAttribute('data-index'));
-                        const newIndex = parseInt(this.getAttribute('data-index'));
-                        dragSrcEl.innerHTML = this.innerHTML;
-                        this.innerHTML = e.dataTransfer.getData('text/html');
-                        vscode.postMessage({
-                            command: 'reorderProjects',
-                            oldIndex: oldIndex,
-                            newIndex: newIndex
-                        });
-                        }
-                        return false;
-                    }
-
-                    function handleDragEnd() {
-                        if (isSaving) return;
-                        this.classList.remove('dragging');
-                        document.querySelectorAll('.project-item-wrapper').forEach(item => {
-                        item.classList.remove('over');
-                        item.classList.remove('insert-top');
-                        item.classList.remove('insert-bottom');
-                        });
-                    }
-
-                    document.querySelectorAll('.project-item-wrapper').forEach(item => {
-                        item.addEventListener('dragstart', handleDragStart, false);
-                        item.addEventListener('dragenter', handleDragEnter, false);
-                        item.addEventListener('dragover', handleDragOver, false);
-                        item.addEventListener('dragleave', handleDragLeave, false);
-                        item.addEventListener('drop', handleDrop, false);
-                        item.addEventListener('dragend', handleDragEnd, false);
-                    });
-
-                    document.querySelectorAll('.project-item-wrapper').forEach(item => {
-                        item.addEventListener('dragover', function(e) {
-                        if (isSaving) return;
-                        const bounding = this.getBoundingClientRect();
-                        const offset = bounding.y + (bounding.height / 2);
-                        if (e.clientY - offset > 0) {
-                            this.classList.add('insert-bottom');
-                            this.classList.remove('insert-top');
-                        } else {
-                            this.classList.add('insert-top');
-                            this.classList.remove('insert-bottom');
-                        }
-                        });
-                    });
-
-                    document.addEventListener('click', (event) => {
-                        if (!event.target.closest('.project-item-wrapper')) {
-                        document.querySelectorAll('.settings-dropdown.show').forEach(el => {
-                            el.classList.remove('show');
-                            el.previousElementSibling.classList.remove('active');
-                        });
-                        }
-                    });
-
-                    document.querySelectorAll('.settings-dropdown').forEach(dropdown => {
-                        dropdown.addEventListener('click', (event) => {
-                        event.stopPropagation();
-                        });
-                    });
-
-                    document.addEventListener('click', (e) => {
-                        const target = e.target.closest('.show-in-file-manager');
-                        if (target) {
-                        const projectPath = target.getAttribute('data-path');
-                        const projectName = target.getAttribute('data-name');
-                        console.log('Sending showInFileManager command', { projectPath, projectName });
-                        vscode.postMessage({
-                            command: 'showInFileManager',
-                            project: {
-                            path: projectPath,
-                            name: projectName
-                            }
-                        });
-                        }
-                    });
-
-                    window.addEventListener('message', event => {
-                        const message = event.data;
-                        if (message.command === 'setLoading') {
-                        isSaving = message.isLoading;
-                        if (message.isLoading) {
-                            loadingSpinner.classList.remove('hidden');
-                        } else {
-                            loadingSpinner.classList.add('hidden');
-                        }
-                        }
-                    });
-                </script>
-
                 ${footerHtml}
             </body>
             </html>`;

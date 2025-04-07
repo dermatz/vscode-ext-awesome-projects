@@ -359,32 +359,30 @@ header .button {
     gap: 0.5rem;
 }
 
-.project-wrapper.dragging {
+.project-item-wrapper {
+    position: relative;
+}
+
+.project-item-wrapper.dragging {
     opacity: 0.5;
+    animation: glow 1.5s ease-in-out infinite;
 }
 
-.project-wrapper.over {
-    border: 2px dashed var(--vscode-input-border);
-    transition: border 0.2s ease;
+.project-item-wrapper.drag-over {
+    margin-bottom:2px;
+    padding-bottom:8px;
+    border-bottom: 2px solid var(--vscode-focusBorder);
 }
 
-.project-wrapper.insert-top::before,
-.project-wrapper.insert-bottom::after {
-    content: '';
-    display: block;
-    height: 2px;
-    background: var(--vscode-input-border);
-    position: absolute;
-    left: 0;
-    right: 0;
-}
-
-.project-wrapper.insert-top::before {
-    top: 0;
-}
-
-.project-wrapper.insert-bottom::after {
-    bottom: 0;
+@keyframes glow {
+    0%, 100% {
+        opacity: 0.5;
+        box-shadow: 0 0 4px var(--vscode-focusBorder);
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 8px var(--vscode-focusBorder);
+    }
 }
 
 /* Utility Styles */
