@@ -3,9 +3,9 @@
 ## Unreleased
 
 - feat: update depdencies
-- fix: update project ID check to run immediately and handle errors to increase performance
+- feat: load static resources only once and cache them to increase performance
+- fix: update project ID check to run immediately to increase performance
 - fix: format code for better readability and consistency
-
 ---
 
 ## Latest Release
