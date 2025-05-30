@@ -1,6 +1,9 @@
 # Change Log
 
 ## Unreleased
+
+- feat: update depdencies
+
 ---
 
 ## Latest Release
