@@ -8,7 +8,9 @@ export async function scanForGitProjects(startPath: string): Promise<string[]> {
     const gitProjects: string[] = [];
 
     async function scan(dir: string, depth: number = 0) {
-        if (depth > 5) return; // Limit recursion depth
+        if (depth > 5) {
+            return;
+        } // Limit recursion depth
 
         try {
             const files = await fs.promises.readdir(dir);
@@ -67,7 +69,7 @@ export async function addScannedProjects(projects: string[]): Promise<void> {
         }
     );
 
-    if (!selectedPaths || selectedPaths.length === 0) return;
+    if (!selectedPaths || selectedPaths.length === 0) { return; }
 
     // Create new project entries
     const projectsToAdd: Project[] = selectedPaths.map(selection => ({
