@@ -22,6 +22,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     private _messageHandlers: ((message: WebviewMessage) => void)[] = [];
     private _isFirstLoad: boolean = true;
     private _cachedCss: string = '';
+    private _cachedHeaderHtml: string = '';
+    private _cachedFooterHtml: string = '';
+    private _cssLoaded: boolean = false;
+    private _headerLoaded: boolean = false;
+    private _footerLoaded: boolean = false;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -259,24 +264,52 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async _getHtmlForWebview(webview: vscode.Webview) {
-        // Load CSS only once and cache it
-        if (!this._cachedCss) {
+    /**
+     * Loads static resources (CSS, header, footer) only once
+     * @private
+     */
+    private async _loadStaticResources(): Promise<void> {
+        // Load CSS only once
+        if (!this._cssLoaded) {
             try {
                 this._cachedCss = await loadResourceFile(this._context, 'dist/css/webview.css') ||
                                  await loadResourceFile(this._context, 'src/css/webview.css');
+                this._cssLoaded = true;
             } catch (error) {
                 console.error('Failed to load CSS:', error);
             }
         }
 
+        // Load header only once
+        if (!this._headerLoaded) {
+            try {
+                this._cachedHeaderHtml = await getHeaderHtml(this._context);
+                this._headerLoaded = true;
+            } catch (error) {
+                console.error('Failed to load header HTML:', error);
+            }
+        }
+
+        // Load footer only once
+        if (!this._footerLoaded) {
+            try {
+                this._cachedFooterHtml = await getFooterHtml(this._context);
+                this._footerLoaded = true;
+            } catch (error) {
+                console.error('Failed to load footer HTML:', error);
+            }
+        }
+    }
+
+    private async _getHtmlForWebview(webview: vscode.Webview) {
+        // Load static resources only once
+        await this._loadStaticResources();
+
         // Get current workspace folder path
         const currentWorkspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
 
-        // Pre-load all HTML components
-        const headerHtml = await getHeaderHtml(this._context);
+        // Only generate the project list HTML each time, as it changes frequently
         const projectListHtml = await getProjectListHtml(this._context, currentWorkspace);
-        const footerHtml = await getFooterHtml(this._context);
 
         return `<!DOCTYPE html>
             <html>
@@ -434,12 +467,12 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 </script>
             </head>
             <body>
-                ${headerHtml}
+                ${this._cachedHeaderHtml}
                 <div class="projects-wrapper">
                     <div id="loading-spinner" class="loading-spinner hidden"></div>
                     ${projectListHtml}
                 </div>
-                ${footerHtml}
+                ${this._cachedFooterHtml}
             </body>
             </html>`;
     }
