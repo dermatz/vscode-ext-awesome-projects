@@ -35,10 +35,10 @@ export function getChangesSinceLastTag(context: any): VersionChanges[] {
     const versionSections = content.split(/## \[/);
 
     for (const section of versionSections) {
-        if (!section.includes(']')) continue;
+        if (!section.includes(']')) { continue; }
 
         const versionMatch = section.match(/^([\d.]+)\](?:\s*-\s*(\d{4}-\d{2}-\d{2}))?\n/);
-        if (!versionMatch) continue;
+        if (!versionMatch) { continue; }
 
         const version = versionMatch[1];
         const date = versionMatch[2] || '';

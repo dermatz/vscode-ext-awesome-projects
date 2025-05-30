@@ -14,13 +14,13 @@ export function getGitServiceType(url: string): 'github' | 'gitlab' | 'bitbucket
     const domain = url.toLowerCase().replace(/^(https?:\/\/|git@)/, '').split(/[/:]/, 1)[0];
 
     // Check for GitHub (usually not self-hosted)
-    if (domain === 'github.com' || domain.includes('github')) return 'github';
+    if (domain === 'github.com' || domain.includes('github')) { return 'github'; }
 
     // Check for GitLab instances
-    if (domain === 'gitlab.com' || domain.includes('gitlab')) return 'gitlab';
+    if (domain === 'gitlab.com' || domain.includes('gitlab')) { return 'gitlab'; }
 
     // Check for Bitbucket instances
-    if (domain === 'bitbucket.org' || domain.includes('bitbucket')) return 'bitbucket';
+    if (domain === 'bitbucket.org' || domain.includes('bitbucket')) { return 'bitbucket'; }
 
     return null;
 }
