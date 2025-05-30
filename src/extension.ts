@@ -42,8 +42,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     registerCommands(context, projectsProvider);
 
-    // Delay the ID check
-    setTimeout(() => {
+    // Check project IDs immediately but asynchronously
+    (async () => {
         const projects = configuration.get<Project[]>('projects') || [];
         const needsUpdate = projects.some(p => !p.id);
 
@@ -52,9 +52,9 @@ export function activate(context: vscode.ExtensionContext) {
                 ...project,
                 id: project.id || getProjectId(project)
             }));
-            configuration.update('projects', updatedProjects, vscode.ConfigurationTarget.Global);
+            await configuration.update('projects', updatedProjects, vscode.ConfigurationTarget.Global);
         }
-    }, 1000);
+    })().catch(err => console.error('Error updating project IDs:', err));
 
     // Handle messages from the webview
     projectsProvider.onDidReceiveMessage(async (message: WebviewMessage) => {

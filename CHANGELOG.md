@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feat: update depdencies
+- fix: update project ID check to run immediately and handle errors to increase performance
 
 ---
 
