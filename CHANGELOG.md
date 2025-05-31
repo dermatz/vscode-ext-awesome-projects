@@ -2,25 +2,36 @@
 
 ## Unreleased
 
-- feat: update depdencies
-- feat: load static resources only once and cache them to increase performance
-- feat: refactor GIT-Repositorys handling to improve performance
-- fix: update project ID check to run immediately to increase performance
-- fix: format code for better readability and consistency
-
 ---
 
 ## Latest Release
 
+## [0.8.0] - 2025-05-31
+
+### New Features
+
+- Static resources (CSS, Images, HTML) only load once and cached them to increase performance
+- Refactored handling for GIT-Repositories to improve the loading performance
+
+### Fixes
+
+- update project ID check to run immediately to increase performance
+- format code for better readability and consistency
+- automated pipeline tests for newer vscode versions
+
+### Others
+
+- update depdencies
+
 ## [0.7.1] - 2025-04-07
 
-### Bug Fixes
+### Fixes
 
 - Fixed an issue where the changelog was not displayed correctly
 
 ## [0.7.0] - 2025-04-07
 
-### Changes
+### New Features
 
 - feat: implement drag-and-drop functionality for project items
 - feat: add update notification feature to inform users of new versions
