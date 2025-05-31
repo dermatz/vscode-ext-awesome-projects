@@ -4,8 +4,10 @@
 
 - feat: update depdencies
 - feat: load static resources only once and cache them to increase performance
+- feat: refactor GIT-Repositorys handling to improve performance
 - fix: update project ID check to run immediately to increase performance
 - fix: format code for better readability and consistency
+
 ---
 
 ## Latest Release

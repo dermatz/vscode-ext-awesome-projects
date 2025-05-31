@@ -81,7 +81,7 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
             : ""
             }
             <div class="info-section">
-                ${getGitRepositoriesHtml(project)}
+                ${await getGitRepositoriesHtml(project)}
             </div>
             <div class="info-actions">
                 <button class="button info-action" onclick="openProject('${project.path.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')">

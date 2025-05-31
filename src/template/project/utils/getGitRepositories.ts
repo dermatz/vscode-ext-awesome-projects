@@ -28,12 +28,16 @@ function convertGitUrlToHttps(gitUrl: string): string {
     return gitUrl;
 }
 
-function getSubmodules(projectPath: string): {name: string, url: string}[] {
+async function getSubmodules(projectPath: string): Promise<{name: string, url: string}[]> {
     const submodules: {name: string, url: string}[] = [];
     const gitmodulesPath = path.join(projectPath, '.gitmodules');
 
-    if (fs.existsSync(gitmodulesPath)) {
-        const content = fs.readFileSync(gitmodulesPath, 'utf8');
+    try {
+        // Überprüfe asynchron, ob die Datei existiert
+        await fs.promises.access(gitmodulesPath, fs.constants.F_OK);
+
+        // Lese die Datei asynchron
+        const content = await fs.promises.readFile(gitmodulesPath, 'utf8');
         const submoduleMatches = content.matchAll(/\[submodule "([^"]+)"\][^[]*url = ([^\n]+)/g);
 
         for (const match of submoduleMatches) {
@@ -41,57 +45,62 @@ function getSubmodules(projectPath: string): {name: string, url: string}[] {
             const url = convertGitUrlToHttps(match[2].trim());
             submodules.push({ name, url });
         }
+    } catch (error) {
+        // Datei existiert nicht oder kann nicht gelesen werden
     }
 
     return submodules;
 }
 
-export function getGitRepositoriesHtml(project: Project): string {
+export async function getGitRepositoriesHtml(project: Project): Promise<string> {
     let gitContent = '<span class="info-item-value">No Git repository found</span>';
     let submodulesHtml = '';
 
     const gitConfigPath = path.join(project.path, '.git', 'config');
-    if (fs.existsSync(gitConfigPath)) {
-        try {
-            const configContent = fs.readFileSync(gitConfigPath, 'utf8');
-            const urlMatch = configContent.match(/url = (.*)/);
-            if (urlMatch && urlMatch[1]) {
-                const httpsUrl = convertGitUrlToHttps(urlMatch[1].trim());
-                const serviceType = getGitServiceType(httpsUrl);
-                const icon = serviceType ? gitIcons[serviceType] : '';
-                gitContent = `
-                    <span class="repository-link">
-                        ${icon}
-                        <a class="info-item-value" href="${httpsUrl}" target="_blank">${httpsUrl}</a>
-                    </span>`;
-            }
 
-            // Add submodules section if any exist
-            const submodules = getSubmodules(project.path);
-            if (submodules.length > 0) {
-                const submodulesList = submodules
-                    .map(sub => {
-                        const serviceType = getGitServiceType(sub.url);
-                        const icon = serviceType ? gitIcons[serviceType] : '';
-                        return `
-                            <li class="repository-link">
-                                ${icon}
-                                <a class="info-item-value" href="${sub.url}" target="_blank" title="${sub.url}">${sub.name}</a>
-                            </li>`;
-                    })
-                    .join('\n');
+    try {
+        // Überprüfe asynchron, ob die Datei existiert
+        await fs.promises.access(gitConfigPath, fs.constants.F_OK);
 
-                submodulesHtml = `
-                    <div class="info-section">
-                        <div class="info-label">Git Submodules</div>
-                        <ul class="submodules">
-                            ${submodulesList}
-                        </ul>
-                    </div>`;
-            }
-        } catch (error) {
-            gitContent = '<span class="info-item-value">Error reading Git configuration</span>';
+        // Lese die Datei asynchron
+        const configContent = await fs.promises.readFile(gitConfigPath, 'utf8');
+        const urlMatch = configContent.match(/url = (.*)/);
+        if (urlMatch && urlMatch[1]) {
+            const httpsUrl = convertGitUrlToHttps(urlMatch[1].trim());
+            const serviceType = getGitServiceType(httpsUrl);
+            const icon = serviceType ? gitIcons[serviceType] : '';
+            gitContent = `
+                <span class="repository-link">
+                    ${icon}
+                    <a class="info-item-value" href="${httpsUrl}" target="_blank">${httpsUrl}</a>
+                </span>`;
         }
+
+        // Add submodules section if any exist
+        const submodules = await getSubmodules(project.path);
+        if (submodules.length > 0) {
+            const submodulesList = submodules
+                .map(sub => {
+                    const serviceType = getGitServiceType(sub.url);
+                    const icon = serviceType ? gitIcons[serviceType] : '';
+                    return `
+                        <li class="repository-link">
+                            ${icon}
+                            <a class="info-item-value" href="${sub.url}" target="_blank" title="${sub.url}">${sub.name}</a>
+                        </li>`;
+                })
+                .join('\n');
+
+            submodulesHtml = `
+                <div class="info-section">
+                    <div class="info-label">Git Submodules</div>
+                    <ul class="submodules">
+                        ${submodulesList}
+                    </ul>
+                </div>`;
+        }
+    } catch (error) {
+        gitContent = '<span class="info-item-value">Error reading Git configuration</span>';
     }
 
     return `
