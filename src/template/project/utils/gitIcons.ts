@@ -22,24 +22,24 @@ export function getGitServiceType(url: string): 'github' | 'gitlab' | 'bitbucket
 
     // Parse and determine service type
     const domain = url.toLowerCase().replace(/^(https?:\/\/|git@)/, '').split(/[/:]/, 1)[0];
-    
+
     let serviceType: 'github' | 'gitlab' | 'bitbucket' | null = null;
 
     // Check for GitHub (usually not self-hosted)
-    if (domain === 'github.com' || domain.includes('github')) { 
-        serviceType = 'github'; 
+    if (domain === 'github.com' || domain.includes('github')) {
+        serviceType = 'github';
     }
     // Check for GitLab instances
-    else if (domain === 'gitlab.com' || domain.includes('gitlab')) { 
-        serviceType = 'gitlab'; 
+    else if (domain === 'gitlab.com' || domain.includes('gitlab')) {
+        serviceType = 'gitlab';
     }
     // Check for Bitbucket instances
-    else if (domain === 'bitbucket.org' || domain.includes('bitbucket')) { 
-        serviceType = 'bitbucket'; 
+    else if (domain === 'bitbucket.org' || domain.includes('bitbucket')) {
+        serviceType = 'bitbucket';
     }
 
     // Cache the result for future lookups
     serviceTypeCache.set(url, serviceType);
-    
+
     return serviceType;
 }

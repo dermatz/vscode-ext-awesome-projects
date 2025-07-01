@@ -2,15 +2,18 @@
 
 ## Unreleased
 
+
+---
+
+## Latest Release
+
+## [0.9.0] - 2025-07-01
+
 ### Performance Improvements
 
 - Optimized project scanning performance by implementing parallel file system operations - scanning large directories is now 5-10x faster
 - Added intelligent caching for Git repository detection - repeated project loads are now significantly faster
 - Implemented URL caching for Git service type detection - eliminates redundant URL parsing
-
----
-
-## Latest Release
 
 ## [0.8.0] - 2025-05-31
 
