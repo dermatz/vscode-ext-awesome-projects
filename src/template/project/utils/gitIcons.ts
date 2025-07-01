@@ -10,17 +10,36 @@ export const gitIcons = {
     </svg>`
 };
 
+// Cache for URL to service type mapping to avoid redundant parsing
+const serviceTypeCache = new Map<string, 'github' | 'gitlab' | 'bitbucket' | null>();
+
 export function getGitServiceType(url: string): 'github' | 'gitlab' | 'bitbucket' | null {
+    // Check cache first
+    const cached = serviceTypeCache.get(url);
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    // Parse and determine service type
     const domain = url.toLowerCase().replace(/^(https?:\/\/|git@)/, '').split(/[/:]/, 1)[0];
+    
+    let serviceType: 'github' | 'gitlab' | 'bitbucket' | null = null;
 
     // Check for GitHub (usually not self-hosted)
-    if (domain === 'github.com' || domain.includes('github')) { return 'github'; }
-
+    if (domain === 'github.com' || domain.includes('github')) { 
+        serviceType = 'github'; 
+    }
     // Check for GitLab instances
-    if (domain === 'gitlab.com' || domain.includes('gitlab')) { return 'gitlab'; }
-
+    else if (domain === 'gitlab.com' || domain.includes('gitlab')) { 
+        serviceType = 'gitlab'; 
+    }
     // Check for Bitbucket instances
-    if (domain === 'bitbucket.org' || domain.includes('bitbucket')) { return 'bitbucket'; }
+    else if (domain === 'bitbucket.org' || domain.includes('bitbucket')) { 
+        serviceType = 'bitbucket'; 
+    }
 
-    return null;
+    // Cache the result for future lookups
+    serviceTypeCache.set(url, serviceType);
+    
+    return serviceType;
 }
