@@ -21,17 +21,27 @@ export async function scanForGitProjects(startPath: string): Promise<string[]> {
                 return; // Don't scan deeper if we found a git repo
             }
 
-            // Scan subdirectories
-            for (const file of files) {
+            // Scan subdirectories with parallel stat operations
+            const statPromises = files.map(async (file) => {
                 const filePath = path.join(dir, file);
                 try {
                     const stat = await fs.promises.stat(filePath);
-                    if (stat.isDirectory() && !file.startsWith('.')) {
-                        await scan(filePath, depth + 1);
-                    }
+                    return { file, filePath, stat, isValid: stat.isDirectory() && !file.startsWith('.') };
                 } catch (err) {
                     console.log(`Error accessing ${filePath}:`, err);
+                    return { file, filePath, stat: null, isValid: false };
                 }
+            });
+
+            const statResults = await Promise.all(statPromises);
+
+            // Process directories in parallel (but limit concurrency to avoid overwhelming the system)
+            const validDirectories = statResults.filter(result => result.isValid);
+            const batchSize = 10; // Process max 10 directories at once
+
+            for (let i = 0; i < validDirectories.length; i += batchSize) {
+                const batch = validDirectories.slice(i, i + batchSize);
+                await Promise.all(batch.map(result => scan(result.filePath, depth + 1)));
             }
         } catch (err) {
             console.log(`Error scanning ${dir}:`, err);
