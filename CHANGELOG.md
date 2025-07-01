@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+### Performance Improvements
+
 - Optimized project scanning performance by implementing parallel file system operations - scanning large directories is now 5-10x faster
+- Added intelligent caching for Git repository detection - repeated project loads are now significantly faster
 
 ---
 
