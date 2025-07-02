@@ -2,10 +2,15 @@
 
 ## Unreleased
 
-
 ---
 
 ## Latest Release
+
+## [0.9.1] - 2025-07-01
+
+### Performance Improvements
+
+- Improved extension startup performance. Extension now loads immediately when VS Code starts instead of waiting for startup completion. Please report any issues you encounter with this change.
 
 ## [0.9.0] - 2025-07-01
 
@@ -19,8 +24,8 @@
 
 ### New Features
 
-- Static resources (CSS, Images, HTML) only load once and cached them to increase performance
 - Refactored handling for GIT-Repositories to improve the loading performance
+- Static resources (CSS, Images, HTML) only load once and cached them to increase performance
 
 ### Fixes
 
