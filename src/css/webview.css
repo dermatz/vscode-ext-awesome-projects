@@ -1,12 +1,22 @@
-@import url('button.css');
+/* CSS Custom Properties */
+:root {
+    --border-radius: 4px;
+    --border-radius-large: 6px;
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --gradient-brand: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+    --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-heavy: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
 
+/* Base Styles */
 body {
     padding: 0;
     margin: 0;
 }
 
 section {
-    padding: .5rem 1rem;
+    padding: 0.5rem 1rem;
 }
 
 /* Header Styles */
@@ -18,7 +28,7 @@ header {
     flex-wrap: wrap;
     color: var(--vscode-foreground);
     padding: 0.5rem 1rem;
-    margin-bottom: .25rem;
+    margin-bottom: 0.25rem;
     border-radius: 3px;
     gap: 1rem;
 }
@@ -39,12 +49,13 @@ header .logo svg {
 header h1 {
     margin: 0;
     font-size: 1.25rem;
+    background-clip: text;
     -webkit-background-clip: text;
     line-height: 1.5rem;
     color: transparent;
     background-color: #4158D0;
     text-shadow: 0 5px 5px rgba(0, 0, 0, 0.3);
-    background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+    background-image: var(--gradient-brand);
 }
 
 header .linkbar {
@@ -61,9 +72,8 @@ header .version {
 }
 
 header .version .badge {
-    background-color: #4158D0;
-    background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: var(--gradient-brand);
+    box-shadow: var(--shadow-light);
     color: #4C0519;
     padding: 0.1rem 0.3rem;
     border-radius: 3px;
@@ -74,11 +84,10 @@ header .version .badge {
 }
 
 header .button {
-    padding: .25rem .5rem;
+    padding: 0.25rem 0.5rem;
 }
 
 /* Button Styles */
-
 .button {
     text-decoration: none;
     border: var(--vscode-button-border);
@@ -90,10 +99,10 @@ header .button {
     cursor: pointer;
     color: var(--vscode-button-foreground);
     background: var(--vscode-button-background);
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     gap: 4px;
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
 }
 
 .button:hover {
@@ -101,7 +110,7 @@ header .button {
     transform: translateY(-1px);
 }
 
-.button:before {
+.button::before {
     content: "";
     position: absolute;
     top: 0;
@@ -109,10 +118,10 @@ header .button {
     width: 100%;
     height: 100%;
     background: linear-gradient(120deg, transparent, color-mix(in srgb, var(--vscode-button-foreground) 10%, transparent), transparent);
-    transition: all 650ms;
+    transition: left 650ms;
 }
 
-.button:hover:before {
+.button:hover::before {
     left: 100%;
 }
 
@@ -123,7 +132,7 @@ header .button {
 
 .button.secondary:hover {
     background-color: var(--vscode-button-secondaryHoverBackground);
-    color: var (--vscode-button-secondaryHoverForeground);
+    color: var(--vscode-button-secondaryHoverForeground);
 }
 
 .button.remove:hover {
@@ -134,10 +143,6 @@ header .button {
 .button svg {
     width: 1rem;
     height: 1rem;
-}
-
-.button:hover::after {
-    left: 100%;
 }
 
 .button.mini {
@@ -153,25 +158,25 @@ header .button {
     justify-content: space-between;
     padding: 10px 12px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 6px 6px 0 0;
+    transition: all var(--transition-normal);
+    border-radius: var(--border-radius-large) var(--border-radius-large) 0 0;
     position: relative;
     background: linear-gradient(135deg,
-        color-mix(in srgb, var(--bg-color) 80%, transparent),
-        color-mix(in srgb, var(--bg-gradient) 80%, transparent)
+        color-mix(in srgb, var(--bg-color, transparent) 80%, transparent),
+        color-mix(in srgb, var(--bg-gradient, transparent) 80%, transparent)
     );
 }
 
 .project-item:not(.active) {
-    border-radius: 6px;
+    border-radius: var(--border-radius-large);
 }
 
 .project-item:hover {
     border-color: var(--vscode-input-border);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-light);
     background: linear-gradient(135deg,
-        var(--bg-color),
-        var(--bg-gradient)
+        var(--bg-color, transparent),
+        var(--bg-gradient, transparent)
     );
 }
 
@@ -179,13 +184,12 @@ header .button {
     margin-right: 12px;
     width: 22px;
     height: 22px;
-    transition: transform 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(250,250,250, 0.8);
-    border-radius: 6px;
-    transition: background-color 0.4s ease-in-out;
+    background-color: rgba(250, 250, 250, 0.8);
+    border-radius: var(--border-radius-large);
+    transition: transform var(--transition-fast), background-color 0.4s ease-in-out;
 }
 
 .project-icon img {
@@ -195,15 +199,12 @@ header .button {
 
 .project-item:hover .project-icon {
     transform: scale(1.1);
-}
-
-.project-item:hover .project-icon {
-    background-color: rgba(250,250,250, 1);
+    background-color: rgba(250, 250, 250, 1);
 }
 
 .project-info {
     flex: 1;
-    transition: transform 0.2s ease;
+    transition: transform var(--transition-fast);
 }
 
 .project-name {
@@ -237,9 +238,9 @@ header .button {
 .card {
     background: var(--vscode-menu-background);
     border-radius: 0.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-light);
     padding: 0.5rem 1rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--transition-normal);
     margin-bottom: 1rem;
 }
 
@@ -251,7 +252,7 @@ header .button {
     padding: 16px;
     margin-top: -1px;
     margin-bottom: 10px;
-    animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideDown var(--transition-fast);
 }
 
 .dropdown.show {
@@ -266,9 +267,9 @@ header .button {
     transform: translateY(-50%) scale(0.9);
     cursor: pointer;
     opacity: 0;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--transition-fast);
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     z-index: 1;
     display: flex;
     align-items: center;
@@ -280,7 +281,7 @@ header .button {
     transform: translateY(-50%) scale(1);
 }
 
-/* Info Section Styles */
+/* Info Section & Actions */
 .info-section {
     margin-bottom: 12px;
 }
@@ -305,7 +306,10 @@ header .button {
     flex-direction: column;
     gap: 8px;
     margin-top: 12px;
-    @media screen and (min-width: 310px) {
+}
+
+@media screen and (min-width: 310px) {
+    .info-actions {
         flex-direction: row;
         justify-content: space-between;
     }
@@ -317,19 +321,18 @@ header .button {
     margin: 1rem 0 0;
 }
 
-
-/* Support Box and Footer */
+/* Support & Links */
 .support-box {
     margin-top: 2rem;
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
     gap: 0.5rem;
     align-items: flex-start;
     position: relative;
 }
 
-.support-link {
+.support-link,
+a.info-item-value {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -338,18 +341,13 @@ header .button {
     font-size: 12px;
     gap: 4px;
     opacity: 0.8;
-    transition: opacity 0.2s ease;
+    transition: opacity var(--transition-fast);
 }
 
-.support-link:hover {
+.support-link:hover,
+a.info-item-value:hover {
     opacity: 1;
-}
-
-.version-info {
-    display: block;
-    font-size: 10px;
-    opacity: 0.5;
-    color: var(--vscode-foreground);
+    text-decoration: underline;
 }
 
 /* Drag and Drop Styles */
@@ -363,23 +361,20 @@ header .button {
     position: relative;
 }
 
-/* Active dragging state */
 .project-item-wrapper.dragging {
     opacity: 0.5;
     animation: glow 1.5s ease-in-out infinite;
     transform: rotate(2deg);
 }
 
-/* Drop zone indication */
 .project-item-wrapper.drag-over {
     margin-bottom: 2px;
     padding-bottom: 8px;
     border-bottom: 2px solid var(--vscode-focusBorder);
 }
 
-/* Potential drop zone styling */
 .project-item-wrapper.dropzone {
-    transition: opacity 0.2s ease;
+    transition: opacity var(--transition-fast);
     opacity: 0.8;
 }
 
@@ -387,6 +382,21 @@ header .button {
     opacity: 1;
 }
 
+/* Current Project Highlight */
+.project-item-wrapper.current-project::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 20px;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 30px;
+    max-height: 100px;
+    background: var(--vscode-activityBar-activeBorder);
+    border-radius: 2px;
+}
+
+/* Keyframe Animations */
 @keyframes glow {
     0%, 100% {
         opacity: 0.5;
@@ -398,8 +408,17 @@ header .button {
     }
 }
 
-/* Utility Styles */
+@keyframes slideDown {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Utility Classes */
 .loading-spinner {
     position: fixed;
     top: 50%;
@@ -418,89 +437,58 @@ header .button {
     display: none;
 }
 
-/* Animations */
-
-@keyframes slideDown {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-/* Input Styles */
-
+/* Form Input Styles */
 input[type="text"],
 input[type="url"] {
     width: calc(100% - 1rem);
     padding: 0.5rem;
     border: 1px solid var(--vscode-input-border);
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
     font-size: 0.8rem;
     margin: 0.5rem 0;
-    transition: background 0.2s ease-in-out;
+    transition: background var(--transition-fast);
 }
 
 input[type="text"]:focus,
 input[type="url"]:focus {
     background: color-mix(in srgb, var(--vscode-input-background) 60%, transparent);
 }
-/* save button */
-.save-button {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
 
-.save-button.show {
-    opacity: 1;
-    cursor: pointer;
-}
-
-.save-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-/* Color Picker Input Styling */
+/* Color Picker Styles */
 .color-container {
     display: flex;
     gap: 0.5rem;
     align-items: center;
     margin: 1rem 0;
 }
+
 input[type="color"].project-color-input {
-    -webkit-appearance: none;
     appearance: none;
+    -webkit-appearance: none;
     width: 2rem;
     height: 2rem;
     background-color: transparent;
     cursor: pointer;
     padding: 0;
-    border-radius: 4px;
+    border-radius: var(--border-radius);
 }
 
 input[type="color"].project-color-input::-webkit-color-swatch-wrapper {
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     padding: 0;
     border: none;
 }
 
 input[type="color"].project-color-input::-webkit-color-swatch {
     border: 2px solid var(--vscode-input-border);
-    border-radius: 4px;
+    border-radius: var(--border-radius);
+    transition: border-color var(--transition-normal);
 }
 
 input[type="color"].project-color-input:hover::-webkit-color-swatch {
     border-color: var(--vscode-button-background);
-    transition: border-color 0.3s ease-in-out;
 }
 
 input[type="color"].project-color-input:focus::-webkit-color-swatch {
@@ -509,11 +497,24 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
     outline: none;
 }
 
+/* Save Button States */
+.save-button {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transition: opacity var(--transition-fast);
+}
+
+.save-button.show,
+.save-button:not(:disabled) {
+    opacity: 1;
+    cursor: pointer;
+}
+
 /* Accordion Styles */
 .settings-accordion {
-    margin: 0 0 .5rem;
+    margin: 0 0 0.5rem;
     border: 1px solid var(--vscode-input-border);
-    border-radius: 4px;
+    border-radius: var(--border-radius);
 }
 
 .accordion-toggle {
@@ -528,7 +529,7 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
     gap: 0.5rem;
     font-size: 0.8rem;
     border-radius: 5px;
-    transition: background-color 0.2s, border-radius 0.45s ease;
+    transition: background-color var(--transition-fast), border-radius 0.45s ease;
 }
 
 .accordion-toggle:hover {
@@ -536,24 +537,24 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
 }
 
 .accordion-toggle .chevron {
-    transition: transform 0.2s ease;
+    transition: transform var(--transition-fast);
 }
 
 .accordion-toggle.expanded .chevron {
     transform: rotate(180deg);
 }
 
+.accordion-toggle.expanded {
+    border-radius: 5px 5px 0 0;
+}
+
 .accordion-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease-out;
+    transition: max-height var(--transition-normal);
     padding: 0 1rem;
     background: var(--vscode-menu-background);
     border-radius: 0 0 5px 5px;
-}
-
-.accordion-toggle.expanded {
-    border-radius: 5px 5px 0 0;
 }
 
 .accordion-toggle.expanded + .accordion-content {
@@ -561,7 +562,6 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
     border-top: 1px solid var(--vscode-input-border);
 }
 
-/* Adjust existing settings item styles */
 .settings-item {
     margin-bottom: 0.75rem;
 }
@@ -571,24 +571,15 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
 }
 
 
+/* Lists & Repository Links */
 ul.submodules {
     margin: 0;
     padding: 0;
 }
+
 ul.submodules li + li {
     margin-top: 0.125rem;
 }
-
-a.info-item-value {
-    text-decoration: none;
-    transition: opacity 0.4s ease-in-out;
-    opacity: 0.8;
-}
-a.info-item-value:hover {
-    opacity: 1;
-    text-decoration: underline;
-}
-
 
 .repository-link {
     display: flex;
@@ -601,34 +592,31 @@ a.info-item-value:hover {
     text-overflow: ellipsis;
 }
 
-
 .repository-link svg {
-    height: .8rem;
-    width: .8rem;
-    min-height: .8rem;
-    min-width: .8rem;
+    height: 0.8rem;
+    width: 0.8rem;
+    min-height: 0.8rem;
+    min-width: 0.8rem;
 }
 
-/* What's New Dropdown Styles */
+/* What's New Modal */
 .whats-new-dropdown {
     position: relative;
 }
 
 .whats-new-content {
     display: none;
-    position: fixed !important;
+    position: fixed;
     left: 1rem;
     right: 1rem;
     top: 4rem;
     background: var(--vscode-editor-background);
     border: 1px solid var(--vscode-widget-border);
-    border-radius: 4px;
+    border-radius: 5px;
     margin-bottom: 8px;
     z-index: 100;
-    position: relative; /* Add this for absolute positioning of close button */
-    border-radius: 5px;
     overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-heavy);
 }
 
 .whats-new-content .content {
@@ -644,6 +632,7 @@ a.info-item-value:hover {
     padding: 0;
     cursor: pointer;
 }
+
 .whats-new-close {
     position: absolute;
     top: 0.5rem;
@@ -654,7 +643,7 @@ a.info-item-value:hover {
     cursor: pointer;
     padding: 0.25rem;
     opacity: 0.6;
-    transition: opacity 0.2s;
+    transition: opacity var(--transition-fast);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -717,7 +706,7 @@ a.info-item-value:hover {
     opacity: 0.8;
     padding: 1rem;
     gap: 4px;
-    transition: opacity 0.2s;
+    transition: opacity var(--transition-fast);
 }
 
 .changelog-link a:hover {
@@ -737,7 +726,7 @@ a.info-item-value:hover {
 .whats-new-content pre {
     background-color: var(--vscode-textBlockQuote-background);
     padding: 1rem;
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     overflow-x: auto;
     border: 1px solid var(--vscode-widget-border);
 }
@@ -747,22 +736,4 @@ a.info-item-value:hover {
     padding: 0;
     border-radius: 0;
     border: none;
-}
-
-/* Current Project Highlight */
-.project-item-wrapper.current-project {
-    position: relative;
-}
-
-.project-item-wrapper.current-project::before {
-    content: '';
-    position: absolute;
-    left: -10px;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 30px;
-    max-height: 100px;
-    top: 20px;
-    background: var(--vscode-activityBar-activeBorder);
-    border-radius: 2px;
 }

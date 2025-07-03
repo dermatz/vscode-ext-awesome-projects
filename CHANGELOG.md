@@ -1,5 +1,11 @@
 # Change Log
 
+## Latest Release
+
+### Fixes
+
+- CSS Refactoring to improve the appearance the complete extension
+
 ---
 
 ## Latest Release
