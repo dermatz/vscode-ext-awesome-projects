@@ -4,9 +4,13 @@
     --border-radius-large: 6px;
     --transition-fast: 0.2s ease;
     --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     --gradient-brand: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+    --gradient-shine: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.1) 100%);
     --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
-    --shadow-heavy: 0 5px 15px rgba(0, 0, 0, 0.4);
+    --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.2);
+    --shadow-glow: 0 0 20px rgba(65, 88, 208, 0.3);
 }
 
 /* Base Styles */
@@ -16,7 +20,7 @@ body {
 }
 
 section {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.5rem 0.5rem 1.5rem;
 }
 
 /* Header Styles */
@@ -73,14 +77,28 @@ header .version {
 
 header .version .badge {
     background: var(--gradient-brand);
-    box-shadow: var(--shadow-light);
+    box-shadow: var(--shadow-light), 0 0 10px rgba(65, 88, 208, 0.3);
     color: #4C0519;
     padding: 0.1rem 0.3rem;
     border-radius: 3px;
     font-size: 0.6rem;
-    animation: shine 5s infinite;
+    animation: pulse 3s ease-in-out infinite;
     text-transform: uppercase;
     font-weight: bold;
+    position: relative;
+    overflow: hidden;
+}
+
+header .version .badge::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%);
+    animation: shimmer 3s ease-in-out infinite;
+    transform: rotate(-45deg);
 }
 
 header .button {
@@ -103,11 +121,17 @@ header .button {
     gap: 4px;
     font-weight: 500;
     transition: all var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .button:hover {
-    box-shadow: 1px 1px 15px 5px color-mix(in srgb, var(--vscode-widget-shadow) 10%, transparent);
-    transform: translateY(-1px);
+    box-shadow: var(--shadow-medium), var(--shadow-glow);
+    transform: translateY(-2px) scale(1.02);
+}
+
+.button:active {
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s ease;
 }
 
 .button::before {
@@ -117,12 +141,29 @@ header .button {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(120deg, transparent, color-mix(in srgb, var(--vscode-button-foreground) 10%, transparent), transparent);
-    transition: left 650ms;
+    background: var(--gradient-shine);
+    transition: left 650ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .button:hover::before {
     left: 100%;
+}
+
+.button::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-shine);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    pointer-events: none;
+}
+
+.button:hover::after {
+    opacity: 0.15;
 }
 
 .button.secondary {
@@ -156,15 +197,32 @@ header .button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
+    padding: 0.5rem 1rem;
     cursor: pointer;
     transition: all var(--transition-normal);
-    border-radius: var(--border-radius-large) var(--border-radius-large) 0 0;
+    border-radius: var(--border-radius-large);
     position: relative;
     background: linear-gradient(135deg,
-        color-mix(in srgb, var(--bg-color, transparent) 80%, transparent),
-        color-mix(in srgb, var(--bg-gradient, transparent) 80%, transparent)
+        color-mix(in srgb, var(--bg-color, transparent) 85%, transparent),
+        color-mix(in srgb, var(--bg-gradient, transparent) 85%, transparent)
     );
+    border: 1px solid color-mix(in srgb, var(--bg-color, var(--vscode-panel-border)) 40%, transparent);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-light);
+}
+
+.project-item::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-shine);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    border-radius: inherit;
+    pointer-events: none;
 }
 
 .project-item:not(.active) {
@@ -172,34 +230,74 @@ header .button {
 }
 
 .project-item:hover {
-    border-color: var(--vscode-input-border);
-    box-shadow: var(--shadow-light);
+    border-color: color-mix(in srgb, var(--bg-color, var(--vscode-focusBorder)) 60%, transparent);
+    box-shadow: var(--shadow-medium),
+                0 0 15px color-mix(in srgb, var(--bg-color, var(--vscode-focusBorder)) 30%, transparent);
     background: linear-gradient(135deg,
         var(--bg-color, transparent),
         var(--bg-gradient, transparent)
     );
+    transform: translateY(-2px);
+}
+
+.project-item:hover::before {
+    opacity: 0.1;
+}
+
+.project-item:active {
+    transform: translateY(-1px);
+    transition: all 0.1s ease;
 }
 
 .project-icon {
-    margin-right: 12px;
-    width: 22px;
-    height: 22px;
+    margin-right: 16px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(250, 250, 250, 0.8);
+    background: linear-gradient(135deg, rgba(250, 250, 250, 0.9), rgba(240, 240, 240, 0.8));
     border-radius: var(--border-radius-large);
-    transition: transform var(--transition-fast), background-color 0.4s ease-in-out;
+    transition: all var(--transition-bounce);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.project-icon::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%);
+    opacity: 0;
+    transition: all 0.6s ease;
+    transform: rotate(-45deg);
 }
 
 .project-icon img {
     width: 16px;
     height: 16px;
+    border-radius: 2px;
+    z-index: 1;
+    position: relative;
 }
 
 .project-item:hover .project-icon {
-    transform: scale(1.1);
-    background-color: rgba(250, 250, 250, 1);
+    transform: scale(1.15) rotate(5deg);
+    background: linear-gradient(135deg, rgba(250, 250, 250, 1), rgba(240, 240, 240, 0.95));
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5),
+                0 0 10px rgba(65, 88, 208, 0.2);
+}
+
+.project-item:hover .project-icon::before {
+    opacity: 1;
+    left: 100%;
 }
 
 .project-info {
@@ -248,15 +346,20 @@ header .button {
     display: none;
     background: var(--vscode-editor-background);
     border-top: none;
-    border-radius: 0 0 8px 8px;
-    padding: 16px;
+    border-radius: 0 0 var(--border-radius-large) var(--border-radius-large);
+    padding: 20px;
     margin-top: -1px;
-    margin-bottom: 10px;
-    animation: slideDown var(--transition-fast);
+    margin-bottom: 12px;
+    animation: slideDown var(--transition-normal) ease-out;
+    box-shadow: var(--shadow-medium);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 50%, transparent);
+    border-top: none;
+    backdrop-filter: blur(4px);
 }
 
 .dropdown.show {
     display: block;
+    animation: slideDown var(--transition-normal) ease-out;
 }
 
 /* Settings Styles */
@@ -383,18 +486,51 @@ a.info-item-value:hover {
 }
 
 /* Current Project Highlight */
+.project-item-wrapper.current-project {
+    position: relative;
+}
+
 .project-item-wrapper.current-project::before {
     content: '';
     position: absolute;
-    left: -10px;
-    top: 20px;
+    left: -0.8rem;
+    top: 0.3rem;
     transform: translateY(-50%);
-    width: 4px;
-    height: 30px;
-    max-height: 100px;
-    background: var(--vscode-activityBar-activeBorder);
+    width: 0.4rem;
+    height: 80%;
+    background: var(--gradient-brand);
     border-radius: 2px;
+    box-shadow: 0 0 8px rgba(65, 88, 208, 0.5);
+    animation: pulse 2s ease-in-out infinite;
 }
+
+.project-item-wrapper.current-project .project-item {
+    border: 2px solid var(--vscode-activityBar-activeBorder);
+    box-shadow: var(--shadow-medium),
+                0 0 20px color-mix(in srgb, var(--vscode-activityBar-activeBorder) 30%, transparent);
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--vscode-activityBar-activeBorder) 15%, var(--bg-color, transparent)),
+        color-mix(in srgb, var(--vscode-activityBar-activeBorder) 10%, var(--bg-gradient, transparent))
+    );
+}
+
+.project-item-wrapper.current-project .project-icon {
+    border: 2px solid var(--vscode-activityBar-activeBorder);
+    box-shadow: 0 0 10px rgba(65, 88, 208, 0.3);
+}
+
+/* Project List Loading Animation */
+.project-item-wrapper {
+    animation: fadeInUp 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.project-item-wrapper:nth-child(1) { animation-delay: 0.1s; }
+.project-item-wrapper:nth-child(2) { animation-delay: 0.2s; }
+.project-item-wrapper:nth-child(3) { animation-delay: 0.3s; }
+.project-item-wrapper:nth-child(4) { animation-delay: 0.4s; }
+.project-item-wrapper:nth-child(5) { animation-delay: 0.5s; }
+.project-item-wrapper:nth-child(n+6) { animation-delay: 0.6s; }
 
 /* Keyframe Animations */
 @keyframes glow {
@@ -409,13 +545,63 @@ a.info-item-value:hover {
 }
 
 @keyframes slideDown {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes spin {
     0% { transform: translate(-50%, -50%) rotate(0deg); }
     100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(.9);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200px 0;
+    }
+    100% {
+        background-position: calc(200px + 100%) 0;
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: translate3d(0, 0, 0);
+    }
+    40%, 43% {
+        transform: translate3d(0, -6px, 0);
+    }
+    70% {
+        transform: translate3d(0, -3px, 0);
+    }
+    90% {
+        transform: translate3d(0, -1px, 0);
+    }
 }
 
 /* Utility Classes */
@@ -424,13 +610,35 @@ a.info-item-value:hover {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 50px;
+    height: 50px;
+    z-index: 1000;
+}
+
+.loading-spinner::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 4px solid rgba(65, 88, 208, 0.1);
     border-top: 4px solid var(--vscode-progressBar-background);
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
     animation: spin 1s linear infinite;
-    z-index: 1000;
+}
+
+.loading-spinner::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+    border: 2px solid transparent;
+    border-top: 2px solid rgba(200, 80, 192, 0.8);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite reverse;
 }
 
 .hidden {
@@ -441,19 +649,25 @@ a.info-item-value:hover {
 input[type="text"],
 input[type="url"] {
     width: calc(100% - 1rem);
-    padding: 0.5rem;
-    border: 1px solid var(--vscode-input-border);
+    padding: 0.75rem;
+    border: 2px solid var(--vscode-input-border);
     border-radius: var(--border-radius);
     background: var(--vscode-input-background);
     color: var(--vscode-input-foreground);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     margin: 0.5rem 0;
-    transition: background var(--transition-fast);
+    transition: all var(--transition-normal);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 input[type="text"]:focus,
 input[type="url"]:focus {
     background: color-mix(in srgb, var(--vscode-input-background) 60%, transparent);
+    border-color: var(--vscode-focusBorder);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--vscode-focusBorder) 30%, transparent),
+                0 2px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    outline: none;
 }
 
 /* Color Picker Styles */

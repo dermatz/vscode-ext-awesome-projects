@@ -1,14 +1,15 @@
 # Change Log
 
-## Latest Release
-
-### Fixes
-
-- CSS Refactoring to improve the appearance the complete extension
-
 ---
 
 ## Latest Release
+
+## [0.9.3] - 2025-07-03
+
+### ✨ Visual Enhancements
+
+- CSS Refactoring to improve the appearance the complete extension
+- Removed GIF Video from README.md to improve loading performance
 
 ## [0.9.2] - 2025-07-03
 
