@@ -40,7 +40,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor);
 
     return `
-        <div class="project-item-wrapper ${currentProjectClass}" data-project-id="${getProjectId(project)}"
+        <div class="project-item-wrapper ${currentProjectClass}" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}"
         >
             <div class="project-item"
                 style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"

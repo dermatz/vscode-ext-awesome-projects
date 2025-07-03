@@ -155,6 +155,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'openUrl':
                     openUrl(message.url);
                     break;
+                case 'reorderProjects':
+                    this._reorderProjects(message.oldIndex, message.newIndex);
+                    break;
                 case 'scanProjects':
                     vscode.window.showOpenDialog({
                         canSelectFolders: true,
@@ -221,6 +224,22 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to update project: ${error}`);
+        }
+    }
+
+    private async _reorderProjects(oldIndex: number, newIndex: number) {
+        try {
+            this._setLoading(true);
+            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+            const projects = [...(configuration.get<Project[]>('projects') || [])];
+            const [movedProject] = projects.splice(oldIndex, 1);
+            projects.splice(newIndex, 0, movedProject);
+            await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+            this.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to reorder projects: ${error}`);
+        } finally {
+            this._setLoading(false);
         }
     }
 
@@ -300,7 +319,70 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     const vscode = acquireVsCodeApi();
 
                     document.addEventListener('DOMContentLoaded', () => {
-                        // Drag & Drop entfernt - nur noch Event Listener für andere Funktionen
+                        const list = document.getElementById('projects-list');
+                        let draggedItem = null;
+
+                        // Drag & Drop Event Listener hinzufügen
+                        document.querySelectorAll('.project-item-wrapper').forEach(item => {
+                            item.setAttribute('draggable', 'true');
+
+                            item.addEventListener('dragstart', (e) => {
+                                draggedItem = item;
+                                e.dataTransfer.effectAllowed = 'move';
+                                item.classList.add('dragging');
+                            });
+
+                            item.addEventListener('dragend', () => {
+                                item.classList.remove('dragging');
+                                draggedItem = null;
+                                // Alle Indikatoren entfernen
+                                document.querySelectorAll('.project-item-wrapper').forEach(item => {
+                                    item.classList.remove('insert-after');
+                                });
+                            });
+
+                            item.addEventListener('dragover', (e) => {
+                                e.preventDefault();
+                                if (draggedItem === item) return;
+
+                                // Nur den aktuellen Indikator zeigen
+                                document.querySelectorAll('.project-item-wrapper').forEach(item => {
+                                    item.classList.remove('insert-after');
+                                });
+                                item.classList.add('insert-after');
+                            });
+
+                            item.addEventListener('drop', (e) => {
+                                e.preventDefault();
+                                if (draggedItem === item) return;
+
+                                // Indizes für die Neuordnung ermitteln
+                                const items = [...list.querySelectorAll('.project-item-wrapper')];
+                                const fromIndex = items.indexOf(draggedItem);
+                                const toIndex = items.indexOf(item);
+
+                                // Element an neuer Position einfügen
+                                if (fromIndex !== -1 && toIndex !== -1) {
+                                    // Element an der alten Position entfernen
+                                    list.removeChild(draggedItem);
+
+                                    // Element an neuer Position einfügen
+                                    list.insertBefore(draggedItem, item);
+
+                                    // VS Code über die Änderung informieren
+                                    vscode.postMessage({
+                                        command: 'reorderProjects',
+                                        oldIndex: fromIndex,
+                                        newIndex: toIndex
+                                    });
+                                }
+
+                                // Aufräumen
+                                item.classList.remove('insert-after');
+                                draggedItem.classList.remove('dragging');
+                                draggedItem = null;
+                            });
+                        });
 
                         // Rest der Event Listener
                         document.querySelectorAll('.project-color-input').forEach(input => {
