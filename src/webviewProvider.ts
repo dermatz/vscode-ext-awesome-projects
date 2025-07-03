@@ -319,72 +319,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     const vscode = acquireVsCodeApi();
 
                     document.addEventListener('DOMContentLoaded', () => {
-                        const list = document.getElementById('projects-list');
-                        let draggedItem = null;
-
-                        // Drag & Drop Event Listener hinzufügen
-                        document.querySelectorAll('.project-item-wrapper').forEach(item => {
-                            item.setAttribute('draggable', 'true');
-
-                            item.addEventListener('dragstart', (e) => {
-                                draggedItem = item;
-                                e.dataTransfer.effectAllowed = 'move';
-                                item.classList.add('dragging');
-                            });
-
-                            item.addEventListener('dragend', () => {
-                                item.classList.remove('dragging');
-                                draggedItem = null;
-                                // Alle Indikatoren entfernen
-                                document.querySelectorAll('.project-item-wrapper').forEach(item => {
-                                    item.classList.remove('insert-after');
-                                });
-                            });
-
-                            item.addEventListener('dragover', (e) => {
-                                e.preventDefault();
-                                if (draggedItem === item) return;
-
-                                // Nur den aktuellen Indikator zeigen
-                                document.querySelectorAll('.project-item-wrapper').forEach(item => {
-                                    item.classList.remove('insert-after');
-                                });
-                                item.classList.add('insert-after');
-                            });
-
-                            item.addEventListener('drop', (e) => {
-                                e.preventDefault();
-                                if (draggedItem === item) return;
-
-                                // Indizes für die Neuordnung ermitteln
-                                const items = [...list.querySelectorAll('.project-item-wrapper')];
-                                const fromIndex = items.indexOf(draggedItem);
-                                const toIndex = items.indexOf(item);
-
-                                // Element an neuer Position einfügen
-                                if (fromIndex !== -1 && toIndex !== -1) {
-                                    // Element an der alten Position entfernen
-                                    list.removeChild(draggedItem);
-
-                                    // Element an neuer Position einfügen
-                                    list.insertBefore(draggedItem, item);
-
-                                    // VS Code über die Änderung informieren
-                                    vscode.postMessage({
-                                        command: 'reorderProjects',
-                                        oldIndex: fromIndex,
-                                        newIndex: toIndex
-                                    });
-                                }
-
-                                // Aufräumen
-                                item.classList.remove('insert-after');
-                                draggedItem.classList.remove('dragging');
-                                draggedItem = null;
-                            });
-                        });
-
-                        // Rest der Event Listener
+                        // Setup event listeners
                         document.querySelectorAll('.project-color-input').forEach(input => {
                             if (input.getAttribute('data-uses-theme-color') === 'true') {
                                 const themeColor = getComputedStyle(document.documentElement)
@@ -446,7 +381,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         });
                     });
 
-                    // Export Funktionen für globale Verwendung
+                    // Export functions for global usage
                     window.openProject = function(project) {
                         const normalizedPath = project.replace(/\\/g, '\\\\');
                         vscode.postMessage({

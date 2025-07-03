@@ -363,15 +363,28 @@ header .button {
     position: relative;
 }
 
+/* Active dragging state */
 .project-item-wrapper.dragging {
     opacity: 0.5;
     animation: glow 1.5s ease-in-out infinite;
+    transform: rotate(2deg);
 }
 
+/* Drop zone indication */
 .project-item-wrapper.drag-over {
-    margin-bottom:2px;
-    padding-bottom:8px;
+    margin-bottom: 2px;
+    padding-bottom: 8px;
     border-bottom: 2px solid var(--vscode-focusBorder);
+}
+
+/* Potential drop zone styling */
+.project-item-wrapper.dropzone {
+    transition: opacity 0.2s ease;
+    opacity: 0.8;
+}
+
+.project-item-wrapper.dropzone:hover {
+    opacity: 1;
 }
 
 @keyframes glow {

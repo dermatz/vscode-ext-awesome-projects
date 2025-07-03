@@ -1,10 +1,14 @@
 # Change Log
 
-## Unreleased
-
 ---
 
 ## Latest Release
+
+## [0.9.2] - 2025-07-03
+
+### Fixes
+
+- Complete reworked drag & drop functionality for project cards, allowing users to rearrange projects more intuitively and efficiently.
 
 ## [0.9.1] - 2025-07-01
 
