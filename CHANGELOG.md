@@ -1,5 +1,9 @@
 # Change Log
 
+## Next Release
+
+- Compressed image assets to reduce extension size and improve loading performance.
+
 ---
 
 ## Latest Release
