@@ -352,38 +352,7 @@ header .button {
     color: var(--vscode-foreground);
 }
 
-/* Drag and Drop Styles */
-.draggable-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.project-item-wrapper {
-    position: relative;
-}
-
-.project-item-wrapper.dragging {
-    opacity: 0.5;
-    animation: glow 1.5s ease-in-out infinite;
-}
-
-.project-item-wrapper.drag-over {
-    margin-bottom:2px;
-    padding-bottom:8px;
-    border-bottom: 2px solid var(--vscode-focusBorder);
-}
-
-@keyframes glow {
-    0%, 100% {
-        opacity: 0.5;
-        box-shadow: 0 0 4px var(--vscode-focusBorder);
-    }
-    50% {
-        opacity: 1;
-        box-shadow: 0 0 8px var(--vscode-focusBorder);
-    }
-}
+/* Drag and Drop Styles entfernt */
 
 /* Utility Styles */
 
@@ -703,7 +672,7 @@ a.info-item-value:hover {
     font-size: 12px;
     opacity: 0.8;
     padding: 1rem;
-    gap: 4px;
+    gap: .25rem;
     transition: opacity 0.2s;
 }
 
@@ -737,6 +706,10 @@ a.info-item-value:hover {
 }
 
 /* Current Project Highlight */
+.project-item-wrapper {
+    margin-bottom: .25rem;
+}
+
 .project-item-wrapper.current-project {
     position: relative;
 }
