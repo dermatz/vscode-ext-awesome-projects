@@ -178,6 +178,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         }
                     });
                     break;
+                case 'sortProjects':
+                    console.log('Received sortProjects message:', message);
+                    this._sortProjects(message.sortedProjectIds || []);
+                    break;
             }
         });
     }
@@ -243,6 +247,33 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    private async _sortProjects(sortedProjectIds: string[]) {
+        try {
+            console.log('_sortProjects called with IDs:', sortedProjectIds);
+            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+            const projects = [...(configuration.get<Project[]>('projects') || [])];
+            console.log('Current projects:', projects);
+
+            // Reorder projects based on the sorted IDs
+            const sortedProjects = sortedProjectIds
+                .map(id => projects.find(p => getProjectId(p) === id))
+                .filter(Boolean) as Project[];
+
+            // Add any projects that weren't in the sorted list (edge case)
+            const includedIds = new Set(sortedProjectIds);
+            const missingProjects = projects.filter(p => !includedIds.has(getProjectId(p)));
+            sortedProjects.push(...missingProjects);
+
+            console.log('Sorted projects:', sortedProjects);
+            await configuration.update('projects', sortedProjects, vscode.ConfigurationTarget.Global);
+            console.log('Projects updated in configuration');
+            this.refresh();
+        } catch (error) {
+            console.error('Error in _sortProjects:', error);
+            vscode.window.showErrorMessage(`Failed to sort projects: ${error}`);
+        }
+    }
+
     private _setLoading(isLoading: boolean) {
         if (this._view) {
             this._view.webview.postMessage({ command: 'setLoading', isLoading });
@@ -272,11 +303,19 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         // Load CSS only once
         if (!this._cssLoaded) {
             try {
-                this._cachedCss = await loadResourceFile(this._context, 'dist/css/webview.css') ||
-                                 await loadResourceFile(this._context, 'src/css/webview.css');
+                let cssContent = '';
+                try {
+                    cssContent = await loadResourceFile(this._context, 'dist/css/webview.css');
+                } catch {
+                    // Fallback to src directory
+                    cssContent = await loadResourceFile(this._context, 'src/css/webview.css');
+                }
+                this._cachedCss = cssContent;
                 this._cssLoaded = true;
             } catch (error) {
                 console.error('Failed to load CSS:', error);
+                // Don't mark as loaded if CSS couldn't be loaded
+                // this._cssLoaded = true;
             }
         }
 
@@ -287,6 +326,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 this._headerLoaded = true;
             } catch (error) {
                 console.error('Failed to load header HTML:', error);
+                // Don't mark as loaded if header couldn't be loaded
             }
         }
 
@@ -297,6 +337,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 this._footerLoaded = true;
             } catch (error) {
                 console.error('Failed to load footer HTML:', error);
+                // Don't mark as loaded if footer couldn't be loaded
             }
         }
     }
@@ -317,6 +358,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 <style>${this._cachedCss}</style>
                 <script>
                     const vscode = acquireVsCodeApi();
+                    // Make vscode globally available for other scripts
+                    window.vscode = vscode;
 
                     document.addEventListener('DOMContentLoaded', () => {
                         // Setup event listeners

@@ -1,12 +1,14 @@
 import * as vscode from 'vscode';
-import { Project } from './types';
+import { Project } from './extension';
 import { ProjectsWebviewProvider } from './webviewProvider';
+import { getProjectId } from './template/project/utils/project-id';
 
 export const Commands = {
     ADD_PROJECT: 'awesome-projects.addProject',
     OPEN_PROJECT: 'awesome-projects.openProject',
     REFRESH_PROJECTS: 'awesome-projects.refreshProjects',
-    UPDATE_PROJECT: 'awesome-projects.updateProject'  // Add this line
+    UPDATE_PROJECT: 'awesome-projects.updateProject',
+    SORT_PROJECTS: 'awesome-projects.sortProjects'
 };
 
 export const registerCommands = (context: vscode.ExtensionContext, projectsProvider: ProjectsWebviewProvider): void => {
@@ -41,6 +43,7 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                     }
 
                     const newProject: Project = {
+                        id: getProjectId({ path: projectPath, name: projectName, id: '' } as Project),
                         path: projectPath,
                         name: projectName
                     };
@@ -89,6 +92,30 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                 return false;
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to update project: ${error}`);
+                return false;
+            }
+        }),
+
+        vscode.commands.registerCommand(Commands.SORT_PROJECTS, async ({ sortedProjectIds }) => {
+            try {
+                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                const projects = [...(configuration.get<Project[]>('projects') || [])];
+
+                // Reorder projects based on the sorted IDs
+                const sortedProjects = sortedProjectIds
+                    .map((id: string) => projects.find(p => getProjectId(p) === id))
+                    .filter(Boolean) as Project[];
+
+                // Add any projects that weren't in the sorted list (edge case)
+                const includedIds = new Set(sortedProjectIds);
+                const missingProjects = projects.filter(p => !includedIds.has(getProjectId(p)));
+                sortedProjects.push(...missingProjects);
+
+                await configuration.update('projects', sortedProjects, vscode.ConfigurationTarget.Global);
+                projectsProvider.refresh();
+                return true;
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to sort projects: ${error}`);
                 return false;
             }
         })

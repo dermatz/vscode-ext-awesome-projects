@@ -2,11 +2,20 @@
 
 ## Next Release
 
-- Compressed image assets to reduce extension size and improve loading performance.
-
 ---
 
 ## Latest Release
+
+## [0.10.0] - 2025-07-03
+
+### Improvements
+
+- Compressed image assets to reduce extension size and improve loading performance.
+- Improved code testing coverage to ensure higher reliability and maintainability of the codebase.
+
+### New Features
+
+- Added a sorting feature for project cards, allowing users to sort projects by name A-Z and Z-A.
 
 ## [0.9.3] - 2025-07-03
 

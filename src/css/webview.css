@@ -67,6 +67,25 @@ header .linkbar {
     gap: 1rem;
 }
 
+header .header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+header .header-actions .button {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+header .header-actions .button svg {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
 header .version {
     color: var(--vscode-button-secondaryForeground);
     opacity: 0.7;

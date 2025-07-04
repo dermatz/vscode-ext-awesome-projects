@@ -261,4 +261,142 @@ suite('Awesome Projects Extension Test Suite', () => {
             await config.update('projects', initialProjects, vscode.ConfigurationTarget.Global);
         }
     });
+
+    test('Should handle project sorting correctly', async () => {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const initialProjects = config.get<Project[]>('projects') || [];
+
+        try {
+            // Create test projects with different names to test sorting
+            const testProjects: Project[] = [
+                {
+                    id: getProjectId({ name: 'Zebra Project', path: '/zebra', id: '' } as Project),
+                    name: 'Zebra Project',
+                    path: '/zebra'
+                },
+                {
+                    id: getProjectId({ name: 'Alpha Project', path: '/alpha', id: '' } as Project),
+                    name: 'Alpha Project',
+                    path: '/alpha'
+                },
+                {
+                    id: getProjectId({ name: 'Beta Project', path: '/beta', id: '' } as Project),
+                    name: 'Beta Project',
+                    path: '/beta'
+                }
+            ];
+
+            // Set initial projects
+            await config.update('projects', testProjects, vscode.ConfigurationTarget.Global);
+
+            // Test sorting A-Z (ascending) - use the actual generated IDs
+            const sortedIds = [
+                testProjects.find(p => p.name === 'Alpha Project')?.id,
+                testProjects.find(p => p.name === 'Beta Project')?.id,
+                testProjects.find(p => p.name === 'Zebra Project')?.id
+            ].filter(Boolean) as string[];
+
+            // Simulate the sortProjects command
+            await vscode.commands.executeCommand('awesome-projects.sortProjects', { sortedProjectIds: sortedIds });
+
+            // Verify the projects are sorted correctly
+            const sortedConfig = vscode.workspace.getConfiguration('awesomeProjects');
+            const sortedProjects = sortedConfig.get<Project[]>('projects') || [];
+
+            assert.strictEqual(sortedProjects.length, 3, 'Should have 3 projects after sorting');
+            assert.strictEqual(sortedProjects[0].name, 'Alpha Project', 'First project should be Alpha');
+            assert.strictEqual(sortedProjects[1].name, 'Beta Project', 'Second project should be Beta');
+            assert.strictEqual(sortedProjects[2].name, 'Zebra Project', 'Third project should be Zebra');
+
+        } finally {
+            // Cleanup
+            await config.update('projects', initialProjects, vscode.ConfigurationTarget.Global);
+        }
+    });
+
+    test('Should handle sorting with missing project IDs gracefully', async () => {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const initialProjects = config.get<Project[]>('projects') || [];
+
+        try {
+            const testProjects: Project[] = [
+                {
+                    id: 'project-1',
+                    name: 'Project One',
+                    path: '/one'
+                },
+                {
+                    id: 'project-2',
+                    name: 'Project Two',
+                    path: '/two'
+                }
+            ];
+
+            await config.update('projects', testProjects, vscode.ConfigurationTarget.Global);
+
+            // Try to sort with a missing project ID and a non-existent one
+            const sortedIds = ['project-2', 'non-existent-id'];
+
+            await vscode.commands.executeCommand('awesome-projects.sortProjects', { sortedProjectIds: sortedIds });
+
+            const sortedConfig = vscode.workspace.getConfiguration('awesomeProjects');
+            const sortedProjects = sortedConfig.get<Project[]>('projects') || [];
+
+            // Should still have both projects, with missing ones appended
+            assert.strictEqual(sortedProjects.length, 2, 'Should still have 2 projects');
+            assert.strictEqual(sortedProjects[0].id, 'project-2', 'First project should be project-2');
+            assert.strictEqual(sortedProjects[1].id, 'project-1', 'Second project should be project-1 (missing from sort)');
+
+        } finally {
+            // Cleanup
+            await config.update('projects', initialProjects, vscode.ConfigurationTarget.Global);
+        }
+    });
+
+    test('Should preserve project data during sorting', async () => {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const initialProjects = config.get<Project[]>('projects') || [];
+
+        try {
+            const testProjects: Project[] = [
+                {
+                    id: 'project-1',
+                    name: 'Project One',
+                    path: '/one',
+                    color: '#ff0000',
+                    productionUrl: 'https://one.com'
+                },
+                {
+                    id: 'project-2',
+                    name: 'Project Two',
+                    path: '/two',
+                    color: '#00ff00',
+                    devUrl: 'https://dev.two.com'
+                }
+            ];
+
+            await config.update('projects', testProjects, vscode.ConfigurationTarget.Global);
+
+            // Sort in reverse order
+            const sortedIds = ['project-2', 'project-1'];
+
+            await vscode.commands.executeCommand('awesome-projects.sortProjects', { sortedProjectIds: sortedIds });
+
+            const sortedConfig = vscode.workspace.getConfiguration('awesomeProjects');
+            const sortedProjects = sortedConfig.get<Project[]>('projects') || [];
+
+            // Verify order changed but data preserved
+            assert.strictEqual(sortedProjects[0].id, 'project-2', 'First project should be project-2');
+            assert.strictEqual(sortedProjects[0].color, '#00ff00', 'Project color should be preserved');
+            assert.strictEqual(sortedProjects[0].devUrl, 'https://dev.two.com', 'Project devUrl should be preserved');
+
+            assert.strictEqual(sortedProjects[1].id, 'project-1', 'Second project should be project-1');
+            assert.strictEqual(sortedProjects[1].color, '#ff0000', 'Project color should be preserved');
+            assert.strictEqual(sortedProjects[1].productionUrl, 'https://one.com', 'Project productionUrl should be preserved');
+
+        } finally {
+            // Cleanup
+            await config.update('projects', initialProjects, vscode.ConfigurationTarget.Global);
+        }
+    });
 });
