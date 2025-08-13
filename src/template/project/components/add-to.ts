@@ -32,8 +32,15 @@ export async function getAddToHtml(): Promise<string> {
             if (!window.vscodeApi) {
                 window.vscodeApi = acquireVsCodeApi();
             }
+            // Restore persisted sort state (survives refresh via webview state)
+            const __savedState = (typeof window.vscodeApi.getState === 'function' ? (window.vscodeApi.getState() || {}) : {});
+            let currentSortOrder = __savedState.currentSortOrder || 'desc'; // 'desc' -> A-Z, 'asc' -> Z-A
 
-            let currentSortOrder = 'desc'; // 'desc' for A-Z descending, 'asc' for A-Z ascending
+            // Ensure button label reflects current state on load
+            const __dirLabelEl = document.getElementById('sort-direction');
+            if (__dirLabelEl) {
+                __dirLabelEl.textContent = currentSortOrder === 'desc' ? 'A-Z' : 'Z-A';
+            }
 
             function addProject() {
                 window.vscodeApi.postMessage({
@@ -88,6 +95,11 @@ export async function getAddToHtml(): Promise<string> {
                     command: 'sortProjects',
                     sortedProjectIds: sortedProjectIds
                 });
+
+                // Persist the new sort order so a single click always flips between the actual states after refresh
+                if (typeof window.vscodeApi.setState === 'function') {
+                    window.vscodeApi.setState({ ...(__savedState || {}), currentSortOrder });
+                }
             }
         </script>
     `;

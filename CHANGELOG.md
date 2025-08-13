@@ -6,6 +6,12 @@
 
 ## Latest Release
 
+## [0.10.1] - 2025-08-13
+
+### Fixes
+
+- Fixed an issue where the project list was not updating correctly after sorting from Z-A to A-Z.
+
 ## [0.10.0] - 2025-07-03
 
 ### Improvements

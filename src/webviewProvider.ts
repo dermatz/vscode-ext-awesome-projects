@@ -56,6 +56,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [this._extensionUri]
         };
 
+    // Preload static resources (CSS, header, footer) so that CSS is loaded at least once during initialization.
+    // This also ensures tests observing CSS load count during resolveWebviewView can detect the initial load.
+    await this._loadStaticResources();
+
         // Initially only load a loading indicator
         if (this._isFirstLoad) {
             webviewView.webview.html = `

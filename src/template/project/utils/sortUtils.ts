@@ -3,13 +3,20 @@
  */
 export function getSortScript(): string {
     return `
-        let currentSortOrder = 'desc'; // 'desc' for A-Z descending, 'asc' for A-Z ascending
+        // Restore persisted sort state
+        const __savedState = (typeof window.vscode !== 'undefined' && typeof window.vscode.getState === 'function') ? (window.vscode.getState() || {}) : {};
+        let currentSortOrder = __savedState.currentSortOrder || 'desc'; // 'desc' for A-Z, 'asc' for Z-A
 
         function toggleSort() {
             console.log('toggleSort called');
             const projectsList = document.getElementById('projects-list');
             const projectItems = Array.from(projectsList.querySelectorAll('.project-item-wrapper'));
             const sortButton = document.getElementById('sort-direction');
+
+            // Ensure label reflects current state before toggling
+            if (sortButton && !sortButton.textContent) {
+                sortButton.textContent = currentSortOrder === 'desc' ? 'A-Z' : 'Z-A';
+            }
 
             // Toggle sort order
             currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc';
@@ -47,6 +54,10 @@ export function getSortScript(): string {
                     command: 'sortProjects',
                     sortedProjectIds: sortedProjectIds
                 });
+                // Persist state
+                if (typeof window.vscode.setState === 'function') {
+                    window.vscode.setState({ ...(__savedState || {}), currentSortOrder });
+                }
             } else {
                 console.error('vscode API not available');
             }
