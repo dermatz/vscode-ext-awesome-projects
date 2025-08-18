@@ -4,15 +4,30 @@ import { getColorPickerHtml } from '../colorpicker/colorPicker';
 import { getProjectId } from '../../utils/project-id';
 import { getSaveFunctionsScript } from '../../utils/save-functions';
 
+// Cache for configuration to avoid repeated calls
+let _cachedConfiguration: vscode.WorkspaceConfiguration | undefined;
+let _configurationLoaded = false;
+
+function getCachedConfiguration(): vscode.WorkspaceConfiguration {
+    if (!_configurationLoaded || !_cachedConfiguration) {
+        _cachedConfiguration = vscode.workspace.getConfiguration('awesomeProjects');
+        _configurationLoaded = true;
+    }
+    return _cachedConfiguration;
+}
+
 async function handleDeleteProject(projectId: string) {
     try {
-        const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+        const configuration = getCachedConfiguration();
         const projects = [...(configuration.get<Project[]>('projects') || [])];
         const projectIndex = projects.findIndex(p => getProjectId(p) === projectId);
 
         if (projectIndex !== -1) {
             projects.splice(projectIndex, 1);
             await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+            // Invalidate cache after update
+            _configurationLoaded = false;
+            _cachedConfiguration = undefined;
         }
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to delete project: ${error}`);

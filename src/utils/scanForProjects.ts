@@ -4,6 +4,18 @@ import * as path from 'path';
 import { Project } from '../extension';
 import { getProjectId } from '../template/project/utils/project-id';
 
+// Cache for configuration to avoid repeated calls
+let _cachedConfiguration: vscode.WorkspaceConfiguration | undefined;
+let _configurationLoaded = false;
+
+function getCachedConfiguration(): vscode.WorkspaceConfiguration {
+    if (!_configurationLoaded || !_cachedConfiguration) {
+        _cachedConfiguration = vscode.workspace.getConfiguration('awesomeProjects');
+        _configurationLoaded = true;
+    }
+    return _cachedConfiguration;
+}
+
 export async function scanForGitProjects(startPath: string): Promise<string[]> {
     const gitProjects: string[] = [];
 
@@ -53,7 +65,7 @@ export async function scanForGitProjects(startPath: string): Promise<string[]> {
 }
 
 export async function addScannedProjects(projects: string[]): Promise<void> {
-    const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+    const configuration = getCachedConfiguration();
     const existingProjects: Project[] = configuration.get('projects') || [];
 
     // Filter out already existing projects
@@ -95,6 +107,10 @@ export async function addScannedProjects(projects: string[]): Promise<void> {
         [...existingProjects, ...projectsToAdd],
         vscode.ConfigurationTarget.Global
     );
+
+    // Invalidate cache after update
+    _configurationLoaded = false;
+    _cachedConfiguration = undefined;
 
     vscode.window.showInformationMessage(`Added ${projectsToAdd.length} new projects`);
 }

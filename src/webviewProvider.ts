@@ -27,6 +27,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     private _cssLoaded: boolean = false;
     private _headerLoaded: boolean = false;
     private _footerLoaded: boolean = false;
+    private _cachedConfiguration?: vscode.WorkspaceConfiguration;
+    private _configurationLoaded: boolean = false;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -35,6 +37,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         this._disposables.push(
             vscode.workspace.onDidChangeConfiguration(e => {
                 if (e.affectsConfiguration('awesomeProjects.projects')) {
+                    // Invalidate configuration cache when projects change
+                    console.log('🔄 [PERF] Configuration changed - invalidating cache');
+                    this._configurationLoaded = false;
+                    this._cachedConfiguration = undefined;
                     this.refresh();
                 }
             })
@@ -114,7 +120,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         if (folderUri && folderUri[0]) {
                             try {
                                 const projectPath = folderUri[0].fsPath;
-                                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                                const configuration = this.getCachedConfiguration();
                                 const projects: Project[] = configuration.get('projects') || [];
 
                                 const name = await vscode.window.showInputBox({
@@ -135,7 +141,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                     vscode.ConfigurationTarget.Global
                                 );
 
-                                const updatedProjects = configuration.get<Project[]>('projects');
+                                // Invalidate cache after update
+                                this._configurationLoaded = false;
+                                this._cachedConfiguration = undefined;
+                                const updatedProjects = this.getCachedConfiguration().get<Project[]>('projects');
                                 if (updatedProjects?.some(p => p.path === newProject.path)) {
                                     this.refresh();
                                 } else {
@@ -212,7 +221,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
     private async _updateProject(projectId: string, updates: Partial<Project>) {
         try {
-            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+            const configuration = this.getCachedConfiguration();
             const projects = [...(configuration.get<Project[]>('projects') || [])];
             const projectIndex = projects.findIndex(p => getProjectId(p) === projectId);
 
@@ -228,6 +237,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 };
 
                 await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+                // Invalidate cache after update
+                this._configurationLoaded = false;
+                this._cachedConfiguration = undefined;
                 this.refresh();
             }
         } catch (error) {
@@ -238,11 +250,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     private async _reorderProjects(oldIndex: number, newIndex: number) {
         try {
             this._setLoading(true);
-            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+            const configuration = this.getCachedConfiguration();
             const projects = [...(configuration.get<Project[]>('projects') || [])];
             const [movedProject] = projects.splice(oldIndex, 1);
             projects.splice(newIndex, 0, movedProject);
             await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+            // Invalidate cache after update
+            this._configurationLoaded = false;
+            this._cachedConfiguration = undefined;
             this.refresh();
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to reorder projects: ${error}`);
@@ -254,7 +269,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     private async _sortProjects(sortedProjectIds: string[]) {
         try {
             console.log('_sortProjects called with IDs:', sortedProjectIds);
-            const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+            const configuration = this.getCachedConfiguration();
             const projects = [...(configuration.get<Project[]>('projects') || [])];
             console.log('Current projects:', projects);
 
@@ -271,6 +286,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             console.log('Sorted projects:', sortedProjects);
             await configuration.update('projects', sortedProjects, vscode.ConfigurationTarget.Global);
             console.log('Projects updated in configuration');
+            // Invalidate cache after update
+            this._configurationLoaded = false;
+            this._cachedConfiguration = undefined;
             this.refresh();
         } catch (error) {
             console.error('Error in _sortProjects:', error);
@@ -297,6 +315,21 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 disposable.dispose();
             }
         }
+    }
+
+    /**
+     * Get cached configuration to avoid repeated calls to workspace.getConfiguration
+     * @private
+     */
+    private getCachedConfiguration(): vscode.WorkspaceConfiguration {
+        if (!this._configurationLoaded || !this._cachedConfiguration) {
+            console.log('🔄 [PERF] Loading configuration from workspace (cache miss)');
+            this._cachedConfiguration = vscode.workspace.getConfiguration('awesomeProjects');
+            this._configurationLoaded = true;
+        } else {
+            console.log('⚡ [PERF] Using cached configuration (cache hit)');
+        }
+        return this._cachedConfiguration;
     }
 
     /**
@@ -354,7 +387,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         const currentWorkspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
 
         // Only generate the project list HTML each time, as it changes frequently
-        const projectListHtml = await getProjectListHtml(this._context, currentWorkspace);
+        const projectListHtml = await getProjectListHtml(this._context, currentWorkspace, this.getCachedConfiguration());
 
         return `<!DOCTYPE html>
             <html>
