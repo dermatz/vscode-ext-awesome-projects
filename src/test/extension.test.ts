@@ -170,6 +170,201 @@ suite('Awesome Projects Extension Test Suite', () => {
         assert.strictEqual(deletedProject, undefined, "Project was not deleted");
     });
 
+    test('Should delete project via message handler with confirmation', async () => {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const initialProjects = config.get<Project[]>('projects') || [];
+
+        try {
+            // Create test projects
+            const testProjects: Project[] = [
+                {
+                    id: 'project-to-delete',
+                    name: 'Project To Delete',
+                    path: '/path/to/delete',
+                    color: '#ff0000',
+                    productionUrl: 'https://delete.com'
+                },
+                {
+                    id: 'project-to-keep',
+                    name: 'Project To Keep',
+                    path: '/path/to/keep',
+                    color: '#00ff00'
+                }
+            ];
+
+            // Set initial projects
+            await config.update('projects', [...initialProjects, ...testProjects], vscode.ConfigurationTarget.Global);
+
+            // Mock the confirmation dialog to return 'Yes'
+            const originalShowWarningMessage = vscode.window.showWarningMessage;
+            let warningMessageCalled = false;
+            let warningMessageText = '';
+
+            vscode.window.showWarningMessage = async (message: string, options?: any, ...items: string[]) => {
+                warningMessageCalled = true;
+                warningMessageText = message;
+                return 'Yes'; // Simulate user clicking 'Yes'
+            };
+
+            // Simulate deleteProject message
+            const deleteMessage = {
+                command: 'deleteProject' as const,
+                projectId: 'project-to-delete'
+            };
+
+            // Execute the deleteProject command directly
+            await vscode.commands.executeCommand('awesome-projects.deleteProject', deleteMessage);
+
+            // Verify confirmation dialog was shown
+            assert.ok(warningMessageCalled, 'Warning message should have been called');
+            assert.ok(warningMessageText.includes('Project To Delete'), 'Warning message should contain project name');
+            assert.ok(warningMessageText.includes('Are you sure'), 'Warning message should ask for confirmation');
+
+            // Verify project was deleted
+            const updatedConfig = vscode.workspace.getConfiguration('awesomeProjects');
+            const updatedProjects = updatedConfig.get<Project[]>('projects') || [];
+
+            const deletedProject = updatedProjects.find(p => p.id === 'project-to-delete');
+            const keptProject = updatedProjects.find(p => p.id === 'project-to-keep');
+
+            assert.strictEqual(deletedProject, undefined, 'Project should be deleted');
+            assert.ok(keptProject, 'Other project should be kept');
+            assert.strictEqual(keptProject?.name, 'Project To Keep', 'Kept project should maintain its data');
+
+            // Restore original function
+            vscode.window.showWarningMessage = originalShowWarningMessage;
+
+        } finally {
+            // Cleanup - restore original projects
+            await config.update('projects', initialProjects, vscode.ConfigurationTarget.Global);
+        }
+    });
+
+    test('Should cancel project deletion when user chooses No', async () => {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const initialProjects = config.get<Project[]>('projects') || [];
+
+        try {
+            const testProject: Project = {
+                id: 'project-cancel-delete',
+                name: 'Project Cancel Delete',
+                path: '/path/cancel/delete',
+                color: '#ff0000'
+            };
+
+            // Set initial project
+            await config.update('projects', [...initialProjects, testProject], vscode.ConfigurationTarget.Global);
+
+            // Mock the confirmation dialog to return 'No'
+            const originalShowWarningMessage = vscode.window.showWarningMessage;
+            vscode.window.showWarningMessage = async (message: string, options?: any, ...items: string[]) => {
+                return 'No'; // Simulate user clicking 'No'
+            };
+
+            // Simulate deleteProject message
+            const deleteMessage = {
+                command: 'deleteProject' as const,
+                projectId: 'project-cancel-delete'
+            };
+
+            // Execute the deleteProject command
+            await vscode.commands.executeCommand('awesome-projects.deleteProject', deleteMessage);
+
+            // Verify project was NOT deleted
+            const updatedConfig = vscode.workspace.getConfiguration('awesomeProjects');
+            const updatedProjects = updatedConfig.get<Project[]>('projects') || [];
+
+            const project = updatedProjects.find(p => p.id === 'project-cancel-delete');
+            assert.ok(project, 'Project should still exist after cancelling deletion');
+            assert.strictEqual(project?.name, 'Project Cancel Delete', 'Project data should be unchanged');
+
+            // Restore original function
+            vscode.window.showWarningMessage = originalShowWarningMessage;
+
+        } finally {
+            // Cleanup
+            await config.update('projects', initialProjects, vscode.ConfigurationTarget.Global);
+        }
+    });
+
+    test('Should handle deletion of non-existent project gracefully', async () => {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const initialProjects = config.get<Project[]>('projects') || [];
+
+        try {
+            // Simulate deleteProject message for non-existent project
+            const deleteMessage = {
+                command: 'deleteProject' as const,
+                projectId: 'non-existent-project-id'
+            };
+
+            // Mock confirmation dialog (should not be called)
+            const originalShowWarningMessage = vscode.window.showWarningMessage;
+            let warningMessageCalled = false;
+            vscode.window.showWarningMessage = async (message: string, options?: any, ...items: string[]) => {
+                warningMessageCalled = true;
+                return 'Yes';
+            };
+
+            // Execute the deleteProject command
+            await vscode.commands.executeCommand('awesome-projects.deleteProject', deleteMessage);
+
+            // Verify no confirmation dialog was shown (since project doesn't exist)
+            assert.strictEqual(warningMessageCalled, false, 'Warning message should not be called for non-existent project');
+
+            // Verify projects list is unchanged
+            const updatedConfig = vscode.workspace.getConfiguration('awesomeProjects');
+            const updatedProjects = updatedConfig.get<Project[]>('projects') || [];
+            assert.strictEqual(updatedProjects.length, initialProjects.length, 'Projects list should be unchanged');
+
+            // Restore original function
+            vscode.window.showWarningMessage = originalShowWarningMessage;
+
+        } finally {
+            // Cleanup
+            await config.update('projects', initialProjects, vscode.ConfigurationTarget.Global);
+        }
+    });
+
+    test('Should handle deletion with missing projectId parameter', async () => {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const initialProjects = config.get<Project[]>('projects') || [];
+
+        try {
+            // Simulate deleteProject message without projectId
+            const deleteMessage = {
+                command: 'deleteProject' as const
+                // projectId is missing
+            };
+
+            // Mock confirmation dialog (should not be called)
+            const originalShowWarningMessage = vscode.window.showWarningMessage;
+            let warningMessageCalled = false;
+            vscode.window.showWarningMessage = async (message: string, options?: any, ...items: string[]) => {
+                warningMessageCalled = true;
+                return 'Yes';
+            };
+
+            // Execute the deleteProject command
+            await vscode.commands.executeCommand('awesome-projects.deleteProject', deleteMessage);
+
+            // Verify no confirmation dialog was shown
+            assert.strictEqual(warningMessageCalled, false, 'Warning message should not be called when projectId is missing');
+
+            // Verify projects list is unchanged
+            const updatedConfig = vscode.workspace.getConfiguration('awesomeProjects');
+            const updatedProjects = updatedConfig.get<Project[]>('projects') || [];
+            assert.strictEqual(updatedProjects.length, initialProjects.length, 'Projects list should be unchanged');
+
+            // Restore original function
+            vscode.window.showWarningMessage = originalShowWarningMessage;
+
+        } finally {
+            // Cleanup
+            await config.update('projects', initialProjects, vscode.ConfigurationTarget.Global);
+        }
+    });
+
     test('Should update project fields and persist changes', async () => {
         const config = vscode.workspace.getConfiguration('awesomeProjects');
         const initialProjects = config.get<Project[]>('projects') || [];

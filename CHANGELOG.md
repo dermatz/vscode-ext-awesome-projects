@@ -2,6 +2,21 @@
 
 ## Next Release
 
+### New Features
+
+- Added project deletion with confirmation dialog - now you can safely remove projects from your list
+
+### Bug Fixes
+
+- Fixed issue where deleted projects would unexpectedly reappear in the project list
+- Project deletions now work reliably - once deleted, projects stay deleted
+- Improved overall stability when managing multiple projects
+
+### Performance Improvements
+
+- Faster project list updates after adding, removing, or modifying projects
+- Reduced loading times when switching between projects
+
 ---
 
 ## Latest Release

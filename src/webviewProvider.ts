@@ -308,6 +308,12 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    public invalidateCache() {
+        console.log('🔄 [PERF] Manually invalidating cache');
+        this._configurationLoaded = false;
+        this._cachedConfiguration = undefined;
+    }
+
     public dispose() {
         while (this._disposables.length) {
             const disposable = this._disposables.pop();

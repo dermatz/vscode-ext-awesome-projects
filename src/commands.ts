@@ -8,7 +8,8 @@ export const Commands = {
     OPEN_PROJECT: 'awesome-projects.openProject',
     REFRESH_PROJECTS: 'awesome-projects.refreshProjects',
     UPDATE_PROJECT: 'awesome-projects.updateProject',
-    SORT_PROJECTS: 'awesome-projects.sortProjects'
+    SORT_PROJECTS: 'awesome-projects.sortProjects',
+    DELETE_PROJECT: 'awesome-projects.deleteProject'
 };
 
 export const registerCommands = (context: vscode.ExtensionContext, projectsProvider: ProjectsWebviewProvider): void => {
@@ -54,6 +55,7 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                         vscode.ConfigurationTarget.Global
                     );
 
+                    projectsProvider.invalidateCache();
                     projectsProvider.refresh();
                 } catch (error: unknown) {
                     const errorMessage = error instanceof Error
@@ -86,6 +88,7 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                     };
 
                     await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+                    projectsProvider.invalidateCache();
                     projectsProvider.refresh();
                     return true;
                 }
@@ -112,10 +115,48 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                 sortedProjects.push(...missingProjects);
 
                 await configuration.update('projects', sortedProjects, vscode.ConfigurationTarget.Global);
+                projectsProvider.invalidateCache();
                 projectsProvider.refresh();
                 return true;
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to sort projects: ${error}`);
+                return false;
+            }
+        }),
+
+        vscode.commands.registerCommand(Commands.DELETE_PROJECT, async ({ projectId }) => {
+            if (!projectId) {
+                return false;
+            }
+
+            try {
+                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                const projects = [...(configuration.get<Project[]>('projects') || [])];
+                const projectIndex = projects.findIndex(p => getProjectId(p) === projectId);
+
+                if (projectIndex !== -1) {
+                    const project = projects[projectIndex];
+
+                    const answer = await vscode.window.showWarningMessage(
+                        `Are you sure you want to remove project "${project.name}"?`,
+                        { modal: true },
+                        'Yes',
+                        'No'
+                    );
+
+                    if (answer === 'Yes') {
+                        projects.splice(projectIndex, 1);
+                        await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
+
+                        // Force cache invalidation in the provider
+                        projectsProvider.invalidateCache();
+                        projectsProvider.refresh();
+                        return true;
+                    }
+                }
+                return false;
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to delete project: ${error}`);
                 return false;
             }
         })
