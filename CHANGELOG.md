@@ -6,6 +6,12 @@
 
 ## Latest Release
 
+## [0.13.0] - 2025-10-20
+
+### Improvements
+
+- Reduced CSS file size by simplifying styles and optimizing hover/animation effects for better performance and user experience.
+
 ## [0.12.0] - 2025-10-20
 
 - Added project deletion with confirmation dialog - now you can safely remove projects from your list
