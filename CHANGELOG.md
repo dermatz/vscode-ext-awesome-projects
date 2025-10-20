@@ -2,7 +2,11 @@
 
 ## Next Release
 
-### New Features
+---
+
+## Latest Release
+
+## [0.12.0] - 2025-10-20
 
 - Added project deletion with confirmation dialog - now you can safely remove projects from your list
 
@@ -16,10 +20,6 @@
 
 - Faster project list updates after adding, removing, or modifying projects
 - Reduced loading times when switching between projects
-
----
-
-## Latest Release
 
 ## [0.11.0] - 2025-08-18
 
