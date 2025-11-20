@@ -2,9 +2,16 @@
 
 ## Next Release
 
+
 ---
 
 ## Latest Release
+
+## [0.13.1] - 2025-11-20
+
+### Dependencies
+
+- Updated dependencies to their latest versions for improved code quality and security
 
 ## [0.13.0] - 2025-10-20
 
