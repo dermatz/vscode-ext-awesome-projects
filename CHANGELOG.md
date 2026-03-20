@@ -4,6 +4,30 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.15.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.14.1...awesome-projects-v0.15.0) (2026-03-20)
+
+
+### Features
+
+* add guidelines for contributing VS Code extension commands ([a90b07c](https://github.com/dermatz/vscode-ext-awesome-projects/commit/a90b07cd90814b1f7cbca610b1532fec921f614f))
+* update release-please config for component tagging and header ([9ab74a5](https://github.com/dermatz/vscode-ext-awesome-projects/commit/9ab74a56d121ed5887443cd0c7600653a4d0d42d))
+
+
+### Documentation
+
+* update README with enhanced project features and structure ([fdcefc7](https://github.com/dermatz/vscode-ext-awesome-projects/commit/fdcefc70efdfdbec39faca89eb113337e2ce6f95))
+
+
+### Code Refactoring
+
+* simplify color picker logic and remove unused functions ([c7fdf06](https://github.com/dermatz/vscode-ext-awesome-projects/commit/c7fdf06c5bb58ff0cbe4c6609b2a74f761a244ec))
+
+
+### Maintenance
+
+* remove package-name from release-please config ([3ed3a6b](https://github.com/dermatz/vscode-ext-awesome-projects/commit/3ed3a6b38b8f7e47a37ba3e46489655fa414a05e))
+* update dependencies and add overrides for compatibility ([a244574](https://github.com/dermatz/vscode-ext-awesome-projects/commit/a2445747c242713ec61fdab743fbec7a6fb1e1df))
+
 ## [0.14.1](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.14.0...awesome-projects-v0.14.1) (2026-03-20)
 
 
