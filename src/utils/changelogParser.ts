@@ -37,11 +37,14 @@ export function getChangesSinceLastTag(context: any): VersionChanges[] {
     for (const section of versionSections) {
         if (!section.includes(']')) { continue; }
 
-        const versionMatch = section.match(/^([\d.]+)\](?:\s*-\s*(\d{4}-\d{2}-\d{2}))?\n/);
+        // Supports both formats:
+        //   Old: [1.0.0] - 2024-01-01
+        //   New: [1.27.2](https://...) (2026-03-10)
+        const versionMatch = section.match(/^([\d.]+)\](?:\([^)]*\))?\s*(?:\((\d{4}-\d{2}-\d{2})\)|-\s*(\d{4}-\d{2}-\d{2}))/);
         if (!versionMatch) { continue; }
 
         const version = versionMatch[1];
-        const date = versionMatch[2] || '';
+        const date = versionMatch[2] || versionMatch[3] || '';
         const changes: { [type: string]: string[] } = {};
 
         // Parse section content
@@ -52,7 +55,7 @@ export function getChangesSinceLastTag(context: any): VersionChanges[] {
             if (line.startsWith('### ')) {
                 currentType = line.replace('### ', '').trim();
                 changes[currentType] = [];
-            } else if (line.trim().startsWith('- ') && currentType) {
+            } else if (/^\s*[-*] /.test(line) && currentType) {
                 const changeText = line.trim().substring(2);
                 changes[currentType].push(convertMarkdownLinksToHtml(changeText));
             }
