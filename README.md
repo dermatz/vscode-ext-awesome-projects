@@ -1,66 +1,103 @@
-# Awesome-Projects 🤩 A Visual Studio Code Extension
+<div align="center">
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/aa3fe284550449ec9088834773d3b1fb)](https://app.codacy.com/gh/dermatz/vscode-ext-awesome-projects/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+# 🤩 Awesome Projects
 
-## Description
+**The smarter way to manage your VS Code projects**
 
-The "awesome-projects" extension for Visual Studio Code revolutionizes project management with an intuitive, feature-rich interface. Designed for developers who juggle multiple projects, it provides seamless organization and quick access to all your development environments.
+[![Version](https://img.shields.io/visual-studio-marketplace/v/MathiasElle.awesome-projects?style=flat-square&label=Marketplace&color=0078D4)](https://marketplace.visualstudio.com/items?itemName=MathiasElle.awesome-projects)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/MathiasElle.awesome-projects?style=flat-square&color=brightgreen)](https://marketplace.visualstudio.com/items?itemName=MathiasElle.awesome-projects)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/MathiasElle.awesome-projects?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=MathiasElle.awesome-projects)
+[![Codacy Grade](https://img.shields.io/codacy/grade/aa3fe284550449ec9088834773d3b1fb?style=flat-square&label=Code%20Quality)](https://app.codacy.com/gh/dermatz/vscode-ext-awesome-projects/dashboard)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](LICENSE)
 
-## Key Features
+![Awesome Projects Preview](resources/image.png)
 
-### Project Management
-- 📂 Advanced project organization with drag & drop sort functionality
-- 🎨 Customizable project colors with random color generator
-- 🏷️ Project categorization and naming system
-- 🔄 Multi-workspace support
+</div>
 
-### Git Integration
-- 🔗 Automatic Git repository detection
-- 📦 Git submodules support
-- 🔍 Repository URL detection and conversion (SSH/HTTPS)
-- 🌐 Integration with major Git platforms (GitHub, GitLab, Bitbucket)
+---
 
-### Environment Management
-- 🌍 Multiple environment URL management (Production, Staging, Development)
-- 🛠️ Project management tool integration
-- 🖼️ Automatic favicon detection for quick visual recognition
-- 📱 Responsive webview design
+## What is Awesome Projects?
 
-### System Integration
-- 🪟 Cross-platform file manager integration (Windows, macOS, Linux)
-- 🔒 Secure data storage
-- ⚡ Performance-optimized for large project collections
+**Awesome Projects** is a Visual Studio Code extension that centralizes all your development projects in one place. Designed for developers who constantly switch between multiple repositories and environments, it gives you instant access to project folders, Git repositories, environment URLs, and more — all from a dedicated sidebar panel.
 
-## Requirements
-- Visual Studio Code version 1.96.0 or higher
-- Git (optional, for repository features)
+---
 
-## Installation & Setup
+## ✨ Features
 
-1. Install from VS Code Marketplace
-2. Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
-3. Search for "Awesome Projects"
-4. Click the "+ Add Project" button to add your first project
+### 📂 Project Management
 
-## Configuration
+| Feature | Description |
+|--------|-------------|
+| **Drag & Drop Sorting** | Reorder projects intuitively by dragging them |
+| **Custom Colors** | Assign colors to projects for quick recognition (includes random generator) |
+| **Project Scanner** | Automatically scan directories to import Git repositories in bulk |
+| **Multi-workspace Support** | Works across different VS Code workspaces |
 
-The extension can be customized through VS Code settings:
+### 🔗 Git Integration
+
+| Feature | Description |
+|--------|-------------|
+| **Auto-detection** | Detects Git repositories automatically |
+| **Submodule Support** | Recognizes and displays Git submodules |
+| **URL Conversion** | Converts between SSH and HTTPS remote URLs |
+| **Platform Links** | Direct links to GitHub, GitLab, and Bitbucket |
+
+### 🌍 Environment Management
+
+| Feature | Description |
+|--------|-------------|
+| **Multi-environment URLs** | Store Production, Staging, Dev, and Management URLs per project |
+| **Favicon Detection** | Auto-fetches favicons for visual URL recognition |
+| **One-click Access** | Open any environment URL directly from the sidebar |
+
+### ⚙️ System Integration
+
+| Feature | Description |
+|--------|-------------|
+| **File Manager** | Open project folders in Finder/Explorer/Nautilus |
+| **Cross-platform** | Full support for Windows, macOS, and Linux |
+| **Performance** | Optimized for large project collections with aggressive caching |
+
+---
+
+## 🚀 Getting Started
+
+### Requirements
+
+- Visual Studio Code **1.96.0** or higher
+- Git *(optional — required for Git integration features)*
+
+### Installation
+
+1. Open VS Code and go to the **Extensions** panel (`Ctrl+Shift+X` / `Cmd+Shift+X`)
+2. Search for **"Awesome Projects"**
+3. Click **Install**
+4. The 🤩 icon appears in the Activity Bar — click it to open the panel
+5. Click **"+ Add Project"** to add your first project
+
+> **Tip:** Use the **"Scan for Projects"** button to automatically import all Git repositories from a directory.
+
+---
+
+## ⚙️ Configuration
+
+Projects are stored in VS Code settings and can be edited directly or managed through the UI.
 
 ```json
 {
-    "awesomeProjects.projects": [
-        {
-            "path": "/path/to/project",
-            "name": "Project Name",
-            "color": "#ff0000",
-            "productionUrl": "https://prod.example.com",
-            "stagingUrl": "https://staging.example.com",
-            "devUrl": "http://localhost:3000",
-            "managementUrl": "https://jira.example.com"
-        }
-    ],
-    "awesomeProjects.useFavicons": true,
-    "awesomeProjects.showGitInfo": true
+  "awesomeProjects.projects": [
+    {
+      "path": "/path/to/your/project",
+      "name": "My Project",
+      "color": "#0078D4",
+      "productionUrl": "https://example.com",
+      "stagingUrl": "https://staging.example.com",
+      "devUrl": "http://localhost:3000",
+      "managementUrl": "https://linear.app/my-team"
+    }
+  ],
+  "awesomeProjects.useFavicons": true,
+  "awesomeProjects.showGitInfo": true
 }
 ```
 
@@ -68,19 +105,42 @@ The extension can be customized through VS Code settings:
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `awesomeProjects.useFavicons` | boolean | `true` | Enable/disable favicon display |
-| `awesomeProjects.showGitInfo` | boolean | `true` | Show Git repository information |
-| `awesomeProjects.projects` | array | `[]` | List of configured projects |
+| `awesomeProjects.projects` | `array` | `[]` | List of configured projects |
+| `awesomeProjects.useFavicons` | `boolean` | `true` | Show favicons next to environment URLs |
+| `awesomeProjects.showGitInfo` | `boolean` | `true` | Display Git repository information |
 
-## Contributing
+### Project Fields
 
-Contributions are welcome! Please check our [Contributing Guidelines](CONTRIBUTING.md) for details.
+| Field | Required | Description |
+|-------|----------|-------------|
+| `path` | ✅ | Absolute path to the project folder |
+| `name` | ✅ | Display name shown in the sidebar |
+| `color` | — | HEX color for the project card accent |
+| `productionUrl` | — | Production environment URL |
+| `stagingUrl` | — | Staging environment URL |
+| `devUrl` | — | Local development URL |
+| `managementUrl` | — | Project management tool URL (Jira, Linear, etc.) |
 
-## License
+---
 
-This extension is released under the [GNU General Public License v3.0](LICENSE).
+## 🤝 Contributing
 
-## Acknowledgments
+Contributions, bug reports, and feature requests are welcome!
 
-- Icons provided by [Tabler Icons](https://tabler.io) under the [MIT License](https://tabler.io/license)
-- Color picker implementation inspired by VS Code's built-in color picker
+- 🐛 [Report a bug](https://github.com/dermatz/vscode-ext-awesome-projects/issues/new?template=bug_report.md)
+- 💡 [Request a feature](https://github.com/dermatz/vscode-ext-awesome-projects/issues/new?template=feature_request.md)
+- 📖 [Read the contributing guidelines](CONTRIBUTING.md)
+
+---
+
+## 📄 License
+
+Released under the [GNU General Public License v3.0](LICENSE).
+
+---
+
+## 🙏 Acknowledgments
+
+- Icons by [Tabler Icons](https://tabler.io) — [MIT License](https://tabler.io/license)
+- Color picker inspired by VS Code's built-in color picker
+- ❤️ [Sponsor this project](https://github.com/sponsors/dermatz)
