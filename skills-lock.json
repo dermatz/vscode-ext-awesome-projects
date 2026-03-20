@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "vscode-ext-commands": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "26c40c1adb82b80a88e2e4b11307924e9f5cdc19c5c0cbb2a96aa02535034f70"
+    }
+  }
+}
