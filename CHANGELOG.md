@@ -4,6 +4,13 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.14.1](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.14.0...awesome-projects-v0.14.1) (2026-03-20)
+
+
+### Maintenance
+
+* add deploy workflow for publishing to VS Code Marketplace ([3ad0c5d](https://github.com/dermatz/vscode-ext-awesome-projects/commit/3ad0c5d587d633cf8767960984974d20ef025fee))
+
 ## [0.14.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.13.1...awesome-projects-v0.14.0) (2026-03-20)
 
 
