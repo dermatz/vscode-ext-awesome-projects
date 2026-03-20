@@ -2,7 +2,7 @@ import { getSaveFunctionsScript } from '../../utils/save-functions';
 
 export interface ColorPickerProps {
     projectPath: string;
-    projectId: string;  // Add this new prop
+    projectId: string;
     currentColor: string | null;
     defaultColor: string;
 }
@@ -45,7 +45,7 @@ export const getContrastColor = (hexColor: string | null): string => {
 };
 
 export function getColorPickerHtml(props: ColorPickerProps): string {
-    const { projectPath, projectId, currentColor, defaultColor } = props;
+    const { projectId, currentColor, defaultColor } = props;
 
     return `
         <div class="color-container">
@@ -90,10 +90,10 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 colorInput.value = hexColor;
                 colorInput.setAttribute('data-uses-theme-color', 'true');
 
-                if (!pendingChanges[projectId]) {
-                    pendingChanges[projectId] = {};
+                if (!window.pendingChanges[projectId]) {
+                    window.pendingChanges[projectId] = {};
                 }
-                pendingChanges[projectId]['color'] = null;
+                window.pendingChanges[projectId]['color'] = null;
 
                 const projectItem = colorInput.closest('.project-item-wrapper').querySelector('.project-item');
                 if (projectItem) {
@@ -105,7 +105,6 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                     }
                 }
 
-                const saveButton = document.getElementById('save-' + projectId);
                 updateSaveButtonState(projectId);
             }
 
@@ -143,10 +142,10 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 colorInput.value = randomColor;
                 colorInput.setAttribute('data-uses-theme-color', 'false');
 
-                if (!pendingChanges[projectId]) {
-                    pendingChanges[projectId] = {};
+                if (!window.pendingChanges[projectId]) {
+                    window.pendingChanges[projectId] = {};
                 }
-                pendingChanges[projectId]['color'] = randomColor;
+                window.pendingChanges[projectId]['color'] = randomColor;
 
                 const projectItem = button.closest('.project-item-wrapper').querySelector('.project-item');
                 if (projectItem) {
@@ -161,58 +160,7 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                     }
                 }
 
-                const saveButton = document.getElementById('save-' + projectId);
-                if (saveButton) {
-                    saveButton.classList.add('show');
-                }
-
                 updateSaveButtonState(projectId);
-            }
-
-            function handleColorChange(event, projectId) {
-                const value = event.target.value;
-                const oldValue = event.target.defaultValue;
-                event.target.setAttribute('data-uses-theme-color', 'false');
-
-                if (!pendingChanges[projectId]) {
-                    pendingChanges[projectId] = {};
-                }
-
-                // Nur speichern wenn sich der Wert tatsächlich geändert hat
-                if (value !== oldValue) {
-                    pendingChanges[projectId]['color'] = value;
-                } else {
-                    delete pendingChanges[projectId]['color'];
-                }
-
-                const projectItem = event.target.closest('.project-item-wrapper').querySelector('.project-item');
-                if (projectItem) {
-                    const textColor = getContrastColor(value);
-                    projectItem.style.setProperty('--bg-color', value);
-                    projectItem.style.setProperty('--bg-gradient', generateGradient(value));
-                    const projectName = projectItem.querySelector('.project-name');
-                    if (projectName) {
-                        projectName.style.color = textColor;
-                    }
-                }
-
-                updateSaveButtonState(projectId);
-            }
-
-            function showSaveButton(projectPath, projectId) {
-                const saveButton = document.getElementById('save-' + projectId);
-                if (saveButton) {
-                    saveButton.classList.add('show');
-                }
-            }
-
-            function updateSaveButtonState(projectId) {
-                const saveButton = document.getElementById('save-' + projectId);
-                if (saveButton) {
-                    const hasChanges = pendingChanges[projectId] && Object.keys(pendingChanges[projectId]).length > 0;
-                    saveButton.classList.toggle('show', hasChanges);
-                    saveButton.disabled = !hasChanges;
-                }
             }
         </script>
     `;
