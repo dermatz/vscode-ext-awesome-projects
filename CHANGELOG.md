@@ -4,6 +4,17 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.15.1](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.15.0...awesome-projects-v0.15.1) (2026-03-20)
+
+
+### Code Refactoring
+
+* clean up unused imports and remove obsolete files ([cb7cc05](https://github.com/dermatz/vscode-ext-awesome-projects/commit/cb7cc05870096d0c4759053af029c03e6ca3a09a))
+* remove cached configuration and related delete project logic ([8fb5b56](https://github.com/dermatz/vscode-ext-awesome-projects/commit/8fb5b56e4975b8f1489f434902b1cf0406a55b49))
+* remove unused console logs and simplify project sorting ([a91e1f9](https://github.com/dermatz/vscode-ext-awesome-projects/commit/a91e1f9346777592ccbd9810418d275028be5f87))
+* remove unused URL parsing function from dropdownProjectInfo ([caec3bf](https://github.com/dermatz/vscode-ext-awesome-projects/commit/caec3bf264a8352bda40dbca0c4343d015baf26c))
+* use cached configuration in command registration ([d8e8bd7](https://github.com/dermatz/vscode-ext-awesome-projects/commit/d8e8bd7f189ff285b65c8681eccbc8209cca6700))
+
 ## [0.15.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.14.1...awesome-projects-v0.15.0) (2026-03-20)
 
 
