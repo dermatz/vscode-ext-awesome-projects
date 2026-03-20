@@ -2,7 +2,7 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "awesome-projects",
+      "include-component-in-tag": false,
       "pull-request-header": "Next Release ${version}",
       "pull-request-footer": "If you have any questions about the release, please contact the maintainers.",
       "changelog-path": "CHANGELOG.md",
