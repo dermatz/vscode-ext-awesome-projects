@@ -4,7 +4,6 @@ import { loadResourceFile } from './template/utils/resourceLoader';
 import { getHeaderHtml } from './template/webview/header';
 import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
-import { getProjectItemHtml } from './template/project/components/project-item';
 import { scanForGitProjects, addScannedProjects } from './utils/scanForProjects';
 import { openProjectInNewWindow, openUrl } from './template/project/utils/projectOpener';
 import { WebviewMessage } from './types/webviewMessages';
@@ -37,8 +36,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         this._disposables.push(
             vscode.workspace.onDidChangeConfiguration(e => {
                 if (e.affectsConfiguration('awesomeProjects.projects')) {
-                    // Invalidate configuration cache when projects change
-                    console.log('🔄 [PERF] Configuration changed - invalidating cache');
                     this._configurationLoaded = false;
                     this._cachedConfiguration = undefined;
                     this.refresh();
@@ -125,8 +122,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
                                 const name = await vscode.window.showInputBox({
                                     prompt: 'Enter project name',
-                                    value: projectPath.split('/').pop()
-                                }) || projectPath.split('/').pop() || '';
+                                    value: path.basename(projectPath)
+                                }) || path.basename(projectPath) || '';
 
                                 const newProject: Project = {
                                     id: getProjectId({ path: projectPath, name, color: null } as Project),
@@ -192,7 +189,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     });
                     break;
                 case 'sortProjects':
-                    console.log('Received sortProjects message:', message);
                     this._sortProjects(message.sortedProjectIds || []);
                     break;
             }
@@ -213,7 +209,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
     private handleMessage(message: WebviewMessage): void {
         if (!message || typeof message !== 'object' || !message.command) {
-            console.error('WebviewProvider: Invalid message received:', message);
             return;
         }
         this._messageHandlers.forEach(handler => handler(message));
@@ -268,10 +263,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
     private async _sortProjects(sortedProjectIds: string[]) {
         try {
-            console.log('_sortProjects called with IDs:', sortedProjectIds);
             const configuration = this.getCachedConfiguration();
             const projects = [...(configuration.get<Project[]>('projects') || [])];
-            console.log('Current projects:', projects);
 
             // Reorder projects based on the sorted IDs
             const sortedProjects = sortedProjectIds
@@ -283,15 +276,12 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             const missingProjects = projects.filter(p => !includedIds.has(getProjectId(p)));
             sortedProjects.push(...missingProjects);
 
-            console.log('Sorted projects:', sortedProjects);
             await configuration.update('projects', sortedProjects, vscode.ConfigurationTarget.Global);
-            console.log('Projects updated in configuration');
             // Invalidate cache after update
             this._configurationLoaded = false;
             this._cachedConfiguration = undefined;
             this.refresh();
         } catch (error) {
-            console.error('Error in _sortProjects:', error);
             vscode.window.showErrorMessage(`Failed to sort projects: ${error}`);
         }
     }
@@ -309,7 +299,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     }
 
     public invalidateCache() {
-        console.log('🔄 [PERF] Manually invalidating cache');
         this._configurationLoaded = false;
         this._cachedConfiguration = undefined;
     }
@@ -329,11 +318,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
      */
     private getCachedConfiguration(): vscode.WorkspaceConfiguration {
         if (!this._configurationLoaded || !this._cachedConfiguration) {
-            console.log('🔄 [PERF] Loading configuration from workspace (cache miss)');
             this._cachedConfiguration = vscode.workspace.getConfiguration('awesomeProjects');
             this._configurationLoaded = true;
-        } else {
-            console.log('⚡ [PERF] Using cached configuration (cache hit)');
         }
         return this._cachedConfiguration;
     }
@@ -405,6 +391,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     window.vscode = vscode;
 
                     document.addEventListener('DOMContentLoaded', () => {
+                        const loadingSpinner = document.getElementById('loading-spinner');
+
                         // Setup event listeners
                         document.querySelectorAll('.project-color-input').forEach(input => {
                             if (input.getAttribute('data-uses-theme-color') === 'true') {
@@ -412,7 +400,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                 .getPropertyValue('--vscode-list-activeSelectionBackground')
                                 .trim();
                                 if (themeColor.startsWith('rgb')) {
-                                const rgb = themeColor.match(/d+/g);
+                                const rgb = themeColor.match(/\d+/g);
                                 if (rgb && rgb.length === 3) {
                                     const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
                                     input.value = hex;
@@ -457,7 +445,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         window.addEventListener('message', event => {
                             const message = event.data;
                             if (message.command === 'setLoading') {
-                            isSaving = message.isLoading;
                             if (message.isLoading) {
                                 loadingSpinner.classList.remove('hidden');
                             } else {
