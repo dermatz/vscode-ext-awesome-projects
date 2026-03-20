@@ -314,9 +314,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
     /**
      * Get cached configuration to avoid repeated calls to workspace.getConfiguration
-     * @private
      */
-    private getCachedConfiguration(): vscode.WorkspaceConfiguration {
+    public getCachedConfiguration(): vscode.WorkspaceConfiguration {
         if (!this._configurationLoaded || !this._cachedConfiguration) {
             this._cachedConfiguration = vscode.workspace.getConfiguration('awesomeProjects');
             this._configurationLoaded = true;

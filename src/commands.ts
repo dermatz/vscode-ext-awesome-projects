@@ -23,7 +23,7 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
             if (folderUri && folderUri[0]) {
                 try {
                     const projectPath = folderUri[0].fsPath;
-                    const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                    const configuration = projectsProvider.getCachedConfiguration();
                     const projects: Project[] = configuration.get('projects') || [];
 
                     // Check if project already exists
@@ -77,7 +77,7 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
         // Add new command
         vscode.commands.registerCommand(Commands.UPDATE_PROJECT, async ({ projectId, updates }) => {
             try {
-                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                const configuration = projectsProvider.getCachedConfiguration();
                 const projects = [...(configuration.get<Project[]>('projects') || [])];
                 const projectIndex = projects.findIndex(p => p.id === projectId);
 
@@ -101,7 +101,7 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
 
         vscode.commands.registerCommand(Commands.SORT_PROJECTS, async ({ sortedProjectIds }) => {
             try {
-                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                const configuration = projectsProvider.getCachedConfiguration();
                 const projects = [...(configuration.get<Project[]>('projects') || [])];
 
                 // Reorder projects based on the sorted IDs
@@ -130,7 +130,7 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
             }
 
             try {
-                const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+                const configuration = projectsProvider.getCachedConfiguration();
                 const projects = [...(configuration.get<Project[]>('projects') || [])];
                 const projectIndex = projects.findIndex(p => getProjectId(p) === projectId);
 
