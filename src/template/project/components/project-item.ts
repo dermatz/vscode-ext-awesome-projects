@@ -5,7 +5,7 @@ import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
 import { getProjectId } from '../utils/project-id';
 
-export interface ProjectItemProps {
+interface ProjectItemProps {
     project: Project;
     index: number;
     useFavicons: boolean;

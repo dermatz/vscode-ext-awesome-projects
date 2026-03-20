@@ -1,6 +1,6 @@
 import { getSaveFunctionsScript } from '../../utils/save-functions';
 
-export interface ColorPickerProps {
+interface ColorPickerProps {
     projectPath: string;
     projectId: string;
     currentColor: string | null;

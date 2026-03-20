@@ -4,7 +4,7 @@ import { getColorPickerHtml } from '../colorpicker/colorPicker';
 import { getProjectId } from '../../utils/project-id';
 import { getSaveFunctionsScript } from '../../utils/save-functions';
 
-export async function getSettingsDropdownHtml(context: vscode.ExtensionContext, project: Project): Promise<string> {
+export async function getSettingsDropdownHtml(_context: vscode.ExtensionContext, project: Project): Promise<string> {
     const defaultBgColor = "var(--vscode-list-activeSelectionBackground)";
     const bgColor = project.color || defaultBgColor;
     const projectColor: string | null = project.color ?? null;

@@ -1,5 +1,3 @@
-import * as vscode from "vscode";
-
 export async function getAddToHtml(): Promise<string> {
     return `
         <div style="display: flex; gap: 1rem; justify-content: space-between; align-items: center; flex-wrap: wrap;">

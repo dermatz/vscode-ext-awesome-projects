@@ -51,7 +51,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     public async resolveWebviewView(
         webviewView: vscode.WebviewView,
         _context: vscode.WebviewViewResolveContext,
-        token: vscode.CancellationToken,
+        _token: vscode.CancellationToken,
     ) {
         this._view = webviewView;
         webviewView.webview.options = {
@@ -370,7 +370,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async _getHtmlForWebview(webview: vscode.Webview) {
+    private async _getHtmlForWebview(_webview: vscode.Webview) {
         // Load static resources only once
         await this._loadStaticResources();
 

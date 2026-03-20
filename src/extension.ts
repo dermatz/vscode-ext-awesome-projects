@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { ProjectsWebviewProvider } from './webviewProvider';
 import { registerCommands } from './commands';
 import { getProjectId } from './template/project/utils/project-id';
