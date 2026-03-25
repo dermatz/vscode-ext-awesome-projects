@@ -10,7 +10,6 @@
     --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.15);
     --shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.2);
-    --shadow-glow: 0 0 20px rgba(65, 88, 208, 0.3);
 }
 
 /* Base Styles */
@@ -212,10 +211,6 @@ button:hover {
     pointer-events: none;
 }
 
-.project-item:not(.active) {
-    border-radius: var(--border-radius-large);
-}
-
 .project-item:hover {
     border-color: color-mix(in srgb, var(--bg-color, var(--vscode-focusBorder)) 60%, transparent);
     box-shadow: var(--shadow-medium),
@@ -331,12 +326,10 @@ button:hover {
 .dropdown {
     display: none;
     background: var(--vscode-editor-background);
-    border-top: none;
     border-radius: 0 0 var(--border-radius-large) var(--border-radius-large);
     padding: 20px;
     margin-top: -1px;
     margin-bottom: 12px;
-    animation: slideDown var(--transition-normal) ease-out;
     box-shadow: var(--shadow-medium);
     border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 50%, transparent);
     border-top: none;
@@ -448,6 +441,7 @@ a.info-item-value:hover {
 
 .project-item-wrapper {
     position: relative;
+    animation: fadeInUp 0.5s ease-out both;
 }
 
 .project-item-wrapper.dragging {
@@ -471,10 +465,6 @@ a.info-item-value:hover {
 }
 
 /* Current Project Highlight */
-.project-item-wrapper.current-project {
-    position: relative;
-}
-
 .project-item-wrapper.current-project::before {
     content: '';
     position: absolute;
@@ -506,12 +496,6 @@ a.info-item-value:hover {
 .project-item-wrapper.current-project .project-icon {
     border: 2px solid var(--vscode-activityBar-activeBorder);
     box-shadow: 0 0 10px rgba(65, 88, 208, 0.3);
-}
-
-/* Project List Loading Animation */
-.project-item-wrapper {
-    animation: fadeInUp 0.5s ease-out;
-    animation-fill-mode: both;
 }
 
 .project-item-wrapper:nth-child(1) { animation-delay: 0.1s; }
