@@ -489,6 +489,10 @@ a.info-item-value:hover {
     animation: pulse 2s ease-in-out infinite;
 }
 
+.project-item-wrapper.current-project:has(.project-item.active)::before {
+    display: none;
+}
+
 .project-item-wrapper.current-project .project-item {
     border: 2px solid var(--vscode-activityBar-activeBorder);
     box-shadow: var(--shadow-medium),
