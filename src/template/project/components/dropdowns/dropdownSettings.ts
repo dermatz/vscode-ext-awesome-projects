@@ -3,23 +3,24 @@ import { Project } from '../../../../extension';
 import { getColorPickerHtml } from '../colorpicker/colorPicker';
 import { getProjectId } from '../../utils/project-id';
 import { getSaveFunctionsScript } from '../../utils/save-functions';
+import { escAttr } from '../../../utils/escaping';
 
-export async function getSettingsDropdownHtml(_context: vscode.ExtensionContext, project: Project): Promise<string> {
+export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, project: Project): string {
     const defaultBgColor = "var(--vscode-list-activeSelectionBackground)";
     const bgColor = project.color || defaultBgColor;
     const projectColor: string | null = project.color ?? null;
     const projectId = getProjectId(project);
 
     const basicInputs = [
-        { label: 'Project name:', type: 'text', value: project.name, placeholder: 'Projectname', field: 'name' },
-        { label: 'Local path:', type: 'text', value: project.path, placeholder: '~/path/to/your/project/', field: 'path' },
+        { label: 'Project name:', type: 'text', value: escAttr(project.name), placeholder: 'Projectname', field: 'name' },
+        { label: 'Local path:', type: 'text', value: escAttr(project.path), placeholder: '~/path/to/your/project/', field: 'path' },
     ];
 
     const urlInputs = [
-        { label: 'Production URL:', type: 'url', value: project.productionUrl || "", placeholder: 'https://..', field: 'productionUrl' },
-        { label: 'Staging URL:', type: 'url', value: project.stagingUrl || "", placeholder: 'https://..', field: 'stagingUrl' },
-        { label: 'Local development URL:', type: 'url', value: project.devUrl || "", placeholder: 'https://..', field: 'devUrl' },
-        { label: 'Management URL:', type: 'url', value: project.managementUrl || "", placeholder: 'https://..', field: 'managementUrl' },
+        { label: 'Production URL:', type: 'url', value: escAttr(project.productionUrl || ""), placeholder: 'https://..', field: 'productionUrl' },
+        { label: 'Staging URL:', type: 'url', value: escAttr(project.stagingUrl || ""), placeholder: 'https://..', field: 'stagingUrl' },
+        { label: 'Local development URL:', type: 'url', value: escAttr(project.devUrl || ""), placeholder: 'https://..', field: 'devUrl' },
+        { label: 'Management URL:', type: 'url', value: escAttr(project.managementUrl || ""), placeholder: 'https://..', field: 'managementUrl' },
     ];
 
     return `

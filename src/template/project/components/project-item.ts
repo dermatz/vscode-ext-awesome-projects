@@ -4,6 +4,7 @@ import { generateGradient, getContrastColor } from './colorpicker/colorPicker';
 import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
 import { getProjectId } from '../utils/project-id';
+import { escHtml, escOnclickArg } from '../../utils/escaping';
 
 interface ProjectItemProps {
     project: Project;
@@ -36,7 +37,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
         : null;
     const faviconHtml = baseUrl && useFavicons ? `<img loading="lazy" src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
 
-    const projectSettingsHtml = await getSettingsDropdownHtml(context, project);
+    const projectSettingsHtml = getSettingsDropdownHtml(context, project);
     const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor);
 
     return `
@@ -48,10 +49,10 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
             >
                 <span class="project-icon">${faviconHtml}</span>
                 <div class="project-info">
-                    <div class="project-name" style="color: ${textColor}">${project.name}</div>
+                    <div class="project-name" style="color: ${textColor}">${escHtml(project.name)}</div>
                 </div>
                 <div class="project-settings">
-                    <button class="button mini" onclick="openProject('${project.path.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')">
+                    <button class="button mini" onclick="openProject('${escOnclickArg(project.path)}')">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/>
                         </svg>
