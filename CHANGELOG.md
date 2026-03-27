@@ -4,6 +4,28 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.16.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.15.2...awesome-projects-v0.16.0) (2026-03-27)
+
+
+### Features
+
+* add new cleaner look and feel for projects ([523011a](https://github.com/dermatz/vscode-ext-awesome-projects/commit/523011a8dd4c00f23d2a59c84b151660ff6653d3))
+
+
+### Code Refactoring
+
+* remove unused gradient and contrast color calculations ([4544cbd](https://github.com/dermatz/vscode-ext-awesome-projects/commit/4544cbdfc828940cc79b6711bcebbd58f998eea2))
+
+
+### Maintenance
+
+* **deps:** bump picomatch ([736992e](https://github.com/dermatz/vscode-ext-awesome-projects/commit/736992e455697af50ec7e4d26163d25824fa81e4))
+* **deps:** bump picomatch ([b98092c](https://github.com/dermatz/vscode-ext-awesome-projects/commit/b98092c4ae64eb330df8575753fe4e0a81cab3e2))
+* Enable component inclusion in release tags ([c18497a](https://github.com/dermatz/vscode-ext-awesome-projects/commit/c18497aa3136ceb26734d6ef029035b99334b554))
+* Enable component inclusion in release tags ([0c01663](https://github.com/dermatz/vscode-ext-awesome-projects/commit/0c016631a653cb90b99ae47ab8ccad2ce15dc2cb))
+* enhance deployment with retry logic for VS Code publish ([d5abf70](https://github.com/dermatz/vscode-ext-awesome-projects/commit/d5abf7050d7d3d945cb2a927c8bd50c3b54fe747))
+* update release config to disable component inclusion in tags ([8e66c37](https://github.com/dermatz/vscode-ext-awesome-projects/commit/8e66c373e6d608acf36fe52aa51ec16f49d147d5))
+
 ## [0.15.2](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.15.1...awesome-projects-v0.15.2) (2026-03-25)
 
 
