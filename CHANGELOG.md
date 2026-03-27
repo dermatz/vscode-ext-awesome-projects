@@ -4,6 +4,14 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.19.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.18.0...awesome-projects-v0.19.0) (2026-03-27)
+
+
+### Features
+
+* add group sort order configuration for project groups ([2ebbf0d](https://github.com/dermatz/vscode-ext-awesome-projects/commit/2ebbf0d59b9768c9a48df33b3bb9493f26ccdfeb))
+* add workspace support ([0f5950a](https://github.com/dermatz/vscode-ext-awesome-projects/commit/0f5950a428a4898939c748e4bf709d1186e58f9c))
+
 ## [0.18.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.17.0...awesome-projects-v0.18.0) (2026-03-27)
 
 

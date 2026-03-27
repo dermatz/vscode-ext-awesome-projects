@@ -2,7 +2,7 @@
   "name": "awesome-projects",
   "displayName": "Awesome Projects",
   "description": "Manage and organize your VS Code projects with ease. Quick access to project URLs, custom colors, and project shortcuts.",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "license": "GNU General Public License v3.0",
@@ -174,10 +174,14 @@
         "awesomeProjects.groupSortOrder": {
           "type": "string",
           "default": "alphabetical",
-          "enum": ["alphabetical", "alphabetical-desc", "manual"],
+          "enum": [
+            "alphabetical",
+            "alphabetical-desc",
+            "manual"
+          ],
           "enumDescriptions": [
-            "Sort groups alphabetically (A\u2013Z)",
-            "Sort groups reverse alphabetically (Z\u2013A)",
+            "Sort groups alphabetically (A–Z)",
+            "Sort groups reverse alphabetically (Z–A)",
             "Keep groups in the order they appear in the project list"
           ],
           "description": "Controls the sort order of project groups in the sidebar"
