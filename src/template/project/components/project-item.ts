@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { Project } from '../../../extension';
-import { generateGradient, getContrastColor } from './colorpicker/colorPicker';
 import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
 import { getProjectId } from '../utils/project-id';
@@ -16,8 +15,6 @@ interface ProjectItemProps {
 export async function getProjectItemHtml(context: vscode.ExtensionContext, props: ProjectItemProps): Promise<string> {
     const { project, index, useFavicons, currentWorkspace } = props;
     const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
-    const gradientColor = project.color ? generateGradient(project.color) : "var(--vscode-list-activeSelectionBackground)";
-    const textColor = project.color ? getContrastColor(project.color) : "#ffffff";
 
     const isCurrentProject = currentWorkspace === project.path;
     const currentProjectClass = isCurrentProject ? 'current-project' : '';
@@ -44,12 +41,12 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
         <div class="project-item-wrapper ${currentProjectClass}" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}"
         >
             <div class="project-item"
-                style="--bg-color: ${bgColor}; --bg-gradient: ${gradientColor}"
+                style="--bg-color: ${bgColor}"
                 onclick="toggleDropdown(event, '${getProjectId(project)}', 'info')"
             >
                 <span class="project-icon">${faviconHtml}</span>
                 <div class="project-info">
-                    <div class="project-name" style="color: ${textColor}">${escHtml(project.name)}</div>
+                    <div class="project-name">${escHtml(project.name)}</div>
                 </div>
                 <div class="project-settings">
                     <button class="button mini" onclick="openProject('${escOnclickArg(project.path)}')">
