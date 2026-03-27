@@ -586,6 +586,13 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
 }
 
 /* Accordion Styles */
+.settings-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+}
+
 .settings-accordion {
     margin: 0 0 0.5rem;
     border: 1px solid var(--vscode-input-border);

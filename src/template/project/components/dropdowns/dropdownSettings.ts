@@ -29,30 +29,22 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
             id="settings-${projectId}"
             data-settings-id="${projectId}">
 
-            <div class="settings-accordion">
-                <button class="accordion-toggle" onclick="toggleUrlSettings(event)">
-                    <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
-                    </svg>
-                    Project Settings
-                </button>
-                <div class="accordion-content">
-                    ${basicInputs.map(input => `
-                    <div class="settings-item">
-                        <label>${input.label}</label>
-                        <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" data-field="${input.field}" oninput="handleInput(event, '${projectId}')">
-                    </div>
+            <div class="settings-fields">
+                ${basicInputs.map(input => `
+                <div class="settings-item">
+                    <label>${input.label}</label>
+                    <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" data-field="${input.field}" data-initial-value="${input.value}" oninput="handleInput(event, '${projectId}')">
+                </div>
                 `).join('')}
-                    <div class="settings-item">
-                        <label>Color:</label>
-                        <p>Choose a color to colorize the project card.</p>
-                        ${getColorPickerHtml({
-                            projectPath: project.path,
-                            projectId: projectId,
-                            currentColor: projectColor,
-                            defaultColor: bgColor
-                        })}
-                    </div>
+                <div class="settings-item">
+                    <label>Color:</label>
+                    <p>Choose a color to colorize the project card.</p>
+                    ${getColorPickerHtml({
+                        projectPath: project.path,
+                        projectId: projectId,
+                        currentColor: projectColor,
+                        defaultColor: bgColor
+                    })}
                 </div>
             </div>
 
