@@ -171,6 +171,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'reorderProjects':
                     this._reorderProjects(message.oldIndex, message.newIndex);
                     break;
+                case 'sortProjects':
+                    this._sortProjectsByIds(message.sortedProjectIds);
+                    break;
                 case 'scanProjects':
                     vscode.window.showOpenDialog({
                         canSelectFolders: true,
@@ -298,6 +301,33 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             vscode.window.showErrorMessage(`Failed to reorder projects: ${error}`);
         } finally {
             this._setLoading(false);
+        }
+    }
+
+    private async _sortProjectsByIds(sortedProjectIds: string[]) {
+        try {
+            const configuration = this.getCachedConfiguration();
+            const projects = configuration.get<Project[]>('projects') || [];
+
+            const sorted: Project[] = [];
+            for (const id of sortedProjectIds) {
+                const project = projects.find(p => (p.id ?? '') === id);
+                if (project) {
+                    sorted.push(project);
+                }
+            }
+            for (const project of projects) {
+                if (!sortedProjectIds.includes(project.id ?? '')) {
+                    sorted.push(project);
+                }
+            }
+
+            await configuration.update('projects', sorted, vscode.ConfigurationTarget.Global);
+            this._configurationLoaded = false;
+            this._cachedConfiguration = undefined;
+            this.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to sort projects: ${error}`);
         }
     }
 
