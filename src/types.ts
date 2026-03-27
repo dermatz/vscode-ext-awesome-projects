@@ -8,4 +8,5 @@ export interface Project {
     devUrl?: string;
     stagingUrl?: string;
     managementUrl?: string;
+    group?: string;
 }

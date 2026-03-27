@@ -8,7 +8,6 @@ export const Commands = {
     OPEN_PROJECT: 'awesome-projects.openProject',
     REFRESH_PROJECTS: 'awesome-projects.refreshProjects',
     UPDATE_PROJECT: 'awesome-projects.updateProject',
-    SORT_PROJECTS: 'awesome-projects.sortProjects',
     DELETE_PROJECT: 'awesome-projects.deleteProject'
 };
 
@@ -95,31 +94,6 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                 return false;
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to update project: ${error}`);
-                return false;
-            }
-        }),
-
-        vscode.commands.registerCommand(Commands.SORT_PROJECTS, async ({ sortedProjectIds }) => {
-            try {
-                const configuration = projectsProvider.getCachedConfiguration();
-                const projects = [...(configuration.get<Project[]>('projects') || [])];
-
-                // Reorder projects based on the sorted IDs
-                const sortedProjects = sortedProjectIds
-                    .map((id: string) => projects.find(p => getProjectId(p) === id))
-                    .filter(Boolean) as Project[];
-
-                // Add any projects that weren't in the sorted list (edge case)
-                const includedIds = new Set(sortedProjectIds);
-                const missingProjects = projects.filter(p => !includedIds.has(getProjectId(p)));
-                sortedProjects.push(...missingProjects);
-
-                await configuration.update('projects', sortedProjects, vscode.ConfigurationTarget.Global);
-                projectsProvider.invalidateCache();
-                projectsProvider.refresh();
-                return true;
-            } catch (error) {
-                vscode.window.showErrorMessage(`Failed to sort projects: ${error}`);
                 return false;
             }
         }),

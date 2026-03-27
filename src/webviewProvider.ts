@@ -28,6 +28,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     private _footerLoaded: boolean = false;
     private _cachedConfiguration?: vscode.WorkspaceConfiguration;
     private _configurationLoaded: boolean = false;
+    private _suppressRefresh: boolean = false;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -38,7 +39,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 if (e.affectsConfiguration('awesomeProjects.projects')) {
                     this._configurationLoaded = false;
                     this._cachedConfiguration = undefined;
-                    this.refresh();
+                    if (!this._suppressRefresh) {
+                        this.refresh();
+                    }
                 }
             })
         );
@@ -188,8 +191,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         }
                     });
                     break;
-                case 'sortProjects':
-                    this._sortProjects(message.sortedProjectIds || []);
+                case 'relocateProject':
+                    this._relocateProject(message.projectId!);
                     break;
             }
         });
@@ -242,6 +245,43 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    private async _relocateProject(projectId: string) {
+        const folderUri = await vscode.window.showOpenDialog({
+            canSelectFolders: true,
+            canSelectMany: false,
+            title: 'Select new folder location for this project'
+        });
+        if (!folderUri || !folderUri[0]) { return; }
+
+        const newPath = folderUri[0].fsPath;
+        const configuration = this.getCachedConfiguration();
+        const projects = [...(configuration.get<Project[]>('projects') || [])];
+        const project = projects.find(p => getProjectId(p) === projectId);
+        if (!project) { return; }
+
+        // Auto-detect group from new path: find common root with other projects
+        const otherPaths = projects.filter(p => getProjectId(p) !== projectId).map(p => p.path);
+        let newGroup: string | undefined;
+        if (otherPaths.length > 0) {
+            const allPaths = [...otherPaths, newPath];
+            const dirParts = allPaths.map(p => path.dirname(p).split(path.sep));
+            const first = dirParts[0];
+            let commonLength = 0;
+            for (let i = 0; i < first.length; i++) {
+                if (dirParts.every(p => p[i] === first[i])) { commonLength = i + 1; } else { break; }
+            }
+            const commonRoot = first.slice(0, commonLength).join(path.sep);
+            const relative = path.relative(commonRoot, newPath);
+            const parts = relative.split(path.sep);
+            newGroup = parts.length > 1 ? parts[0] : undefined;
+        }
+
+        await this._updateProject(projectId, {
+            path: newPath,
+            group: newGroup ?? project.group
+        });
+    }
+
     private async _reorderProjects(oldIndex: number, newIndex: number) {
         try {
             this._setLoading(true);
@@ -258,31 +298,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             vscode.window.showErrorMessage(`Failed to reorder projects: ${error}`);
         } finally {
             this._setLoading(false);
-        }
-    }
-
-    private async _sortProjects(sortedProjectIds: string[]) {
-        try {
-            const configuration = this.getCachedConfiguration();
-            const projects = [...(configuration.get<Project[]>('projects') || [])];
-
-            // Reorder projects based on the sorted IDs
-            const sortedProjects = sortedProjectIds
-                .map(id => projects.find(p => getProjectId(p) === id))
-                .filter(Boolean) as Project[];
-
-            // Add any projects that weren't in the sorted list (edge case)
-            const includedIds = new Set(sortedProjectIds);
-            const missingProjects = projects.filter(p => !includedIds.has(getProjectId(p)));
-            sortedProjects.push(...missingProjects);
-
-            await configuration.update('projects', sortedProjects, vscode.ConfigurationTarget.Global);
-            // Invalidate cache after update
-            this._configurationLoaded = false;
-            this._cachedConfiguration = undefined;
-            this.refresh();
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to sort projects: ${error}`);
         }
     }
 

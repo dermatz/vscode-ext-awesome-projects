@@ -16,6 +16,7 @@ export interface Project {
     stagingUrl?: string;
     managementUrl?: string;
     description?: string;
+    group?: string;
 }
 
 /**

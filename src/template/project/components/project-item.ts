@@ -10,14 +10,45 @@ interface ProjectItemProps {
     index: number;
     useFavicons: boolean;
     currentWorkspace?: string;
+    pathExists?: boolean;
 }
 
 export async function getProjectItemHtml(context: vscode.ExtensionContext, props: ProjectItemProps): Promise<string> {
-    const { project, index, useFavicons, currentWorkspace } = props;
+    const { project, index, useFavicons, currentWorkspace, pathExists = true } = props;
     const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
 
     const isCurrentProject = currentWorkspace === project.path;
     const currentProjectClass = isCurrentProject ? 'current-project' : '';
+    const missingClass = pathExists ? '' : 'missing';
+
+    if (!pathExists) {
+        const projectId = getProjectId(project);
+        return `
+        <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${projectId}">
+            <div class="project-item" style="--bg-color: var(--vscode-inputValidation-errorBorder, #f44)">
+                <span class="project-icon">⚠️</span>
+                <div class="project-info">
+                    <div class="project-name">${escHtml(project.name)}</div>
+                    <div class="project-path missing-hint">Folder not found</div>
+                </div>
+                <div class="project-settings">
+                    <button class="button mini relocate" onclick="window.vscodeApi.postMessage({ command: 'relocateProject', projectId: '${projectId}' })">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 7v13h18V7M3 7l9-4 9 4M9 21V11h6v10"/>
+                        </svg>
+                        Relocate
+                    </button>
+                    <button class="button mini remove" onclick="handleDeleteProject('${projectId}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                        </svg>
+                        Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    }
 
     const getBaseUrl = (url?: string) => {
         if (!url) { return null; }
@@ -38,7 +69,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor);
 
     return `
-        <div class="project-item-wrapper ${currentProjectClass}" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}"
+        <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}"
         >
             <div class="project-item"
                 style="--bg-color: ${bgColor}"

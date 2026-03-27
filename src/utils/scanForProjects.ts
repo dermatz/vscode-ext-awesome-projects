@@ -16,8 +16,15 @@ function getCachedConfiguration(): vscode.WorkspaceConfiguration {
     return _cachedConfiguration;
 }
 
-export async function scanForGitProjects(startPath: string): Promise<string[]> {
-    const gitProjects: string[] = [];
+export interface ScannedProject {
+    path: string;
+    /** Relative path from the scan root to the project's parent folder.
+     * Empty string means the project is directly inside the scan root. */
+    group: string;
+}
+
+export async function scanForGitProjects(startPath: string): Promise<ScannedProject[]> {
+    const gitProjects: ScannedProject[] = [];
 
     async function scan(dir: string, depth: number = 0) {
         if (depth > 5) {
@@ -29,7 +36,10 @@ export async function scanForGitProjects(startPath: string): Promise<string[]> {
 
             // Check if current directory is a git repo
             if (files.includes('.git')) {
-                gitProjects.push(dir);
+                const parentRelative = path.relative(startPath, path.dirname(dir));
+                // Normalise to forward slashes for cross-platform consistency
+                const group = parentRelative.split(path.sep).join('/');
+                gitProjects.push({ path: dir, group });
                 return; // Don't scan deeper if we found a git repo
             }
 
@@ -64,27 +74,46 @@ export async function scanForGitProjects(startPath: string): Promise<string[]> {
     return gitProjects;
 }
 
-export async function addScannedProjects(projects: string[]): Promise<void> {
+export async function addScannedProjects(scannedProjects: ScannedProject[]): Promise<void> {
     const configuration = getCachedConfiguration();
     const existingProjects: Project[] = configuration.get('projects') || [];
 
-    // Filter out already existing projects
-    const newProjects = projects.filter(path =>
-        !existingProjects.some(p => p.path === path)
-    );
+    // Filter out already existing projects (by exact path or by same name in same group)
+    const newProjects = scannedProjects.filter(sp => {
+        if (existingProjects.some(p => p.path === sp.path)) {
+            return false; // exact path duplicate
+        }
+        const spName = (sp.path.split('/').pop() || sp.path).toLowerCase();
+        const spGroup = sp.group || '';
+        if (existingProjects.some(p => p.name.toLowerCase() === spName && (p.group || '') === spGroup)) {
+            return false; // same name in same group
+        }
+        return true;
+    });
 
     if (newProjects.length === 0) {
         vscode.window.showInformationMessage('No new projects found');
         return;
     }
 
+    // Mark entries whose name already exists in a different location/group
+    const quickPickItems = newProjects.map(sp => {
+        const label = sp.path.split('/').pop() || sp.path;
+        const spName = label.toLowerCase();
+        const nameExistsElsewhere = existingProjects.some(
+            p => p.name.toLowerCase() === spName
+        );
+        return {
+            label: nameExistsElsewhere ? `$(warning) ${label}` : label,
+            description: sp.group ? `${sp.group}  ·  ${sp.path}` : sp.path,
+            detail: nameExistsElsewhere ? 'A project with this name already exists at a different path' : undefined,
+            scanned: sp
+        };
+    });
+
     // Let user select which projects to add
     const selectedPaths = await vscode.window.showQuickPick(
-        newProjects.map(path => ({
-            label: path.split('/').pop() || path,
-            description: path,
-            path: path
-        })),
+        quickPickItems,
         {
             canPickMany: true,
             placeHolder: 'Select projects to add'
@@ -93,13 +122,17 @@ export async function addScannedProjects(projects: string[]): Promise<void> {
 
     if (!selectedPaths || selectedPaths.length === 0) { return; }
 
-    // Create new project entries
-    const projectsToAdd: Project[] = selectedPaths.map(selection => ({
-        id: getProjectId({ path: selection.path, name: selection.label, color: null } as Project),
-        name: selection.label,
-        path: selection.path,
-        color: null
-    }));
+    // Create new project entries (strip any warning icon prefix from the label)
+    const projectsToAdd: Project[] = selectedPaths.map(selection => {
+        const cleanName = selection.label.replace(/^\$\(warning\) /, '');
+        return {
+            id: getProjectId({ path: selection.scanned.path, name: cleanName, color: null } as Project),
+            name: cleanName,
+            path: selection.scanned.path,
+            color: null,
+            group: selection.scanned.group || undefined
+        };
+    });
 
     // Add to configuration
     await configuration.update(

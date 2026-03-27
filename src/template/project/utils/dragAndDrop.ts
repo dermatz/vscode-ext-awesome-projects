@@ -64,24 +64,21 @@ export const getDragDropScript = (): string => {
                 e.preventDefault();
                 if (this === dragTracker.draggingElement) return;
 
-                const dropIndex = Array.from(this.parentNode.children).indexOf(this);
-
-                // Always insert after the drop target element to match visual feedback
-                // The blue line (drag-over) appears at the bottom of the target element
+                // Insert after the drop target element to match visual feedback
                 this.parentNode.insertBefore(dragTracker.draggingElement, this.nextSibling);
 
                 // Clean up visual state
                 this.classList.remove('drag-over');
 
-                // Calculate the correct new index after DOM manipulation
-                const newIndex = Array.from(this.parentNode.children).indexOf(dragTracker.draggingElement);
+                // Collect all project IDs in their new DOM order and notify VS Code
+                const sortedProjectIds = Array.from(
+                    document.querySelectorAll('.project-item-wrapper[data-project-id]')
+                ).map(item => item.getAttribute('data-project-id'));
 
-                // Notify VS Code about the reorder
                 if (window.vscodeApi) {
                     window.vscodeApi.postMessage({
-                        command: 'reorderProjects',
-                        oldIndex: dragTracker.originalIndex,
-                        newIndex: newIndex
+                        command: 'sortProjects',
+                        sortedProjectIds: sortedProjectIds
                     });
                 }
 
