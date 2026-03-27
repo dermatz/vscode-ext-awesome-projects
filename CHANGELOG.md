@@ -4,6 +4,18 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.18.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.17.0...awesome-projects-v0.18.0) (2026-03-27)
+
+
+### Features
+
+* add sorting functionality for projects by IDs ([fce35aa](https://github.com/dermatz/vscode-ext-awesome-projects/commit/fce35aa03349df47e92f8cfb596bd60e535f9113))
+
+
+### Maintenance
+
+* update GitHub Actions workflow for Node.js and dependencies ([0d4a6c4](https://github.com/dermatz/vscode-ext-awesome-projects/commit/0d4a6c465d9239d82942071791f3ecfb0249da98))
+
 ## [0.17.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.16.0...awesome-projects-v0.17.0) (2026-03-27)
 
 
