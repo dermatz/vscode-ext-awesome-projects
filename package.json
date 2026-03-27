@@ -170,6 +170,17 @@
           "type": "boolean",
           "default": true,
           "description": "Use Google's favicon service to fetch project icons if production url is provided"
+        },
+        "awesomeProjects.groupSortOrder": {
+          "type": "string",
+          "default": "alphabetical",
+          "enum": ["alphabetical", "alphabetical-desc", "manual"],
+          "enumDescriptions": [
+            "Sort groups alphabetically (A\u2013Z)",
+            "Sort groups reverse alphabetically (Z\u2013A)",
+            "Keep groups in the order they appear in the project list"
+          ],
+          "description": "Controls the sort order of project groups in the sidebar"
         }
       }
     }

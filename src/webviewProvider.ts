@@ -36,7 +36,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     ) {
         this._disposables.push(
             vscode.workspace.onDidChangeConfiguration(e => {
-                if (e.affectsConfiguration('awesomeProjects.projects')) {
+                if (e.affectsConfiguration('awesomeProjects.projects') ||
+                    e.affectsConfiguration('awesomeProjects.groupSortOrder')) {
                     this._configurationLoaded = false;
                     this._cachedConfiguration = undefined;
                     if (!this._suppressRefresh) {
