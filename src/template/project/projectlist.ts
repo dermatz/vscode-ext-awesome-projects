@@ -105,14 +105,19 @@ export async function getProjectListHtml(
                 )
             )).join('');
             return `
-                <div class="project-group">
-                    <div class="project-group-header">
+                <div class="project-group" data-group="${escHtml(group)}">
+                    <div class="project-group-header" onclick="toggleGroup(this)">
+                        <svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
+                        </svg>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                         </svg>
                         <span class="project-group-label">${escHtml(group)}</span>
                     </div>
-                    ${itemsHtml}
+                    <div class="project-group-items">
+                        ${itemsHtml}
+                    </div>
                 </div>
             `;
         })
@@ -132,6 +137,35 @@ export async function getProjectListHtml(
         <script>
             ${getDragDropScript()}
             ${getDropdownToggleScript()}
+
+            // Group collapse/expand with persistence via vscodeApi state
+            (function() {
+                const api = window.vscodeApi || acquireVsCodeApi();
+                if (!window.vscodeApi) { window.vscodeApi = api; }
+                const state = api.getState() || {};
+                const collapsed = state.collapsedGroups || {};
+
+                function saveCollapsed() {
+                    const current = api.getState() || {};
+                    api.setState({ ...current, collapsedGroups: collapsed });
+                }
+
+                // Apply persisted state on load
+                document.querySelectorAll('.project-group').forEach(function(group) {
+                    const name = group.getAttribute('data-group');
+                    if (collapsed[name]) {
+                        group.classList.add('collapsed');
+                    }
+                });
+
+                window.toggleGroup = function(header) {
+                    const group = header.closest('.project-group');
+                    const name = group.getAttribute('data-group');
+                    const isCollapsed = group.classList.toggle('collapsed');
+                    collapsed[name] = isCollapsed;
+                    saveCollapsed();
+                };
+            })();
         </script>
     `;
 }

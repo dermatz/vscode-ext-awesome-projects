@@ -365,6 +365,13 @@ a.info-item-value:hover {
     color: var(--vscode-foreground);
     opacity: 0.5;
     user-select: none;
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: opacity var(--transition-fast);
+}
+
+.project-group-header:hover {
+    opacity: 0.85;
 }
 
 .project-group-header svg {
@@ -372,6 +379,26 @@ a.info-item-value:hover {
     height: 12px;
     flex-shrink: 0;
     opacity: 0.8;
+}
+
+.group-chevron {
+    transition: transform var(--transition-fast);
+}
+
+.project-group.collapsed .group-chevron {
+    transform: rotate(-90deg);
+}
+
+.project-group-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow: hidden;
+    transition: none;
+}
+
+.project-group.collapsed .project-group-items {
+    display: none;
 }
 
 .project-item-wrapper {
