@@ -27,23 +27,6 @@ export const generateGradient = (baseColor: string | null): string => {
     return `rgb(${darkerR}, ${darkerG}, ${darkerB})`;
 };
 
-/**
- * Gets a contrasting color (black or white) based on the luminance of the input color.
- * @param {string | null} hexColor - The input color in hex format.
- * @returns {string} - The contrasting color in hex format.
- */
-export const getContrastColor = (hexColor: string | null): string => {
-    const defaultContrastColor = '#ffffff';
-    if (!hexColor) {
-        return defaultContrastColor;
-    }
-    const color = hexColor.replace('#', '');
-    const [r, g, b] = [0, 2, 4].map(offset => parseInt(color.substring(offset, offset + 2), 16));
-
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.5 ? '#000000' : '#ffffff';
-};
-
 export function getColorPickerHtml(props: ColorPickerProps): string {
     const { projectId, currentColor, defaultColor } = props;
 
@@ -99,10 +82,6 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 if (projectItem) {
                     projectItem.style.setProperty('--bg-color', 'var(--vscode-list-activeSelectionBackground)');
                     projectItem.style.setProperty('--bg-gradient', 'var(--vscode-list-activeSelectionBackground)');
-                    const projectName = projectItem.querySelector('.project-name');
-                    if (projectName) {
-                        projectName.style.color = '#ffffff';
-                    }
                 }
 
                 updateSaveButtonState(projectId);
@@ -124,14 +103,6 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 darkerB.toString(16).padStart(2, '0');
             }
 
-            function getContrastColor(hexcolor) {
-                const r = parseInt(hexcolor.slice(1,3),16);
-                const g = parseInt(hexcolor.slice(3,5),16);
-                const b = parseInt(hexcolor.slice(5,7),16);
-                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-                return brightness > 128 ? '#000000' : '#ffffff';
-            }
-
             function setRandomColor(event, projectId) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -150,14 +121,9 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 const projectItem = button.closest('.project-item-wrapper').querySelector('.project-item');
                 if (projectItem) {
                     const gradientColor = generateGradient(randomColor);
-                    const textColor = getContrastColor(randomColor);
 
                     projectItem.style.setProperty('--bg-color', randomColor);
                     projectItem.style.setProperty('--bg-gradient', gradientColor);
-                    const projectName = projectItem.querySelector('.project-name');
-                    if (projectName) {
-                        projectName.style.color = textColor;
-                    }
                 }
 
                 updateSaveButtonState(projectId);
