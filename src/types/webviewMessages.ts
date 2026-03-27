@@ -1,7 +1,7 @@
 import { Project } from '../extension';
 
 export interface WebviewMessage {
-    command: 'deleteProject' | 'updateProject' | 'openProject' | 'openUrl' |
+    command: 'deleteProject' | 'updateProject' | 'openProject' | 'openWorkspace' | 'openUrl' |
              'addProject' | 'projectSelected' |
              'reorderProjects' | 'sortProjects' | 'scanProjects' | 'setLoading' | 'relocateProject';
     projectId?: string;

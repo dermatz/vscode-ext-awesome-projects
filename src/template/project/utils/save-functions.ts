@@ -82,6 +82,14 @@ export function getSaveFunctionsScript(): string {
             });
         }
 
+        function openWorkspace(workspacePath) {
+            const normalizedPath = workspacePath.replace(/\\\\/g, '\\\\');
+            window.vscodeApi.postMessage({
+                command: 'openWorkspace',
+                project: normalizedPath
+            });
+        }
+
         function toggleUrlSettings(event) {
             const button = event.currentTarget;
             const content = button.nextElementSibling;

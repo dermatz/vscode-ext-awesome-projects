@@ -160,6 +160,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'openProject':
                     openProjectInNewWindow(message.project);
                     break;
+                case 'openWorkspace':
+                    openProjectInNewWindow(message.project);
+                    break;
                 case 'projectSelected':
                     vscode.window.showInformationMessage(`Project selected: ${message.path}`);
                     break;

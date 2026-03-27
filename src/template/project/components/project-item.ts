@@ -1,9 +1,21 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 import { Project } from '../../../extension';
 import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
 import { getProjectId } from '../utils/project-id';
 import { escHtml, escOnclickArg } from '../../utils/escaping';
+
+function findWorkspaceFile(projectPath: string): string | null {
+    try {
+        const entries = fs.readdirSync(projectPath);
+        const wsFile = entries.find(e => e.endsWith('.code-workspace'));
+        return wsFile ? path.join(projectPath, wsFile) : null;
+    } catch {
+        return null;
+    }
+}
 
 interface ProjectItemProps {
     project: Project;
@@ -65,8 +77,9 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
         : null;
     const faviconHtml = baseUrl && useFavicons ? `<img loading="lazy" src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
 
+    const workspaceFile = findWorkspaceFile(project.path) ?? undefined;
     const projectSettingsHtml = getSettingsDropdownHtml(context, project);
-    const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor);
+    const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor, workspaceFile);
 
     return `
         <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}"
@@ -86,6 +99,13 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                         </svg>
                         Open
                     </button>
+                    ${workspaceFile ? `
+                    <button class="button mini" onclick="openWorkspace('${escOnclickArg(workspaceFile)}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
+                        Workspace
+                    </button>` : ''}
                     <button class="button mini" onclick="toggleDropdown(event, '${getProjectId(project)}', 'settings')">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke="none" d="M0 0h24v24H0z"/>
