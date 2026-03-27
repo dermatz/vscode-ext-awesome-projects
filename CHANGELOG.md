@@ -4,6 +4,25 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.17.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.16.0...awesome-projects-v0.17.0) (2026-03-27)
+
+
+### Features
+
+* add project grouping and path existence checks in project list ([fc8828b](https://github.com/dermatz/vscode-ext-awesome-projects/commit/fc8828bf785a98e6e3a9d105e0d82d2bd9768d92))
+* add settings fields layout and improve project color input ([23ba59f](https://github.com/dermatz/vscode-ext-awesome-projects/commit/23ba59fb95d36d737da80205170a3bb97fe1f9eb))
+* implement collapsible project groups with persistent state ([6aff773](https://github.com/dermatz/vscode-ext-awesome-projects/commit/6aff7732003db0a6dd6e1d8fe791cfb0a57c3d4c))
+
+
+### Refactoring
+
+* remove unused getContrastColor function and related code ([1e9ea34](https://github.com/dermatz/vscode-ext-awesome-projects/commit/1e9ea34fc53ef608658f7d762663cbd6f8f3c68f))
+
+
+### Maintenance
+
+* add style hints to further changelogs ([9f6028a](https://github.com/dermatz/vscode-ext-awesome-projects/commit/9f6028adb267241f00b404ae6645e7a368caee73))
+
 ## [0.16.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.15.2...awesome-projects-v0.16.0) (2026-03-27)
 
 
