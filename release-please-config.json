@@ -10,10 +10,11 @@
       "changelog-sections": [
         { "type": "feat", "section": "Features" },
         { "type": "fix", "section": "Bug Fixes" },
-        { "type": "perf", "section": "Performance Improvements" },
+        { "type": "perf", "section": "Performance" },
         { "type": "docs", "section": "Documentation" },
-        { "type": "refactor", "section": "Code Refactoring" },
-        { "type": "chore", "section": "Maintenance" }
+        { "type": "refactor", "section": "Refactoring" },
+        { "type": "chore", "section": "Maintenance" },
+        { "type": "style", "section": "UX Improvements" }
       ]
     }
   },
