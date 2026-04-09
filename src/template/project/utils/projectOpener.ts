@@ -40,11 +40,11 @@ async function validatePath(inputPath: string): Promise<void> {
     }
 }
 
-export async function openProjectInNewWindow(projectPath: string): Promise<void> {
+export async function openProjectInNewWindow(projectPath: string, forceNewWindow: boolean = false): Promise<void> {
     try {
         const normalizedPath = normalizePath(projectPath);
         await validatePath(normalizedPath);
-        await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(normalizedPath));
+        await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(normalizedPath), forceNewWindow);
     } catch (error) {
         console.error('Error opening project:', error);
         vscode.window.showErrorMessage(`Failed to open project: ${error instanceof Error ? error.message : 'Unknown error'}`);

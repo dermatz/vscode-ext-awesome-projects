@@ -260,12 +260,136 @@ button:hover {
     gap: 0.25rem;
 }
 
-.project-item:hover .project-settings {
+.project-item:hover .project-settings,
+.project-settings.menu-open {
     opacity: 1;
     transform: translateY(-50%) scale(1);
 }
 
+.project-settings.menu-open {
+    z-index: 200;
+}
+
+body.hide-hover-buttons .project-settings {
+    display: none;
+}
+
+/* Quick Menu (burger button flyout) */
+.quick-menu-wrapper {
+    position: relative;
+}
+
+.quick-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 100;
+    min-width: 175px;
+    background: var(--vscode-menu-background, var(--vscode-editor-background));
+    border: 1px solid var(--vscode-menu-border, var(--vscode-panel-border));
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-medium);
+    overflow: hidden;
+}
+
+.quick-menu.show {
+    display: block;
+    animation: slideDown var(--transition-normal) ease-out;
+}
+
+.quick-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.4rem 0.75rem;
+    background: none;
+    border: none;
+    color: var(--vscode-menu-foreground, var(--vscode-foreground));
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.quick-menu-item:hover {
+    background: var(--vscode-menu-selectionBackground, var(--vscode-list-hoverBackground));
+    color: var(--vscode-menu-selectionForeground, var(--vscode-foreground));
+}
+
+.quick-menu-item svg {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex-shrink: 0;
+}
+
+.quick-menu-divider {
+    margin: 0.25rem 0;
+    border: none;
+    border-top: 1px solid var(--vscode-menu-separatorBackground, var(--vscode-panel-border));
+}
+
 /* Info Section & Actions */
+.info-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 12px;
+}
+
+.info-header-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.info-header-name {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--vscode-foreground);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info-header-url {
+    font-size: 0.8em;
+    color: var(--vscode-textLink-foreground);
+    text-decoration: none;
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info-header-url:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.info-close-button {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--vscode-foreground);
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 2px;
+    border-radius: var(--border-radius);
+    transition: opacity var(--transition-fast);
+}
+
+.info-close-button:hover {
+    opacity: 1;
+    background: var(--vscode-toolbar-hoverBackground);
+}
+
 .info-section {
     margin-bottom: 12px;
 }
@@ -283,6 +407,50 @@ button:hover {
     color: var(--vscode-foreground);
     width: 100%;
     overflow: auto;
+}
+
+/* Action Grid */
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.action-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 8px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background var(--transition-fast), opacity var(--transition-fast);
+}
+
+.action-card:hover {
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.action-card svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+}
+
+.action-card-primary {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.action-card-primary:hover {
+    background: var(--vscode-button-hoverBackground);
 }
 
 .info-actions {
@@ -393,7 +561,7 @@ a.info-item-value:hover {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    overflow: hidden;
+    overflow: visible;
     transition: none;
 }
 
