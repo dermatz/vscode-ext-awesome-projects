@@ -82,6 +82,14 @@ export function getSaveFunctionsScript(): string {
             });
         }
 
+        function openProjectNewWindow(projectPath) {
+            const normalizedPath = projectPath.replace(/\\\\/g, '\\\\');
+            window.vscodeApi.postMessage({
+                command: 'openProjectNewWindow',
+                project: normalizedPath
+            });
+        }
+
         function openWorkspace(workspacePath) {
             const normalizedPath = workspacePath.replace(/\\\\/g, '\\\\');
             window.vscodeApi.postMessage({

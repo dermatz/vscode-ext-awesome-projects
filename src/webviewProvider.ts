@@ -160,6 +160,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'openProject':
                     openProjectInNewWindow(message.project);
                     break;
+                case 'openProjectNewWindow':
+                    openProjectInNewWindow(message.project, true);
+                    break;
                 case 'openWorkspace':
                     openProjectInNewWindow(message.project);
                     break;
@@ -428,7 +431,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
         // Only generate the project list HTML each time, as it changes frequently
         const projectListHtml = await getProjectListHtml(this._context, currentWorkspace, this.getCachedConfiguration());
-
+        const showButtonsOnHover = this.getCachedConfiguration().get<boolean>('showButtonsOnHover', true);
+        const bodyClass = showButtonsOnHover ? '' : ' hide-hover-buttons';
         return `<!DOCTYPE html>
             <html>
             <head>
@@ -522,7 +526,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     };
                 </script>
             </head>
-            <body>
+            <body class="${bodyClass.trim()}">
                 ${this._cachedHeaderHtml}
                 <div class="projects-wrapper">
                     <div id="loading-spinner" class="loading-spinner hidden"></div>

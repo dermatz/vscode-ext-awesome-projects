@@ -93,27 +93,43 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                     <div class="project-name">${escHtml(project.name)}</div>
                 </div>
                 <div class="project-settings">
-                    <button class="button mini" onclick="openProject('${escOnclickArg(project.path)}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/>
-                        </svg>
-                        Open
-                    </button>
-                    ${workspaceFile ? `
-                    <button class="button mini" onclick="openWorkspace('${escOnclickArg(workspaceFile)}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                        </svg>
-                        Workspace
-                    </button>` : ''}
-                    <button class="button mini" onclick="toggleDropdown(event, '${getProjectId(project)}', 'settings')">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke="none" d="M0 0h24v24H0z"/>
-                            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
-                            <path d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0"/>
-                        </svg>
-                        Edit
-                    </button>
+                    <div class="quick-menu-wrapper">
+                        <button class="button mini" onclick="toggleQuickMenu(event, '${getProjectId(project)}')" title="Open options">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
+                            </svg>
+                        </button>
+                        <div class="quick-menu" id="quick-menu-${getProjectId(project)}">
+                            <button class="quick-menu-item" onclick="openProject('${escOnclickArg(project.path)}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M5 3l14 9-14 9V3z"/>
+                                </svg>
+                                Open
+                            </button>
+                            <button class="quick-menu-item" onclick="openProjectNewWindow('${escOnclickArg(project.path)}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                                New Window
+                            </button>
+                            ${workspaceFile ? `
+                            <button class="quick-menu-item" onclick="openWorkspace('${escOnclickArg(workspaceFile)}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                                </svg>
+                                Workspace
+                            </button>` : ''}
+                            <hr class="quick-menu-divider"/>
+                            <button class="quick-menu-item" onclick="toggleDropdown(event, '${getProjectId(project)}', 'settings')">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke="none" d="M0 0h24v24H0z"/>
+                                    <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
+                                    <path d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0"/>
+                                </svg>
+                                Edit
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
             ${projectInfoHtml}
