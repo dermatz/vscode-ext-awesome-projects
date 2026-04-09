@@ -4,6 +4,14 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.20.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.19.0...awesome-projects-v0.20.0) (2026-04-09)
+
+
+### Features
+
+* add redesigned quick menu for project actions and new window op… ([77154a5](https://github.com/dermatz/vscode-ext-awesome-projects/commit/77154a5e72abef26fb0bf138e0968dccf822470e))
+* add redesigned quick menu for project actions and new window option ([fa60521](https://github.com/dermatz/vscode-ext-awesome-projects/commit/fa6052143eddc675c8a792998dbb86037ca5fc93))
+
 ## [0.19.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.18.0...awesome-projects-v0.19.0) (2026-03-27)
 
 
