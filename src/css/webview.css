@@ -569,6 +569,21 @@ a.info-item-value:hover {
     display: none;
 }
 
+/* Nested group visual hierarchy */
+.project-group .project-group {
+    margin-top: 0.4rem;
+    border-left-color: var(--vscode-panel-border, rgba(255,255,255,0.07));
+}
+
+.project-group .project-group .project-group-header {
+    font-size: 0.67rem;
+    opacity: 0.45;
+}
+
+.project-group .project-group .project-group-header:hover {
+    opacity: 0.75;
+}
+
 .project-item-wrapper {
     position: relative;
 }
