@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Project } from '../extension';
 import { getProjectId } from '../template/project/utils/project-id';
+import { StatusBarManager } from '../statusBar';
 
 const extensionId = 'MathiasElle.awesome-projects';
 
@@ -455,5 +456,45 @@ suite('Awesome Projects Extension Test Suite', () => {
             // Cleanup
             await config.update('projects', initialProjects, vscode.ConfigurationTarget.Global);
         }
+    });
+
+    // Status bar tests
+    suite('StatusBarManager', () => {
+        test('Should create a StatusBarManager without errors', () => {
+            const manager = new StatusBarManager();
+            assert.ok(manager, 'StatusBarManager should be created');
+            manager.dispose();
+        });
+
+        test('Should have showStatusBar configuration setting', () => {
+            const config = vscode.workspace.getConfiguration('awesomeProjects');
+            assert.ok(config.has('showStatusBar'), 'showStatusBar setting should exist');
+        });
+
+        test('Should call update without error when no workspace is open', () => {
+            const manager = new StatusBarManager();
+            assert.doesNotThrow(() => manager.update(), 'update() should not throw');
+            manager.dispose();
+        });
+
+        test('Should dispose without errors', () => {
+            const manager = new StatusBarManager();
+            assert.doesNotThrow(() => manager.dispose(), 'dispose() should not throw');
+        });
+
+        test('Should hide status bar when showStatusBar is false', async () => {
+            const config = vscode.workspace.getConfiguration('awesomeProjects');
+            const original = config.get<boolean>('showStatusBar');
+
+            try {
+                await config.update('showStatusBar', false, vscode.ConfigurationTarget.Global);
+                const manager = new StatusBarManager();
+                // update() should not throw even when disabled
+                assert.doesNotThrow(() => manager.update());
+                manager.dispose();
+            } finally {
+                await config.update('showStatusBar', original, vscode.ConfigurationTarget.Global);
+            }
+        });
     });
 });

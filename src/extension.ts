@@ -4,6 +4,7 @@ import { registerCommands } from './commands';
 import { getProjectId } from './template/project/utils/project-id';
 import { WebviewMessage } from './types/webviewMessages';
 import { showUpdateNotification } from './updateNotifier';
+import { StatusBarManager } from './statusBar';
 
 export interface Project {
     id: string;  // Make id required instead of optional
@@ -41,6 +42,11 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     registerCommands(context, projectsProvider);
+
+    // Initialize status bar
+    const statusBarManager = new StatusBarManager();
+    context.subscriptions.push(statusBarManager);
+    statusBarManager.update();
 
     // Check project IDs immediately but asynchronously
     (async () => {
