@@ -569,13 +569,17 @@ a.info-item-value:hover {
     display: none;
 }
 
-/* Nested group visual hierarchy */
+/* Nested group visual hierarchy: all groups inside another group get
+   reduced margin, a lighter border, and a slightly smaller/dimmer header.
+   The same rules apply recursively at any depth, which keeps deeply-nested
+   groups readable while still showing visual distinction from top-level groups. */
 .project-group .project-group {
     margin-top: 0.4rem;
     border-left-color: var(--vscode-panel-border, rgba(255,255,255,0.07));
 }
 
 .project-group .project-group .project-group-header {
+    /* ~93% of the parent 0.72rem for a subtle size decrease at every nesting level */
     font-size: 0.67rem;
     opacity: 0.45;
 }

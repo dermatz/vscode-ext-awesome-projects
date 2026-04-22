@@ -6,7 +6,7 @@ import { getProjectItemHtml } from './components/project-item';
 import { getAddToHtml } from './components/add-to';
 import { getDropdownToggleScript } from './utils/dropdownUtils';
 import { getDragDropScript } from './utils/dragAndDrop';
-import { escHtml } from '../utils/escaping';
+import { escHtml, escAttr } from '../utils/escaping';
 
 /**
  * Find the common root directory shared by all project paths.
@@ -89,7 +89,7 @@ async function renderGroupNode(
     )).join('');
 
     return `
-                <div class="project-group" data-group="${escHtml(groupKey)}">
+                <div class="project-group" data-group="${escAttr(groupKey)}">
                     <div class="project-group-header" onclick="toggleGroup(this)">
                         <svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
@@ -100,8 +100,8 @@ async function renderGroupNode(
                         <span class="project-group-label">${escHtml(name)}</span>
                     </div>
                     <div class="project-group-items">
-                        ${childrenHtml}
                         ${itemsHtml}
+                        ${childrenHtml}
                     </div>
                 </div>
             `;
