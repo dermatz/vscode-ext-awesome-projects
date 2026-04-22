@@ -204,6 +204,17 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'relocateProject':
                     this._relocateProject(message.projectId!);
                     break;
+                case 'toggleGroupCollapse':
+                    if (message.groupName !== undefined && message.isCollapsed !== undefined) {
+                        const collapsedGroups = this._context.globalState.get<Record<string, boolean>>('collapsedGroups', {});
+                        if (message.isCollapsed) {
+                            collapsedGroups[message.groupName] = true;
+                        } else {
+                            delete collapsedGroups[message.groupName];
+                        }
+                        this._context.globalState.update('collapsedGroups', collapsedGroups);
+                    }
+                    break;
             }
         });
     }
@@ -430,7 +441,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         const currentWorkspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
 
         // Only generate the project list HTML each time, as it changes frequently
-        const projectListHtml = await getProjectListHtml(this._context, currentWorkspace, this.getCachedConfiguration());
+        const collapsedGroups = this._context.globalState.get<Record<string, boolean>>('collapsedGroups', {});
+        const projectListHtml = await getProjectListHtml(this._context, currentWorkspace, this.getCachedConfiguration(), collapsedGroups);
         const showButtonsOnHover = this.getCachedConfiguration().get<boolean>('showButtonsOnHover', true);
         const bodyClass = showButtonsOnHover ? '' : ' hide-hover-buttons';
         return `<!DOCTYPE html>

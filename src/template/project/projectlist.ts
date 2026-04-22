@@ -65,7 +65,8 @@ async function renderGroupNode(
     useFavicons: boolean,
     currentWorkspace: string,
     existsMap: Map<string, boolean>,
-    groupSortOrder: string
+    groupSortOrder: string,
+    collapsedGroups: Record<string, boolean>
 ): Promise<string> {
     const itemsHtml = (await Promise.all(
         node.items.map(({ project, index }) =>
@@ -83,13 +84,14 @@ async function renderGroupNode(
                 useFavicons,
                 currentWorkspace,
                 existsMap,
-                groupSortOrder
+                groupSortOrder,
+                collapsedGroups
             )
         )
     )).join('');
 
     return `
-                <div class="project-group" data-group="${escAttr(groupKey)}">
+                <div class="project-group${collapsedGroups[groupKey] ? ' collapsed' : ''}" data-group="${escAttr(groupKey)}">
                     <div class="project-group-header" onclick="toggleGroup(this)">
                         <svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
@@ -110,7 +112,8 @@ async function renderGroupNode(
 export async function getProjectListHtml(
     context: vscode.ExtensionContext,
     currentWorkspace: string = '',
-    configuration?: vscode.WorkspaceConfiguration
+    configuration?: vscode.WorkspaceConfiguration,
+    collapsedGroups: Record<string, boolean> = {}
 ): Promise<string> {
     const config = configuration || vscode.workspace.getConfiguration('awesomeProjects');
     const rawProjects = config.get<Project[]>('projects') || [];
@@ -172,7 +175,7 @@ export async function getProjectListHtml(
     // Render top-level groups (and their nested children) recursively
     const groupedHtml = (await Promise.all(
         getSortedGroupChildren(rootNode, groupSortOrder).map(([name, node]) =>
-            renderGroupNode(name, name, node, context, useFavicons, currentWorkspace, existsMap, groupSortOrder)
+            renderGroupNode(name, name, node, context, useFavicons, currentWorkspace, existsMap, groupSortOrder, collapsedGroups)
         )
     )).join('');
 
@@ -191,35 +194,21 @@ export async function getProjectListHtml(
             ${getDragDropScript()}
             ${getDropdownToggleScript()}
 
-            // Group collapse/expand with persistence via vscodeApi state
+            // Group collapse/expand with persistence via extension globalState
             (function() {
-                const api = window.vscodeApi || acquireVsCodeApi();
-                if (!window.vscodeApi) { window.vscodeApi = api; }
-                const state = api.getState() || {};
-                const collapsed = state.collapsedGroups || {};
-
-                function saveCollapsed() {
-                    const current = api.getState() || {};
-                    api.setState({ ...current, collapsedGroups: collapsed });
-                }
-
-                // Apply persisted state on load
-                document.querySelectorAll('.project-group').forEach(function(group) {
-                    const name = group.getAttribute('data-group');
-                    if (collapsed[name]) {
-                        group.classList.add('collapsed');
-                    }
-                });
-
                 window.toggleGroup = function(header) {
                     const group = header.closest('.project-group');
                     const name = group.getAttribute('data-group');
                     const isCollapsed = group.classList.toggle('collapsed');
-                    collapsed[name] = isCollapsed;
-                    saveCollapsed();
+                    if (window.vscodeApi) {
+                        window.vscodeApi.postMessage({
+                            command: 'toggleGroupCollapse',
+                            groupName: name,
+                            isCollapsed: isCollapsed
+                        });
+                    }
                 };
             })();
         </script>
     `;
 }
-
