@@ -5,7 +5,7 @@ import { Project } from '../../../extension';
 import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
 import { getProjectId } from '../utils/project-id';
-import { escHtml, escOnclickArg } from '../../utils/escaping';
+import { escHtml, escAttr, escOnclickArg, sanitizeCssColor } from '../../utils/escaping';
 
 function findWorkspaceFile(projectPath: string): string | null {
     try {
@@ -75,7 +75,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const baseUrl = useFavicons
         ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
         : null;
-    const faviconHtml = baseUrl && useFavicons ? `<img loading="lazy" src="https://www.google.com/s2/favicons?domain=${baseUrl}" onerror="this.parentElement.innerHTML='📁'">` : "📁";
+    const faviconHtml = baseUrl && useFavicons ? `<img loading="lazy" src="https://www.google.com/s2/favicons?domain=${escAttr(baseUrl)}" onerror="this.parentElement.textContent='\u{1F4C1}'">` : "📁";
 
     const workspaceFile = findWorkspaceFile(project.path) ?? undefined;
     const projectSettingsHtml = getSettingsDropdownHtml(context, project);
@@ -85,7 +85,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
         <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}"
         >
             <div class="project-item"
-                style="--bg-color: ${bgColor}"
+                style="--bg-color: ${sanitizeCssColor(bgColor)}"
                 onclick="toggleDropdown(event, '${getProjectId(project)}', 'info')"
             >
                 <span class="project-icon">${faviconHtml}</span>

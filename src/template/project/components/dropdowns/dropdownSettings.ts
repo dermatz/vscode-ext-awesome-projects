@@ -3,7 +3,7 @@ import { Project } from '../../../../extension';
 import { getColorPickerHtml } from '../colorpicker/colorPicker';
 import { getProjectId } from '../../utils/project-id';
 import { getSaveFunctionsScript } from '../../utils/save-functions';
-import { escAttr } from '../../../utils/escaping';
+import { escAttr, sanitizeCssColor } from '../../../utils/escaping';
 
 export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, project: Project): string {
     const defaultBgColor = "var(--vscode-list-activeSelectionBackground)";
@@ -23,9 +23,10 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
         { label: 'Management URL:', type: 'url', value: escAttr(project.managementUrl || ""), placeholder: 'https://..', field: 'managementUrl' },
     ];
 
+    const safeBgColor = sanitizeCssColor(bgColor);
     return `
         <div class="dropdown settings-dropdown"
-            style="border-left: 1px solid ${bgColor}; border-right: 1px solid ${bgColor}; border-bottom: 1px solid ${bgColor};"
+            style="border-left: 1px solid ${safeBgColor}; border-right: 1px solid ${safeBgColor}; border-bottom: 1px solid ${safeBgColor};"
             id="settings-${projectId}"
             data-settings-id="${projectId}">
 

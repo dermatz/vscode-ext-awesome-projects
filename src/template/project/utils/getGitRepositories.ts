@@ -2,6 +2,7 @@ import { Project } from '../../../extension';
 import * as path from 'path';
 import * as fs from 'fs';
 import { gitIcons, getGitServiceType } from './gitIcons';
+import { safeUrl, escAttr, escHtml } from '../../utils/escaping';
 
 // Cache for git config data with file modification time tracking
 interface GitCacheEntry {
@@ -126,7 +127,7 @@ export async function getGitRepositoriesHtml(project: Project): Promise<string> 
         gitContent = `
             <span class="repository-link">
                 ${icon}
-                <a class="info-item-value" href="${gitConfig.url}" target="_blank">${gitConfig.url}</a>
+                <a class="info-item-value" href="${safeUrl(gitConfig.url)}" target="_blank">${escHtml(gitConfig.url)}</a>
             </span>`;
 
         // Add submodules section if any exist
@@ -139,7 +140,7 @@ export async function getGitRepositoriesHtml(project: Project): Promise<string> 
                     return `
                         <li class="repository-link">
                             ${icon}
-                            <a class="info-item-value" href="${sub.url}" target="_blank" title="${sub.url}">${sub.name}</a>
+                            <a class="info-item-value" href="${safeUrl(sub.url)}" target="_blank" title="${escAttr(sub.url)}">${escHtml(sub.name)}</a>
                         </li>`;
                 })
                 .join('\n');
