@@ -579,7 +579,7 @@ a.info-item-value:hover {
 }
 
 .project-group .project-group .project-group-header {
-    /* ~93% of the parent 0.72rem for a subtle size decrease at every nesting level */
+    /* Slightly smaller text for nested group headers (complements the 0.72rem base) */
     font-size: 0.67rem;
     opacity: 0.45;
 }
