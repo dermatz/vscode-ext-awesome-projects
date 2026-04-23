@@ -1,16 +1,16 @@
 import { Project } from '../../../../extension';
 import { getProjectId } from '../../utils/project-id';
 import { getGitRepositoriesHtml } from '../../utils/getGitRepositories';
-import { safeUrl, escOnclickArg, escHtml } from '../../../utils/escaping';
+import { safeUrl, escOnclickArg, escHtml, sanitizeCssColor } from '../../../utils/escaping';
 
 export async function getProjectInfoDropdownHtml(project: Project, color?: string, workspaceFile?: string): Promise<string> {
     const projectId = getProjectId(project);
-    const borderColor = color || "var(--vscode-list-activeSelectionBackground)";
+    const safeBorderColor = sanitizeCssColor(color || "var(--vscode-list-activeSelectionBackground)");
 
     return `
         <div id="info-${projectId}"
              class="dropdown project-info-dropdown"
-             style="border-left: 1px solid ${borderColor}; border-right: 1px solid ${borderColor}; border-bottom: 1px solid ${borderColor};"
+             style="border-left: 1px solid ${safeBorderColor}; border-right: 1px solid ${safeBorderColor}; border-bottom: 1px solid ${safeBorderColor};"
         >
             <div class="info-header">
                 <div class="info-header-meta">

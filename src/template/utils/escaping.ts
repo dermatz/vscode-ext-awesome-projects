@@ -30,6 +30,25 @@ export function escOnclickArg(value: string): string {
 }
 
 /**
+ * Sanitizes a CSS color value for safe use in a style attribute.
+ * Only allows hex colors (#rgb / #rrggbb / #rgba / #rrggbbaa) and
+ * VS Code CSS variable references with an optional hex-color or keyword fallback.
+ * Returns 'transparent' for any value that does not match, preventing
+ * CSS injection via user-supplied project color settings.
+ */
+export function sanitizeCssColor(color: string): string {
+    const trimmed = color.trim();
+    if (/^#[0-9a-fA-F]{3,8}$/.test(trimmed)) {
+        return trimmed;
+    }
+    // Allow var(--name) with an optional fallback that is itself a safe color or keyword
+    if (/^var\(--[a-zA-Z0-9_-]+(?:,\s*(?:#[0-9a-fA-F]{3,8}|[a-zA-Z]+))?\)$/.test(trimmed)) {
+        return trimmed;
+    }
+    return 'transparent';
+}
+
+/**
  * Validates that a URL uses http or https and escapes it for an HTML attribute.
  * Returns '#' for invalid or non-http(s) URLs to prevent javascript: injection.
  */
