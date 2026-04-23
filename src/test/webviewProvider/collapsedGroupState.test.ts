@@ -26,7 +26,7 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
                     return Promise.resolve();
                 },
                 setKeysForSync: () => {}
-            } as any,
+            } as unknown as vscode.ExtensionContext['globalState'],
             extensionPath: path.join(__dirname, '../../..'),
             asAbsolutePath: (relativePath: string) => path.join(__dirname, '../../../', relativePath),
             storagePath: __dirname,
@@ -48,13 +48,13 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
                 postMessage: () => Promise.resolve(true),
                 // Expose for test use
                 _triggerMessage: (msg: unknown) => messageHandler && messageHandler(msg),
-            } as any,
+            } as unknown as vscode.Webview,
             onDidChangeVisibility: () => ({ dispose: () => {} }),
             onDidDispose: () => ({ dispose: () => {} }),
             title: 'Test View',
             description: 'Test',
             visible: true,
-        } as any;
+        } as unknown as vscode.WebviewView;
     }
 
     test('Should save collapsed state to globalState on toggleGroupCollapse message', async () => {
@@ -104,10 +104,10 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
         mutableProjectList2.getProjectListHtml = async () => '<div>Mock Project List</div>';
 
         try {
-            await provider.resolveWebviewView(mockWebviewView, { state: undefined } as any, {} as any);
+            await provider.resolveWebviewView(mockWebviewView, { state: undefined } as unknown as vscode.WebviewViewResolveContext<undefined>, {} as unknown as vscode.CancellationToken);
 
             // Simulate expanding MyGroup
-            (mockWebviewView.webview as any)._triggerMessage({
+            (mockWebviewView.webview as unknown as { _triggerMessage: (msg: unknown) => void })._triggerMessage({
                 command: 'toggleGroupCollapse',
                 groupName: 'MyGroup',
                 isCollapsed: false
@@ -142,7 +142,7 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
 
         try {
             const provider = new ProjectsWebviewProvider(mockContext.extensionUri, mockContext);
-            await provider.resolveWebviewView(mockWebviewView, { state: undefined } as any, {} as any);
+            await provider.resolveWebviewView(mockWebviewView, { state: undefined } as unknown as vscode.WebviewViewResolveContext<undefined>, {} as unknown as vscode.CancellationToken);
 
             // Wait for deferred initial render
             await new Promise(resolve => setTimeout(resolve, 200));
