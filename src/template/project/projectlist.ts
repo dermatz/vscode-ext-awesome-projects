@@ -6,7 +6,7 @@ import { getProjectItemHtml } from './components/project-item';
 import { getAddToHtml } from './components/add-to';
 import { getDropdownToggleScript } from './utils/dropdownUtils';
 import { getDragDropScript } from './utils/dragAndDrop';
-import { escHtml } from '../utils/escaping';
+import { escHtml, escAttr } from '../utils/escaping';
 
 /**
  * Find the common root directory shared by all project paths.
@@ -27,15 +27,84 @@ function findCommonRoot(paths: string[]): string {
 }
 
 /**
- * Infer a group name from the project path relative to the common root.
- * Returns the immediate parent folder name if the project is one level deeper
- * than the common root, otherwise undefined (= ungrouped).
+ * Infer the full group path from the project path relative to the common root.
+ * Returns an array of folder names representing each level of nesting, e.g.
+ * ['github', 'customer1'] for a project two directories below the common root.
  */
-function inferGroup(projectPath: string, commonRoot: string): string | undefined {
-    if (!commonRoot) { return undefined; }
+function inferGroupPath(projectPath: string, commonRoot: string): string[] {
+    if (!commonRoot) { return []; }
     const relative = path.relative(commonRoot, projectPath);
     const parts = relative.split(path.sep);
-    return parts.length > 1 ? parts[0] : undefined;
+    // All parts except the last one (the project directory itself)
+    return parts.length > 1 ? parts.slice(0, -1) : [];
+}
+
+/** Node in the recursive group tree. */
+interface GroupTreeNode {
+    children: Map<string, GroupTreeNode>;
+    items: { project: Project; index: number }[];
+}
+
+/** Return the children of a group node in the requested sort order. */
+function getSortedGroupChildren(node: GroupTreeNode, sortOrder: string): [string, GroupTreeNode][] {
+    const entries = Array.from(node.children.entries());
+    if (sortOrder === 'alphabetical') {
+        entries.sort(([a], [b]) => a.localeCompare(b));
+    } else if (sortOrder === 'alphabetical-desc') {
+        entries.sort(([a], [b]) => b.localeCompare(a));
+    }
+    return entries;
+}
+
+/** Recursively render a single group node and all its nested children. */
+async function renderGroupNode(
+    name: string,
+    groupKey: string,
+    node: GroupTreeNode,
+    context: vscode.ExtensionContext,
+    useFavicons: boolean,
+    currentWorkspace: string,
+    existsMap: Map<string, boolean>,
+    groupSortOrder: string
+): Promise<string> {
+    const itemsHtml = (await Promise.all(
+        node.items.map(({ project, index }) =>
+            getProjectItemHtml(context, { project, index, useFavicons, currentWorkspace, pathExists: existsMap.get(project.path) ?? true })
+        )
+    )).join('');
+
+    const childrenHtml = (await Promise.all(
+        getSortedGroupChildren(node, groupSortOrder).map(([childName, childNode]) =>
+            renderGroupNode(
+                childName,
+                `${groupKey}/${childName}`,
+                childNode,
+                context,
+                useFavicons,
+                currentWorkspace,
+                existsMap,
+                groupSortOrder
+            )
+        )
+    )).join('');
+
+    return `
+                <div class="project-group" data-group="${escAttr(groupKey)}">
+                    <div class="project-group-header" onclick="toggleGroup(this)">
+                        <svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
+                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span class="project-group-label">${escHtml(name)}</span>
+                    </div>
+                    <div class="project-group-items">
+                        ${itemsHtml}
+                        ${childrenHtml}
+                    </div>
+                </div>
+            `;
 }
 
 export async function getProjectListHtml(
@@ -74,60 +143,37 @@ export async function getProjectListHtml(
 
     const commonRoot = findCommonRoot(projects.map(p => p.path));
 
-    const ungrouped: { project: Project; index: number }[] = [];
-    const groupMap = new Map<string, { project: Project; index: number }[]>();
-
+    // Build a nested group tree.
+    // Explicit group field → single flat level; path-based inference → multi-level.
+    const rootNode: GroupTreeNode = { children: new Map(), items: [] };
     projects.forEach((project, index) => {
-        // Explicit group takes priority, then auto-infer from path structure
-        const group = project.group?.trim() || inferGroup(project.path, commonRoot);
-        if (group) {
-            if (!groupMap.has(group)) {
-                groupMap.set(group, []);
+        const explicitGroup = project.group?.trim();
+        const groupParts = explicitGroup
+            ? [explicitGroup]
+            : inferGroupPath(project.path, commonRoot);
+
+        let node = rootNode;
+        for (const part of groupParts) {
+            if (!node.children.has(part)) {
+                node.children.set(part, { children: new Map(), items: [] });
             }
-            groupMap.get(group)!.push({ project, index });
-        } else {
-            ungrouped.push({ project, index });
+            node = node.children.get(part)!;
         }
+        node.items.push({ project, index });
     });
 
-    // Render ungrouped items
+    // Render ungrouped items (items at the root of the tree)
     const ungroupedHtml = (await Promise.all(
-        ungrouped.map(({ project, index }) =>
+        rootNode.items.map(({ project, index }) =>
             getProjectItemHtml(context, { project, index, useFavicons, currentWorkspace, pathExists: existsMap.get(project.path) ?? true })
         )
     )).join('');
 
-    // Render grouped items with headers
-    const groupEntries = Array.from(groupMap.entries());
-    if (groupSortOrder === 'alphabetical') {
-        groupEntries.sort(([a], [b]) => a.localeCompare(b));
-    } else if (groupSortOrder === 'alphabetical-desc') {
-        groupEntries.sort(([a], [b]) => b.localeCompare(a));
-    }
+    // Render top-level groups (and their nested children) recursively
     const groupedHtml = (await Promise.all(
-        groupEntries.map(async ([group, items]) => {
-            const itemsHtml = (await Promise.all(
-                items.map(({ project, index }) =>
-                    getProjectItemHtml(context, { project, index, useFavicons, currentWorkspace, pathExists: existsMap.get(project.path) ?? true })
-                )
-            )).join('');
-            return `
-                <div class="project-group" data-group="${escHtml(group)}">
-                    <div class="project-group-header" onclick="toggleGroup(this)">
-                        <svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
-                        </svg>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                        </svg>
-                        <span class="project-group-label">${escHtml(group)}</span>
-                    </div>
-                    <div class="project-group-items">
-                        ${itemsHtml}
-                    </div>
-                </div>
-            `;
-        })
+        getSortedGroupChildren(rootNode, groupSortOrder).map(([name, node]) =>
+            renderGroupNode(name, name, node, context, useFavicons, currentWorkspace, existsMap, groupSortOrder)
+        )
     )).join('');
 
     return `
