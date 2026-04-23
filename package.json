@@ -190,6 +190,11 @@
             "Keep groups in the order they appear in the project list"
           ],
           "description": "Controls the sort order of project groups in the sidebar"
+        },
+        "awesomeProjects.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the current project in the status bar when a registered project is open"
         }
       }
     }
