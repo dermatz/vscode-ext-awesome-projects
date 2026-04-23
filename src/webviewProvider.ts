@@ -107,7 +107,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
         }
 
-        webviewView.webview.onDidReceiveMessage(message => {
+        webviewView.webview.onDidReceiveMessage(async message => {
             // Forward all messages to message handlers first
             this.handleMessage(message);
 
@@ -212,7 +212,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         } else {
                             delete collapsedGroups[message.groupName];
                         }
-                        this._context.globalState.update('collapsedGroups', collapsedGroups);
+                        await this._context.globalState.update('collapsedGroups', collapsedGroups);
                     }
                     break;
             }
@@ -452,7 +452,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 <script>
                     const vscode = acquireVsCodeApi();
                     // Make vscode globally available for other scripts
-                    window.vscode = vscode;
+                    window.vscodeApi = vscode;
 
                     document.addEventListener('DOMContentLoaded', () => {
                         const loadingSpinner = document.getElementById('loading-spinner');
@@ -496,7 +496,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             const projectPath = target.getAttribute('data-path');
                             const projectName = target.getAttribute('data-name');
                             console.log('Sending showInFileManager command', { projectPath, projectName });
-                            vscode.postMessage({
+                            window.vscodeApi.postMessage({
                                 command: 'showInFileManager',
                                 project: {
                                 path: projectPath,
@@ -521,7 +521,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     // Export functions for global usage
                     window.openProject = function(project) {
                         const normalizedPath = project.replace(/\\/g, '\\\\');
-                        vscode.postMessage({
+                        window.vscodeApi.postMessage({
                             command: 'openProject',
                             project: normalizedPath
                         });
@@ -529,8 +529,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
                     window.openUrl = function(event, url) {
                         event.preventDefault();
-                        if (vscode) {
-                            vscode.postMessage({
+                        if (window.vscodeApi) {
+                            window.vscodeApi.postMessage({
                                 command: 'openUrl',
                                 url: url
                             });

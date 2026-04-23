@@ -2,6 +2,9 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ProjectsWebviewProvider } from '../../webviewProvider';
+import * as projectListModule from '../../template/project/projectlist';
+
+type ProjectListHtmlFn = typeof projectListModule.getProjectListHtml;
 
 const ASYNC_HANDLER_TIMEOUT_MS = 50;
 
@@ -13,7 +16,7 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
             workspaceState: {
                 get: () => undefined,
                 update: () => Promise.resolve()
-            } as any,
+            } as unknown as vscode.Memento,
             globalState: {
                 get: (key: string, defaultValue?: unknown) => {
                     return key in globalStateStore ? globalStateStore[key] : defaultValue;
@@ -29,22 +32,22 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
             storagePath: __dirname,
             globalStoragePath: __dirname,
             logPath: __dirname,
-        } as any;
+        } as unknown as vscode.ExtensionContext;
     }
 
-    function makeMockWebviewView(receivedMessages: any[] = []): vscode.WebviewView {
-        let messageHandler: ((message: any) => void) | undefined;
+    function makeMockWebviewView(): vscode.WebviewView {
+        let messageHandler: ((message: unknown) => void) | undefined;
         return {
             webview: {
                 html: '',
                 options: {},
-                onDidReceiveMessage: (handler: (message: any) => void) => {
+                onDidReceiveMessage: (handler: (message: unknown) => void) => {
                     messageHandler = handler;
                     return { dispose: () => {} };
                 },
                 postMessage: () => Promise.resolve(true),
                 // Expose for test use
-                _triggerMessage: (msg: any) => messageHandler && messageHandler(msg),
+                _triggerMessage: (msg: unknown) => messageHandler && messageHandler(msg),
             } as any,
             onDidChangeVisibility: () => ({ dispose: () => {} }),
             onDidDispose: () => ({ dispose: () => {} }),
@@ -62,15 +65,15 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
         const provider = new ProjectsWebviewProvider(mockContext.extensionUri, mockContext);
 
         // Mock project list to avoid actual rendering
-        const projectListModule = require('../../template/project/projectlist');
-        const originalGetProjectListHtml = projectListModule.getProjectListHtml;
-        projectListModule.getProjectListHtml = async () => '<div>Mock Project List</div>';
+        const mutableProjectList1 = projectListModule as unknown as { getProjectListHtml: ProjectListHtmlFn };
+        const originalGetProjectListHtml = mutableProjectList1.getProjectListHtml;
+        mutableProjectList1.getProjectListHtml = async () => '<div>Mock Project List</div>';
 
         try {
-            await provider.resolveWebviewView(mockWebviewView, { state: undefined } as any, {} as any);
+            await provider.resolveWebviewView(mockWebviewView, { state: undefined } as unknown as vscode.WebviewViewResolveContext<undefined>, {} as unknown as vscode.CancellationToken);
 
             // Simulate toggleGroupCollapse message from webview
-            (mockWebviewView.webview as any)._triggerMessage({
+            (mockWebviewView.webview as unknown as { _triggerMessage: (msg: unknown) => void })._triggerMessage({
                 command: 'toggleGroupCollapse',
                 groupName: 'MyGroup',
                 isCollapsed: true
@@ -83,7 +86,7 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
             assert.ok(saved, 'collapsedGroups should be saved to globalState');
             assert.strictEqual(saved['MyGroup'], true, 'MyGroup should be marked as collapsed');
         } finally {
-            projectListModule.getProjectListHtml = originalGetProjectListHtml;
+            mutableProjectList1.getProjectListHtml = originalGetProjectListHtml;
         }
     });
 
@@ -96,9 +99,9 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
 
         const provider = new ProjectsWebviewProvider(mockContext.extensionUri, mockContext);
 
-        const projectListModule = require('../../template/project/projectlist');
-        const originalGetProjectListHtml = projectListModule.getProjectListHtml;
-        projectListModule.getProjectListHtml = async () => '<div>Mock Project List</div>';
+        const mutableProjectList2 = projectListModule as unknown as { getProjectListHtml: ProjectListHtmlFn };
+        const originalGetProjectListHtml = mutableProjectList2.getProjectListHtml;
+        mutableProjectList2.getProjectListHtml = async () => '<div>Mock Project List</div>';
 
         try {
             await provider.resolveWebviewView(mockWebviewView, { state: undefined } as any, {} as any);
@@ -117,7 +120,7 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
             assert.strictEqual(saved['MyGroup'], undefined, 'MyGroup should be removed when expanded');
             assert.strictEqual(saved['OtherGroup'], true, 'OtherGroup should remain collapsed');
         } finally {
-            projectListModule.getProjectListHtml = originalGetProjectListHtml;
+            mutableProjectList2.getProjectListHtml = originalGetProjectListHtml;
         }
     });
 
@@ -130,9 +133,9 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
 
         let capturedCollapsedGroups: Record<string, boolean> | undefined;
 
-        const projectListModule = require('../../template/project/projectlist');
-        const originalGetProjectListHtml = projectListModule.getProjectListHtml;
-        projectListModule.getProjectListHtml = async (_ctx: any, _ws: any, _cfg: any, collapsedGroups: Record<string, boolean>) => {
+        const mutableProjectList3 = projectListModule as unknown as { getProjectListHtml: ProjectListHtmlFn };
+        const originalGetProjectListHtml = mutableProjectList3.getProjectListHtml;
+        mutableProjectList3.getProjectListHtml = async (_ctx: vscode.ExtensionContext, _ws?: string, _cfg?: vscode.WorkspaceConfiguration, collapsedGroups: Record<string, boolean> = {}) => {
             capturedCollapsedGroups = collapsedGroups;
             return '<div>Mock Project List</div>';
         };
@@ -147,7 +150,7 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
             assert.ok(capturedCollapsedGroups, 'collapsedGroups should be passed to getProjectListHtml');
             assert.strictEqual(capturedCollapsedGroups!['GitHub'], true, 'GitHub group should be marked as collapsed');
         } finally {
-            projectListModule.getProjectListHtml = originalGetProjectListHtml;
+            mutableProjectList3.getProjectListHtml = originalGetProjectListHtml;
         }
     });
 });
