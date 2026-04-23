@@ -4,6 +4,31 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.21.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.20.0...awesome-projects-v0.21.0) (2026-04-23)
+
+
+### Features
+
+* add status bar item showing current project name and parent folder ([3f246c8](https://github.com/dermatz/vscode-ext-awesome-projects/commit/3f246c8970ceaca44e495cdb1673c17b892c76b8))
+* implement nested groups for hierarchical project folder structure ([b9eabcc](https://github.com/dermatz/vscode-ext-awesome-projects/commit/b9eabcc266487d3d6eedcfbc8d726400f15b52d3))
+* persist group collapsed state across VS Code sessions ([7b67f48](https://github.com/dermatz/vscode-ext-awesome-projects/commit/7b67f48d33daa31ef1b1de03067ee1e783454c2b))
+* persist group collapsed state across VS Code sessions using globalState ([4c43dfe](https://github.com/dermatz/vscode-ext-awesome-projects/commit/4c43dfe7e88084a91ad4ddc7507762e7f9701ad0))
+* Show current project in status bar ([ef61a86](https://github.com/dermatz/vscode-ext-awesome-projects/commit/ef61a86288c37cd8ea7b2c7d26b09f7b0612ff05))
+* Support nested collapsible groups based on folder hierarchy ([5b1a300](https://github.com/dermatz/vscode-ext-awesome-projects/commit/5b1a3006316d781ccaf630b88026c260dfbf1f8b))
+
+
+### Bug Fixes
+
+* resolve Codacy security issues (XSS and CSS injection) ([4b79c45](https://github.com/dermatz/vscode-ext-awesome-projects/commit/4b79c45c2d8d13e6b562f47ea143ff70cadd4d34))
+* use escAttr for data-group attribute to prevent XSS, improve CSS comments ([5fc27a2](https://github.com/dermatz/vscode-ext-awesome-projects/commit/5fc27a2ccb6ea1e28fb2dd71376850f31526fa07))
+
+
+### Refactoring
+
+* improve CSS comment for nested group header font-size ([3b18ad7](https://github.com/dermatz/vscode-ext-awesome-projects/commit/3b18ad72fd4c4ed31efea925cec3a812bdd4236d))
+* update type assertions for globalState and webview in tests ([c577653](https://github.com/dermatz/vscode-ext-awesome-projects/commit/c577653b27a3198902b7e2249629895cc37c9ac9))
+* update vscode API usage for message posting in webview ([f552178](https://github.com/dermatz/vscode-ext-awesome-projects/commit/f5521789f22bca113c4dba5073fb0c7fcceeda7d))
+
 ## [0.20.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.19.0...awesome-projects-v0.20.0) (2026-04-09)
 
 
