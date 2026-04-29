@@ -4,6 +4,15 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.21.1](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.21.0...awesome-projects-v0.21.1) (2026-04-29)
+
+
+### Refactoring
+
+* Color Picker ([b5bc212](https://github.com/dermatz/vscode-ext-awesome-projects/commit/b5bc21259c0ca649fb44d6ae18d024231787a0c8))
+* optimize dropdowns ([0f35cda](https://github.com/dermatz/vscode-ext-awesome-projects/commit/0f35cdaca501c3fa5cac139ec3db22a2cd669c79))
+* project items ([b3e981a](https://github.com/dermatz/vscode-ext-awesome-projects/commit/b3e981a3212b17737d56af41ac2b3aab77477716))
+
 ## [0.21.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.20.0...awesome-projects-v0.21.0) (2026-04-23)
 
 
