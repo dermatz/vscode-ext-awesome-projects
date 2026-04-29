@@ -5,6 +5,7 @@ import { safeUrl, escOnclickArg, escHtml, sanitizeCssColor } from '../../../util
 
 export async function getProjectInfoDropdownHtml(project: Project, color?: string, workspaceFile?: string): Promise<string> {
     const projectId = getProjectId(project);
+    const escapedId = escOnclickArg(projectId);
     const safeBorderColor = sanitizeCssColor(color || "var(--vscode-list-activeSelectionBackground)");
 
     return `
@@ -17,7 +18,7 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
                     <div class="info-header-name">${escHtml(project.name)}</div>
                     ${project.productionUrl ? `<a class="info-header-url" href="${safeUrl(project.productionUrl)}" target="_blank">${safeUrl(project.productionUrl).replace(/^https?:\/\//, '')}</a>` : ''}
                 </div>
-                <button class="info-close-button" onclick="toggleDropdown(event, '${projectId}', 'info')" title="Close">
+                <button class="info-close-button" onclick="toggleDropdown(event, '${escapedId}', 'info')" title="Close">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
                     </svg>
@@ -65,7 +66,7 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
                     </svg>
                     <span>Workspace</span>
                 </button>` : ''}
-                <button class="action-card" onclick="toggleDropdown(event, '${projectId}', 'settings')">
+                <button class="action-card" onclick="toggleDropdown(event, '${escapedId}', 'settings')">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
                         <path d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0"/>
