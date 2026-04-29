@@ -41,7 +41,6 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
                     <label>Color:</label>
                     <p>Choose a color to colorize the project card.</p>
                     ${getColorPickerHtml({
-                        projectPath: project.path,
                         projectId: projectId,
                         currentColor: projectColor,
                         defaultColor: bgColor

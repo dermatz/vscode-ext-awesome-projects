@@ -1,34 +1,14 @@
-import { getSaveFunctionsScript } from '../../utils/save-functions';
+import { escOnclickArg } from '../../../utils/escaping';
 
 interface ColorPickerProps {
-    projectPath: string;
     projectId: string;
     currentColor: string | null;
     defaultColor: string;
 }
 
-/**
- * Generates a darker gradient color based on the base color.
- * @param {string | null} baseColor - The base color in hex format.
- * @returns {string} - The generated gradient color in rgb format.
- */
-export const generateGradient = (baseColor: string | null): string => {
-    const defaultColor = 'var(--vscode-list-activeSelectionBackground)';
-    if (!baseColor) {
-        return defaultColor;
-    }
-    const hex = baseColor.replace('#', '');
-    const [r, g, b] = [0, 2, 4].map(offset => parseInt(hex.substring(offset, offset + 2), 16));
-
-    const darkerR = Math.max(0, r - 40);
-    const darkerG = Math.max(0, g - 40);
-    const darkerB = Math.max(0, b - 40);
-
-    return `rgb(${darkerR}, ${darkerG}, ${darkerB})`;
-};
-
 export function getColorPickerHtml(props: ColorPickerProps): string {
     const { projectId, currentColor, defaultColor } = props;
+    const escapedId = escOnclickArg(projectId);
 
     return `
         <div class="color-container">
@@ -37,15 +17,15 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
                 value="${currentColor || defaultColor}"
                 data-uses-theme-color="${!currentColor}"
                 data-field="color"
-                oninput="handleInput(event, '${projectId}')"
-                onchange="handleInput(event, '${projectId}')">
-            <button class="button small secondary random-color" onclick="setRandomColor(event, '${projectId}')" style="display:flex; align-items:center; gap:4px;">
+                oninput="handleInput(event, '${escapedId}')"
+                onchange="handleInput(event, '${escapedId}')">
+            <button class="button small secondary random-color" onclick="setRandomColor(event, '${escapedId}')" style="display:flex; align-items:center; gap:4px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 4l3 3l-3 3" /><path d="M18 20l3 -3l-3 -3" /><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" /><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3" />
                 </svg>
                 <span style="pointer-events: none">Randomize</span>
             </button>
-            <button class="button small secondary" onclick="resetColor(event, '${projectId}')">
+            <button class="button small secondary" onclick="resetColor(event, '${escapedId}')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 14l-4 -4l4 -4" /><path d="M5 10h11a4 4 0 1 1 0 8h-1" />
                 </svg>
@@ -53,8 +33,6 @@ export function getColorPickerHtml(props: ColorPickerProps): string {
             </button>
         </div>
         <script>
-            ${getSaveFunctionsScript()}
-
             function resetColor(event, projectId) {
                 event.preventDefault();
                 const colorInput = event.target.closest('.color-container').querySelector('input[type="color"]');
