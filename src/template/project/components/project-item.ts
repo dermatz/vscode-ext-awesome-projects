@@ -36,7 +36,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     if (!pathExists) {
         const projectId = getProjectId(project);
         return `
-        <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${projectId}">
+        <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${escAttr(projectId)}">
             <div class="project-item" style="--bg-color: var(--vscode-inputValidation-errorBorder, #f44)">
                 <span class="project-icon">⚠️</span>
                 <div class="project-info">
@@ -44,13 +44,13 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                     <div class="project-path missing-hint">Folder not found</div>
                 </div>
                 <div class="project-settings">
-                    <button class="button mini relocate" onclick="window.vscodeApi.postMessage({ command: 'relocateProject', projectId: '${projectId}' })">
+                    <button class="button mini relocate" onclick="window.vscodeApi.postMessage({ command: 'relocateProject', projectId: '${escOnclickArg(projectId)}' })">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M3 7v13h18V7M3 7l9-4 9 4M9 21V11h6v10"/>
                         </svg>
                         Relocate
                     </button>
-                    <button class="button mini remove" onclick="handleDeleteProject('${projectId}')">
+                    <button class="button mini remove" onclick="handleDeleteProject('${escOnclickArg(projectId)}')">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                             <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
                         </svg>
@@ -80,13 +80,14 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const workspaceFile = findWorkspaceFile(project.path) ?? undefined;
     const projectSettingsHtml = getSettingsDropdownHtml(context, project);
     const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor, workspaceFile);
+    const projectId = getProjectId(project);
 
     return `
-        <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${getProjectId(project)}"
+        <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${escAttr(projectId)}"
         >
             <div class="project-item"
                 style="--bg-color: ${sanitizeCssColor(bgColor)}"
-                onclick="toggleDropdown(event, '${getProjectId(project)}', 'info')"
+                onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'info')"
             >
                 <span class="project-icon">${faviconHtml}</span>
                 <div class="project-info">
@@ -94,12 +95,12 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                 </div>
                 <div class="project-settings">
                     <div class="quick-menu-wrapper">
-                        <button class="button mini" onclick="toggleQuickMenu(event, '${getProjectId(project)}')" title="Open options">
+                        <button class="button mini" onclick="toggleQuickMenu(event, '${escOnclickArg(projectId)}')" title="Open options">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
                                 <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
                             </svg>
                         </button>
-                        <div class="quick-menu" id="quick-menu-${getProjectId(project)}">
+                        <div class="quick-menu" id="quick-menu-${escAttr(projectId)}">
                             <button class="quick-menu-item" onclick="openProject('${escOnclickArg(project.path)}')">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M5 3l14 9-14 9V3z"/>
@@ -120,7 +121,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                                 Workspace
                             </button>` : ''}
                             <hr class="quick-menu-divider"/>
-                            <button class="quick-menu-item" onclick="toggleDropdown(event, '${getProjectId(project)}', 'settings')">
+                            <button class="quick-menu-item" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'settings')">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke="none" d="M0 0h24v24H0z"/>
                                     <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
