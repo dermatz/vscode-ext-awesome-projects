@@ -16,7 +16,7 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
             <div class="info-header">
                 <div class="info-header-meta">
                     <div class="info-header-name">${escHtml(project.name)}</div>
-                    ${project.productionUrl ? `<a class="info-header-url" href="${safeUrl(project.productionUrl)}" target="_blank">${safeUrl(project.productionUrl).replace(/^https?:\/\//, '')}</a>` : ''}
+                    ${project.productionUrl ? `<a class="info-header-url" href="${safeUrl(project.productionUrl)}" target="_blank">${escHtml(project.productionUrl).replace(/^https?:\/\//, '')}</a>` : ''}
                 </div>
                 <button class="info-close-button" onclick="toggleDropdown(event, '${escapedId}', 'info')" title="Close">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
