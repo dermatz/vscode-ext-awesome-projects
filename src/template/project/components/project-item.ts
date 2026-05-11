@@ -7,9 +7,9 @@ import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
 import { getProjectId } from '../utils/project-id';
 import { escHtml, escAttr, escOnclickArg, sanitizeCssColor } from '../../utils/escaping';
 
-function findWorkspaceFile(projectPath: string): string | null {
+async function findWorkspaceFile(projectPath: string): Promise<string | null> {
     try {
-        const entries = fs.readdirSync(projectPath);
+        const entries = await fs.promises.readdir(projectPath);
         const wsFile = entries.find(e => e.endsWith('.code-workspace'));
         return wsFile ? path.join(projectPath, wsFile) : null;
     } catch {
@@ -77,7 +77,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
         : null;
     const faviconHtml = baseUrl && useFavicons ? `<img loading="lazy" src="https://www.google.com/s2/favicons?domain=${escAttr(baseUrl)}" onerror="this.parentElement.textContent='\u{1F4C1}'">` : "📁";
 
-    const workspaceFile = findWorkspaceFile(project.path) ?? undefined;
+    const workspaceFile = await findWorkspaceFile(project.path) ?? undefined;
     const projectSettingsHtml = getSettingsDropdownHtml(context, project);
     const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor, workspaceFile);
     const projectId = getProjectId(project);
