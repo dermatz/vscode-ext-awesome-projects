@@ -78,7 +78,7 @@ export function getSaveFunctionsScript(): string {
             const normalizedPath = projectPath.replace(/\\\\/g, '\\\\');
             window.vscodeApi.postMessage({
                 command: 'openProject',
-                project: normalizedPath
+                projectPath: normalizedPath
             });
         }
 
@@ -86,7 +86,7 @@ export function getSaveFunctionsScript(): string {
             const normalizedPath = projectPath.replace(/\\\\/g, '\\\\');
             window.vscodeApi.postMessage({
                 command: 'openProjectNewWindow',
-                project: normalizedPath
+                projectPath: normalizedPath
             });
         }
 
@@ -94,7 +94,7 @@ export function getSaveFunctionsScript(): string {
             const normalizedPath = workspacePath.replace(/\\\\/g, '\\\\');
             window.vscodeApi.postMessage({
                 command: 'openWorkspace',
-                project: normalizedPath
+                projectPath: normalizedPath
             });
         }
 
