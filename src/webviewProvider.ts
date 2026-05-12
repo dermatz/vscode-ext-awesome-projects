@@ -170,16 +170,24 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     vscode.window.showInformationMessage(`Project selected: ${message.path}`);
                     break;
                 case 'updateProject':
-                    this._updateProject(message.projectId, message.updates);
+                    if (message.projectId !== undefined && message.updates !== undefined) {
+                        this._updateProject(message.projectId, message.updates);
+                    }
                     break;
                 case 'openUrl':
-                    openUrl(message.url);
+                    if (message.url !== undefined) {
+                        openUrl(message.url);
+                    }
                     break;
                 case 'reorderProjects':
-                    this._reorderProjects(message.oldIndex, message.newIndex);
+                    if (message.oldIndex !== undefined && message.newIndex !== undefined) {
+                        this._reorderProjects(message.oldIndex, message.newIndex);
+                    }
                     break;
                 case 'sortProjects':
-                    this._sortProjectsByIds(message.sortedProjectIds);
+                    if (message.sortedProjectIds !== undefined) {
+                        this._sortProjectsByIds(message.sortedProjectIds);
+                    }
                     break;
                 case 'scanProjects':
                     vscode.window.showOpenDialog({
