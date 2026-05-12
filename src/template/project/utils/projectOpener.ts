@@ -52,5 +52,15 @@ export async function openProjectInNewWindow(projectPath: string, forceNewWindow
 }
 
 export async function openUrl(url: string): Promise<void> {
+    try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            vscode.window.showErrorMessage(`Cannot open URL: only http and https are allowed.`);
+            return;
+        }
+    } catch {
+        vscode.window.showErrorMessage(`Cannot open URL: invalid URL.`);
+        return;
+    }
     await vscode.env.openExternal(vscode.Uri.parse(url));
 }
