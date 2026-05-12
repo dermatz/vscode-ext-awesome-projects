@@ -4,6 +4,26 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.21.2](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.21.1...awesome-projects-v0.21.2) (2026-05-12)
+
+
+### Bug Fixes
+
+* guard message handler calls against undefined fields ([2569915](https://github.com/dermatz/vscode-ext-awesome-projects/commit/25699151ab85ca929c692f2bec50eb1f78ff6148))
+* use getProjectId for consistent project lookup in UPDATE_PROJECT command ([97eb945](https://github.com/dermatz/vscode-ext-awesome-projects/commit/97eb9458c74db02c7edff6edfdb136f864be462d))
+* use projectPath field for open commands, remove misleading Messages ([2468571](https://github.com/dermatz/vscode-ext-awesome-projects/commit/2468571cf67f8b5b61bda1adb463ade13a9e76c0))
+* validate http/https protocol in openUrl to prevent arbitrary URL schemes ([585b95d](https://github.com/dermatz/vscode-ext-awesome-projects/commit/585b95dcd4c821aae840b9f42065a3fc6cb17b9e))
+
+
+### Refactoring
+
+* update findWorkspaceFile to use async file reading ([b6b2bd8](https://github.com/dermatz/vscode-ext-awesome-projects/commit/b6b2bd856787eeafe5486d73973a9bfece7fd0da))
+
+
+### Maintenance
+
+* update node depenencies ([fa9438b](https://github.com/dermatz/vscode-ext-awesome-projects/commit/fa9438b9399031dd87bc28deaa4141eb66027c66))
+
 ## [0.21.1](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.21.0...awesome-projects-v0.21.1) (2026-04-29)
 
 
