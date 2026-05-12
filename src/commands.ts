@@ -78,7 +78,7 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
             try {
                 const configuration = projectsProvider.getCachedConfiguration();
                 const projects = [...(configuration.get<Project[]>('projects') || [])];
-                const projectIndex = projects.findIndex(p => p.id === projectId);
+                const projectIndex = projects.findIndex(p => getProjectId(p) === projectId);
 
                 if (projectIndex !== -1) {
                     projects[projectIndex] = {
