@@ -115,5 +115,66 @@ export function getSaveFunctionsScript(): string {
                 projectId: projectId
             });
         }
+
+        function startInlineRename(event, projectId, currentName) {
+            event.stopPropagation();
+            event.preventDefault();
+            const nameEl = event.currentTarget;
+            if (nameEl.querySelector('input')) { return; }
+
+            // Close info dropdown if open
+            const infoDropdown = document.getElementById('info-' + projectId);
+            if (infoDropdown && infoDropdown.classList.contains('show')) {
+                infoDropdown.classList.remove('show');
+                const wrapper = document.querySelector('[data-project-id="' + projectId + '"]');
+                if (wrapper) {
+                    const item = wrapper.querySelector('.project-item');
+                    if (item) { item.classList.remove('active'); }
+                }
+            }
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'project-name-input';
+            input.value = currentName;
+            nameEl.textContent = '';
+            nameEl.appendChild(input);
+            input.focus();
+            input.select();
+
+            let committed = false;
+
+            function commit() {
+                if (committed) { return; }
+                committed = true;
+                const newName = input.value.trim();
+                nameEl.textContent = newName || currentName;
+                if (newName && newName !== currentName) {
+                    window.vscodeApi.postMessage({
+                        command: 'updateProject',
+                        projectId: projectId,
+                        updates: { name: newName }
+                    });
+                }
+            }
+
+            function cancel() {
+                if (committed) { return; }
+                committed = true;
+                nameEl.textContent = currentName;
+            }
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.stopPropagation();
+                    commit();
+                } else if (e.key === 'Escape') {
+                    e.stopPropagation();
+                    cancel();
+                }
+            });
+            input.addEventListener('blur', commit);
+            input.addEventListener('click', function(e) { e.stopPropagation(); });
+        }
     `;
 }

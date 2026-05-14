@@ -193,6 +193,19 @@ button:hover {
     margin-bottom: 2px;
 }
 
+.project-name-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--vscode-focusBorder);
+    color: inherit;
+    font: inherit;
+    font-weight: 500;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    outline: none;
+}
+
 .project-path {
     font-size: 0.85em;
     opacity: 0.7;

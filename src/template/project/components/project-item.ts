@@ -91,7 +91,11 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
             >
                 <span class="project-icon">${faviconHtml}</span>
                 <div class="project-info">
-                    <div class="project-name">${escHtml(project.name)}</div>
+                    <div class="project-name"
+                        onclick="if(event.detail>=2)event.stopPropagation()"
+                        ondblclick="startInlineRename(event, '${escOnclickArg(projectId)}', '${escOnclickArg(project.name)}')"
+                        title="Double-click to rename"
+                    >${escHtml(project.name)}</div>
                 </div>
                 <div class="project-settings">
                     <div class="quick-menu-wrapper">
