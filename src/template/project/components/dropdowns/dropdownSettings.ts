@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 import { Project } from '../../../../extension';
 import { getColorPickerHtml } from '../colorpicker/colorPicker';
 import { getProjectId } from '../../utils/project-id';
-import { getSaveFunctionsScript } from '../../utils/save-functions';
 import { escAttr, escOnclickArg, sanitizeCssColor } from '../../../utils/escaping';
 
 export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, project: Project): string {
@@ -89,27 +88,6 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
             </div>
         </div>
 
-        <script>
-            ${getSaveFunctionsScript()}
-
-            function handleDeleteProject(projectId) {
-                if (!projectId) return;
-
-                window.vscodeApi.postMessage({
-                    command: 'deleteProject',
-                    projectId: projectId
-                });
-            }
-
-            function toggleUrlSettings(event) {
-                const button = event.currentTarget;
-                const content = button.nextElementSibling;
-                const isExpanded = button.classList.contains('expanded');
-
-                button.classList.toggle('expanded');
-                content.style.maxHeight = isExpanded ? '0' : content.scrollHeight + 'px';
-            }
-        </script>
     `;
 }
 

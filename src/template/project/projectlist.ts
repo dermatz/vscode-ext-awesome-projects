@@ -6,6 +6,7 @@ import { getProjectItemHtml } from './components/project-item';
 import { getAddToHtml } from './components/add-to';
 import { getDropdownToggleScript } from './utils/dropdownUtils';
 import { getDragDropScript } from './utils/dragAndDrop';
+import { getSaveFunctionsScript } from './utils/save-functions';
 import { escHtml, escAttr } from '../utils/escaping';
 
 /**
@@ -191,6 +192,7 @@ export async function getProjectListHtml(
         </section>
 
         <script>
+            ${getSaveFunctionsScript()}
             ${getDragDropScript()}
             ${getDropdownToggleScript()}
 

@@ -106,5 +106,14 @@ export function getSaveFunctionsScript(): string {
             button.classList.toggle('expanded');
             content.style.maxHeight = isExpanded ? '0' : content.scrollHeight + 'px';
         }
+
+        function handleDeleteProject(projectId) {
+            if (!projectId) return;
+
+            window.vscodeApi.postMessage({
+                command: 'deleteProject',
+                projectId: projectId
+            });
+        }
     `;
 }
