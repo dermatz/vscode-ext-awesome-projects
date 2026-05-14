@@ -32,6 +32,8 @@
 | **Custom Colors** | Assign colors to projects for quick recognition (includes random generator) |
 | **Project Scanner** | Automatically scan directories to import Git repositories in bulk |
 | **Multi-workspace Support** | Works across different VS Code workspaces |
+| **Groups & Nesting** | Organize projects into collapsible nested groups with persistent state |
+| **Inline Renaming** | Double-click a project title to rename it inline |
 
 ### 🔗 Git Integration
 
@@ -57,6 +59,8 @@
 | **File Manager** | Open project folders in Finder/Explorer/Nautilus |
 | **Cross-platform** | Full support for Windows, macOS, and Linux |
 | **Performance** | Optimized for large project collections with aggressive caching |
+| **Status Bar** | Shows the current project name in the VS Code status bar — click to open the project list |
+| **Reveal in Explorer** | Reveal the project folder directly in VS Code's Explorer panel |
 
 ---
 
@@ -90,6 +94,7 @@ Projects are stored in VS Code settings and can be edited directly or managed th
       "path": "/path/to/your/project",
       "name": "My Project",
       "color": "#0078D4",
+      "group": "Work",
       "productionUrl": "https://example.com",
       "stagingUrl": "https://staging.example.com",
       "devUrl": "http://localhost:3000",
@@ -97,7 +102,8 @@ Projects are stored in VS Code settings and can be edited directly or managed th
     }
   ],
   "awesomeProjects.useFavicons": true,
-  "awesomeProjects.showGitInfo": true
+  "awesomeProjects.showStatusBar": true,
+  "awesomeProjects.showButtonsOnHover": true
 }
 ```
 
@@ -107,7 +113,9 @@ Projects are stored in VS Code settings and can be edited directly or managed th
 |---------|------|---------|-------------|
 | `awesomeProjects.projects` | `array` | `[]` | List of configured projects |
 | `awesomeProjects.useFavicons` | `boolean` | `true` | Show favicons next to environment URLs |
-| `awesomeProjects.showGitInfo` | `boolean` | `true` | Display Git repository information |
+| `awesomeProjects.showButtonsOnHover` | `boolean` | `true` | Show action buttons (Open, New Window, Workspace) when hovering over a project |
+| `awesomeProjects.groupSortOrder` | `string` | `"alphabetical"` | Sort order for project groups: `alphabetical`, `alphabetical-desc`, or `manual` |
+| `awesomeProjects.showStatusBar` | `boolean` | `true` | Show the current project in the VS Code status bar |
 
 ### Project Fields
 
@@ -116,6 +124,8 @@ Projects are stored in VS Code settings and can be edited directly or managed th
 | `path` | ✅ | Absolute path to the project folder |
 | `name` | ✅ | Display name shown in the sidebar |
 | `color` | — | HEX color for the project card accent |
+| `icon` | — | Custom icon for the project |
+| `group` | — | Group name for organizing projects into collapsible sections |
 | `productionUrl` | — | Production environment URL |
 | `stagingUrl` | — | Staging environment URL |
 | `devUrl` | — | Local development URL |
