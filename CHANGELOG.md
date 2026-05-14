@@ -4,6 +4,25 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+## [0.22.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.21.2...awesome-projects-v0.22.0) (2026-05-14)
+
+
+### Features
+
+* add "Reveal in Explorer" button to project dropdowns and update webview message handling ([75b2c31](https://github.com/dermatz/vscode-ext-awesome-projects/commit/75b2c31c22c38e3d0be946d871c1422dcd613a65))
+* implement inline renaming for project items with doubleclick on title ([88f284d](https://github.com/dermatz/vscode-ext-awesome-projects/commit/88f284d1ffe5c43c803d15cedefa0b0cb346d2e0))
+
+
+### Bug Fixes
+
+* improve save functions scripts for more performance ([41beeef](https://github.com/dermatz/vscode-ext-awesome-projects/commit/41beeef61c58934b1b891d157b3c728ab779b79e))
+* update hover and active styles for project items to improve visual consistency ([7cf8607](https://github.com/dermatz/vscode-ext-awesome-projects/commit/7cf8607903bbab22808aac680968a9d222e6fe12))
+
+
+### Refactoring
+
+* remove unused event listeners and global functions from webview ([f22333a](https://github.com/dermatz/vscode-ext-awesome-projects/commit/f22333a99e22d8fb0a2c5508ab19b90ffacdebc2))
+
 ## [0.21.2](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.21.1...awesome-projects-v0.21.2) (2026-05-12)
 
 
