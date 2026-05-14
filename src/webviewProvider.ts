@@ -509,22 +509,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             });
                         });
 
-                        document.addEventListener('click', (e) => {
-                            const target = e.target.closest('.show-in-file-manager');
-                            if (target) {
-                            const projectPath = target.getAttribute('data-path');
-                            const projectName = target.getAttribute('data-name');
-                            console.log('Sending showInFileManager command', { projectPath, projectName });
-                            window.vscodeApi.postMessage({
-                                command: 'showInFileManager',
-                                project: {
-                                path: projectPath,
-                                name: projectName
-                                }
-                            });
-                            }
-                        });
-
                         window.addEventListener('message', event => {
                             const message = event.data;
                             if (message.command === 'setLoading') {
@@ -536,25 +520,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             }
                         });
                     });
-
-                    // Export functions for global usage
-                    window.openProject = function(project) {
-                        const normalizedPath = project.replace(/\\/g, '\\\\');
-                        window.vscodeApi.postMessage({
-                            command: 'openProject',
-                            project: normalizedPath
-                        });
-                    };
-
-                    window.openUrl = function(event, url) {
-                        event.preventDefault();
-                        if (window.vscodeApi) {
-                            window.vscodeApi.postMessage({
-                                command: 'openUrl',
-                                url: url
-                            });
-                        }
-                    };
                 </script>
             </head>
             <body class="${bodyClass.trim()}">
