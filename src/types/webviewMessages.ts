@@ -4,7 +4,7 @@ export interface WebviewMessage {
     command: 'deleteProject' | 'updateProject' | 'openProject' | 'openProjectNewWindow' | 'openWorkspace' | 'openUrl' |
              'addProject' | 'projectSelected' |
              'reorderProjects' | 'sortProjects' | 'scanProjects' | 'setLoading' | 'relocateProject' |
-             'toggleGroupCollapse';
+             'toggleGroupCollapse' | 'showInFileManager';
     projectId?: string;
     projectPath?: string;
     url?: string;
@@ -16,4 +16,5 @@ export interface WebviewMessage {
     sortedProjectIds?: string[];
     groupName?: string;
     isCollapsed?: boolean;
+    project?: { path: string; name: string };
 }

@@ -218,6 +218,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'relocateProject':
                     this._relocateProject(message.projectId!);
                     break;
+                case 'showInFileManager':
+                    if (message.project?.path) {
+                        vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.project.path));
+                    }
+                    break;
                 case 'toggleGroupCollapse':
                     if (message.groupName !== undefined && message.isCollapsed !== undefined) {
                         const collapsedGroups = this._context.globalState.get<Record<string, boolean>>('collapsedGroups', {});
