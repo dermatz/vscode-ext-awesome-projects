@@ -155,7 +155,7 @@ button:hover {
 }
 
 .project-item:hover {
-    background-color: var(--vscode-list-hoverBackground, rgba(255,255,255,0.07));
+    background-color: color-mix(in srgb, var(--bg-color, var(--vscode-list-hoverBackground, rgba(255,255,255,0.07))) 12%, var(--vscode-list-hoverBackground, rgba(255,255,255,0.07)));
     border-color: transparent;
     border-left-color: color-mix(in srgb, var(--bg-color, var(--vscode-focusBorder)) 90%, transparent);
 }
@@ -649,8 +649,8 @@ a.info-item-value:hover {
 }
 
 .project-item-wrapper.current-project .project-item {
-    background-color: color-mix(in srgb, var(--vscode-activityBar-activeBorder, var(--vscode-button-background)) 8%, var(--vscode-list-inactiveSelectionBackground, transparent));
-    border-left-color: var(--vscode-activityBar-activeBorder, var(--vscode-button-background));
+    background-color: color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 10%, transparent);
+    border-left-color: var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background)));
     border-left-width: 10px;
 }
 
