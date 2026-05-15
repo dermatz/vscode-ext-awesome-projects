@@ -1,11 +1,32 @@
 export const getDropdownToggleScript = (): string => {
     return `
+        function hideQuickMenuBackdrop() {
+            const backdrop = document.getElementById('quick-menu-backdrop');
+            if (backdrop) { backdrop.style.display = 'none'; }
+        }
+
+        function showQuickMenuBackdrop() {
+            let backdrop = document.getElementById('quick-menu-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'quick-menu-backdrop';
+                backdrop.style.cssText = 'position:fixed;inset:0;z-index:99;background:transparent;';
+                backdrop.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    closeAllQuickMenus();
+                });
+                document.body.appendChild(backdrop);
+            }
+            backdrop.style.display = 'block';
+        }
+
         function closeAllQuickMenus() {
             document.querySelectorAll('.quick-menu.show').forEach(m => {
                 m.classList.remove('show');
                 const wrapper = m.closest('.project-settings');
                 if (wrapper) { wrapper.classList.remove('menu-open'); }
             });
+            hideQuickMenuBackdrop();
         }
 
         function toggleQuickMenu(event, projectId) {
@@ -18,6 +39,7 @@ export const getDropdownToggleScript = (): string => {
                 menu.classList.add('show');
                 const settings = menu.closest('.project-settings');
                 if (settings) { settings.classList.add('menu-open'); }
+                showQuickMenuBackdrop();
             }
         }
 
@@ -42,6 +64,7 @@ export const getDropdownToggleScript = (): string => {
             }
 
             event.stopPropagation();
+            closeAllQuickMenus();
 
             const projectWrapper = document.querySelector('[data-project-id="' + targetId + '"]');
             const projectItem = projectWrapper ? projectWrapper.querySelector('.project-item') : null;
