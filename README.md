@@ -85,7 +85,7 @@
 
 ## ⚙️ Configuration
 
-Projects are stored in VS Code settings and can be edited directly or managed through the UI.
+Projects are stored in VS Code settings and can be edited directly or managed through the UI. The project list is **machine-specific**, so it is not synchronized across devices via Settings Sync. This lets you maintain separate projects on different computers (for example, Mac and Windows).
 
 ```json
 {
@@ -111,7 +111,7 @@ Projects are stored in VS Code settings and can be edited directly or managed th
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `awesomeProjects.projects` | `array` | `[]` | List of configured projects |
+| `awesomeProjects.projects` | `array` | `[]` | List of configured projects (machine-specific, not synced) |
 | `awesomeProjects.useFavicons` | `boolean` | `true` | Show favicons next to environment URLs |
 | `awesomeProjects.showButtonsOnHover` | `boolean` | `true` | Show action buttons (Open, New Window, Workspace) when hovering over a project |
 | `awesomeProjects.groupSortOrder` | `string` | `"alphabetical"` | Sort order for project groups: `alphabetical`, `alphabetical-desc`, or `manual` |

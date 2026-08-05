@@ -4,6 +4,10 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 
 ## Next release
 
+### Features
+
+* mark `awesomeProjects.projects` as machine-scoped so the project list is no longer synced across devices
+
 ## [0.22.1](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.22.0...awesome-projects-v0.22.1) (2026-05-15)
 
 

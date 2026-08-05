@@ -127,7 +127,8 @@
         "awesomeProjects.projects": {
           "type": "array",
           "default": [],
-          "description": "List of saved projects",
+          "scope": "machine",
+          "description": "List of saved projects (machine-specific, not synced across devices)",
           "items": {
             "type": "object",
             "required": [
