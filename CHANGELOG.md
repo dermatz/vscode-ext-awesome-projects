@@ -9,6 +9,21 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 * mark `awesomeProjects.projects` as machine-scoped so the project list is no longer synced across devices
 * add support for remote repositories via "Connect to Repository"
 
+## [0.23.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.22.1...awesome-projects-v0.23.0) (2026-08-05)
+
+
+### Features
+
+* add support for remote repositories ([4ff6ea8](https://github.com/dermatz/vscode-ext-awesome-projects/commit/4ff6ea83cb436c2641bd2c4698c438e3494902de))
+* enhance project list HTML structure and group remote projects ([dd2095d](https://github.com/dermatz/vscode-ext-awesome-projects/commit/dd2095d743457f5a40c73e6b3caafce17b853363))
+* store project list per machine so Mac and Windows stay separate ([4e4abd3](https://github.com/dermatz/vscode-ext-awesome-projects/commit/4e4abd360d4071c5e931a6b36bd8ab51d924529f))
+
+
+### Maintenance
+
+* **deps-dev:** bump brace-expansion from 1.1.14 to 1.1.16 ([#78](https://github.com/dermatz/vscode-ext-awesome-projects/issues/78)) ([a454a6f](https://github.com/dermatz/vscode-ext-awesome-projects/commit/a454a6f5ce6686235019658d9cd5720241db6fec))
+* **deps-dev:** bump js-yaml from 4.1.1 to 4.3.0 ([#77](https://github.com/dermatz/vscode-ext-awesome-projects/issues/77)) ([7fa8b43](https://github.com/dermatz/vscode-ext-awesome-projects/commit/7fa8b43ff7972d51cb245b1ecad7b168b6067f33))
+
 ## [0.22.1](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.22.0...awesome-projects-v0.22.1) (2026-05-15)
 
 
