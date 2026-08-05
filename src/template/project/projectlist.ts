@@ -157,12 +157,13 @@ export async function getProjectListHtml(
 
     // Build a nested group tree.
     // Explicit group field → single flat level; path-based inference → multi-level.
+    // Remote projects without an explicit group are collected under "Remote".
     const rootNode: GroupTreeNode = { children: new Map(), items: [] };
     projects.forEach((project, index) => {
         const explicitGroup = project.group?.trim();
         const groupParts = explicitGroup
             ? [explicitGroup]
-            : (project.remoteUrl ? [] : inferGroupPath(project.path, commonRoot));
+            : (project.remoteUrl ? ['Remote'] : inferGroupPath(project.path, commonRoot));
 
         let node = rootNode;
         for (const part of groupParts) {

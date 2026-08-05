@@ -1,8 +1,10 @@
 export async function getAddToHtml(): Promise<string> {
     return `
-        <div style="display: flex; gap: 1rem; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <button class="button" onclick="addProject()">
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--vscode-foreground); opacity: 0.8; text-transform: uppercase; letter-spacing: 0.05em;">Add Project</div>
+            <div style="display: flex; gap: 1rem; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="button" onclick="addProject()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke="none" d="M0 0h24v24H0z"/>
                         <path d="M12 5v14M5 12h14"/>
