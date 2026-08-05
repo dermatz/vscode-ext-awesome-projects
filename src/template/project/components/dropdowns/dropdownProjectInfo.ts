@@ -6,6 +6,7 @@ import { safeUrl, escAttr, escOnclickArg, escHtml, sanitizeCssColor } from '../.
 export async function getProjectInfoDropdownHtml(project: Project, color?: string, workspaceFile?: string): Promise<string> {
     const projectId = getProjectId(project);
     const escapedId = escOnclickArg(projectId);
+    const isRemote = !!project.remoteUrl;
     const safeBorderColor = sanitizeCssColor(color || "var(--vscode-list-activeSelectionBackground)");
 
     return `
@@ -44,6 +45,13 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
             </div>
 
             <div class="action-grid">
+                ${isRemote ? `
+                <button class="action-card action-card-primary" onclick="openRemoteProject('${escOnclickArg(project.remoteUrl!)}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    <span>Open Remote</span>
+                </button>` : `
                 <button class="action-card action-card-primary" onclick="openProject('${escOnclickArg(project.path)}')">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
@@ -58,7 +66,7 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
                         <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                     </svg>
                     <span>New Window</span>
-                </button>
+                </button>`}
                 ${workspaceFile ? `
                 <button class="action-card" onclick="openWorkspace('${escOnclickArg(workspaceFile)}')">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -66,12 +74,13 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
                     </svg>
                     <span>Workspace</span>
                 </button>` : ''}
+                ${!isRemote ? `
                 <button class="action-card" onclick="window.vscodeApi.postMessage({ command: 'showInFileManager', project: { path: '${escOnclickArg(project.path)}', name: '${escOnclickArg(project.name)}' } })">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                     </svg>
                     <span>Reveal in Explorer</span>
-                </button>
+                </button>` : ''}
                 <button class="action-card" onclick="toggleDropdown(event, '${escapedId}', 'settings')">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>

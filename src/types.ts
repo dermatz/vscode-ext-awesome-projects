@@ -4,6 +4,7 @@ export interface Project {
     name: string;
     color?: string;
     icon?: string;
+    remoteUrl?: string;
     productionUrl?: string;
     devUrl?: string;
     stagingUrl?: string;

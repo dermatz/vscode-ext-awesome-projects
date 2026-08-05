@@ -5,7 +5,7 @@ import { getHeaderHtml } from './template/webview/header';
 import { getFooterHtml } from './template/webview/footer';
 import { getProjectListHtml } from './template/project/projectlist';
 import { scanForGitProjects, addScannedProjects } from './utils/scanForProjects';
-import { openProjectInNewWindow, openUrl } from './template/project/utils/projectOpener';
+import { openProjectInNewWindow, openUrl, openRemoteProject } from './template/project/utils/projectOpener';
 import { WebviewMessage } from './types/webviewMessages';
 import { getProjectId } from './template/project/utils/project-id';
 import * as path from 'path';
@@ -157,6 +157,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         }
                     });
                     break;
+                case 'addRemoteProject':
+                    vscode.commands.executeCommand('awesome-projects.addRemoteProject');
+                    break;
                 case 'openProject':
                     if (message.projectPath !== undefined) {
                         openProjectInNewWindow(message.projectPath);
@@ -165,6 +168,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                 case 'openProjectNewWindow':
                     if (message.projectPath !== undefined) {
                         openProjectInNewWindow(message.projectPath, true);
+                    }
+                    break;
+                case 'openRemoteProject':
+                    if (message.remoteUrl !== undefined) {
+                        openRemoteProject(message.remoteUrl, message.forceNewWindow ?? false);
                     }
                     break;
                 case 'openWorkspace':

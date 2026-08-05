@@ -12,6 +12,7 @@ export interface Project {
     name: string;
     color?: string | null;  // Make color optional
     icon?: string;
+    remoteUrl?: string;
     productionUrl?: string;
     devUrl?: string;
     stagingUrl?: string;

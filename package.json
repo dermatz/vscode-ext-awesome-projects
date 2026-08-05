@@ -69,6 +69,12 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "awesome-projects.addRemoteProject",
+        "title": "Connect to Repository",
+        "category": "Awesome Projects",
+        "icon": "$(repo)"
+      },
+      {
         "command": "awesome-projects.showInFileManager",
         "title": "Show in File Manager",
         "category": "Awesome Projects",
@@ -94,8 +100,11 @@
           "when": "view == awesomeProjectsView",
           "group": "navigation"
         },
-        {
-          "command": "awesome-projects.refreshProjects",
+        {          "command": "awesome-projects.addRemoteProject",
+          "when": "view == awesomeProjectsView",
+          "group": "navigation"
+        },
+        {          "command": "awesome-projects.refreshProjects",
           "when": "view == awesomeProjectsView",
           "group": "navigation"
         }
@@ -143,6 +152,10 @@
               "name": {
                 "type": "string",
                 "description": "Display name of the project"
+              },
+              "remoteUrl": {
+                "type": "string",
+                "description": "Remote repository URL (e.g. https://github.com/owner/repo). When set, the project opens via VS Code:'s Remote Repositories workflow."
               },
               "color": {
                 "type": "string",

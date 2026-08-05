@@ -64,3 +64,38 @@ export async function openUrl(url: string): Promise<void> {
     }
     await vscode.env.openExternal(vscode.Uri.parse(url));
 }
+
+export async function openRemoteProject(remoteUrl: string, forceNewWindow: boolean = false): Promise<void> {
+    try {
+        // Prefer the Remote Repositories / GitHub Repositories extension workflow.
+        // These commands open the repository without cloning it locally.
+        // The optional second argument hints whether a new window is desired.
+        const remoteCommands = ['remoteHub.openRepository', 'github.openRepository'];
+        for (const command of remoteCommands) {
+            const available = await vscode.commands.getCommands(true).then(cmds => cmds.includes(command));
+            if (available) {
+                await vscode.commands.executeCommand(command, remoteUrl, { newWindow: forceNewWindow });
+                return;
+            }
+        }
+
+        // Fallback: try the generic "open remote repository" URI handler.
+        // For "Open" we prefer to reuse the current window; for "New Window" we
+        // request a new window explicitly.
+        const scheme = forceNewWindow ? 'vscode://ms-vscode.remote-repositories/openInNewWindow' : 'vscode://ms-vscode.remote-repositories/open';
+        const didOpen = await vscode.env.openExternal(vscode.Uri.parse(`${scheme}?url=${encodeURIComponent(remoteUrl)}`));
+        if (!didOpen) {
+            throw new Error('No Remote Repositories extension found and the URI handler could not be opened.');
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        const openInBrowser = 'Open in Browser';
+        const choice = await vscode.window.showErrorMessage(
+            `Failed to open remote repository: ${message}`,
+            openInBrowser
+        );
+        if (choice === openInBrowser) {
+            await openUrl(remoteUrl);
+        }
+    }
+}

@@ -11,9 +11,11 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
     const projectId = getProjectId(project);
     const escapedId = escOnclickArg(projectId);
 
+    const isRemote = !!project.remoteUrl;
     const basicInputs = [
         { label: 'Project name:', type: 'text', value: escAttr(project.name), placeholder: 'Projectname', field: 'name' },
-        { label: 'Local path:', type: 'text', value: escAttr(project.path), placeholder: '~/path/to/your/project/', field: 'path' },
+        { label: isRemote ? 'Remote URL:' : 'Local path:', type: 'text', value: escAttr(project.path), placeholder: isRemote ? 'https://github.com/owner/repo' : '~/path/to/your/project/', field: 'path' },
+        { label: 'Repository URL:', type: 'url', value: escAttr(project.remoteUrl || ""), placeholder: 'https://github.com/owner/repo', field: 'remoteUrl' },
     ];
 
     const urlInputs = [

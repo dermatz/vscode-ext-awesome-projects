@@ -95,6 +95,7 @@ Projects are stored in VS Code settings and can be edited directly or managed th
       "name": "My Project",
       "color": "#0078D4",
       "group": "Work",
+      "remoteUrl": "https://github.com/owner/repo",
       "productionUrl": "https://example.com",
       "stagingUrl": "https://staging.example.com",
       "devUrl": "http://localhost:3000",
@@ -121,10 +122,11 @@ Projects are stored in VS Code settings and can be edited directly or managed th
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `path` | ✅ | Absolute path to the project folder |
+| `path` | ✅ | Absolute path to the project folder or repository URL for remote projects |
 | `name` | ✅ | Display name shown in the sidebar |
 | `color` | — | HEX color for the project card accent |
 | `icon` | — | Custom icon for the project |
+| `remoteUrl` | — | Remote repository URL. When set, the project opens via VS Code:'s Remote Repositories workflow |
 | `group` | — | Group name for organizing projects into collapsible sections |
 | `productionUrl` | — | Production environment URL |
 | `stagingUrl` | — | Staging environment URL |

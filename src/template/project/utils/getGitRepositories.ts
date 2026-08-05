@@ -116,6 +116,27 @@ export async function getGitRepositoriesHtml(project: Project): Promise<string> 
     let gitContent = '<span class="info-item-value">No Git repository found</span>';
     let submodulesHtml = '';
 
+    if (project.remoteUrl) {
+        const serviceType = getGitServiceType(project.remoteUrl);
+        const icon = serviceType ? gitIcons[serviceType] : '';
+        gitContent = `
+            <span class="repository-link">
+                ${icon}
+                <a class="info-item-value" href="${safeUrl(project.remoteUrl)}" target="_blank">${escHtml(project.remoteUrl)}</a>
+            </span>`;
+
+        return `
+    <div class="info-section">
+        <div class="info-label">Git Repository</div>
+        <div class="info-content">
+            <div class="info-item">
+                ${gitContent}
+            </div>
+        </div>
+    </div>
+    ${submodulesHtml}`;
+    }
+
     const gitConfigPath = path.join(project.path, '.git', 'config');
 
     // Use cached git config

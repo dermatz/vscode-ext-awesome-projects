@@ -1,12 +1,14 @@
 import { Project } from '../extension';
 
 export interface WebviewMessage {
-    command: 'deleteProject' | 'updateProject' | 'openProject' | 'openProjectNewWindow' | 'openWorkspace' | 'openUrl' |
-             'addProject' | 'projectSelected' |
+    command: 'deleteProject' | 'updateProject' | 'openProject' | 'openProjectNewWindow' | 'openRemoteProject' |
+             'openWorkspace' | 'openUrl' | 'addProject' | 'addRemoteProject' | 'projectSelected' |
              'reorderProjects' | 'sortProjects' | 'scanProjects' | 'setLoading' | 'relocateProject' |
              'toggleGroupCollapse' | 'showInFileManager';
     projectId?: string;
     projectPath?: string;
+    remoteUrl?: string;
+    forceNewWindow?: boolean;
     url?: string;
     updates?: Partial<Project>;
     path?: string;

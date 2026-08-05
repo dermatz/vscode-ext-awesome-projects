@@ -29,11 +29,12 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const { project, index, useFavicons, currentWorkspace, pathExists = true } = props;
     const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
 
+    const isRemote = !!project.remoteUrl;
     const isCurrentProject = currentWorkspace === project.path;
     const currentProjectClass = isCurrentProject ? 'current-project' : '';
-    const missingClass = pathExists ? '' : 'missing';
+    const missingClass = pathExists || isRemote ? '' : 'missing';
 
-    if (!pathExists) {
+    if (!pathExists && !isRemote) {
         const projectId = getProjectId(project);
         return `
         <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${escAttr(projectId)}">
@@ -75,9 +76,11 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const baseUrl = useFavicons
         ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
         : null;
-    const faviconHtml = baseUrl && useFavicons ? `<img loading="lazy" src="https://www.google.com/s2/favicons?domain=${escAttr(baseUrl)}" onerror="this.parentElement.textContent='\u{1F4C1}'">` : "📁";
+    const faviconHtml = baseUrl && useFavicons
+        ? `<img loading="lazy" src="https://www.google.com/s2/favicons?domain=${escAttr(baseUrl)}" onerror="this.parentElement.textContent='${isRemote ? '\u{1F310}' : '\u{1F4C1}'}">`
+        : (isRemote ? "🌐" : "📁");
 
-    const workspaceFile = await findWorkspaceFile(project.path) ?? undefined;
+    const workspaceFile = isRemote ? undefined : (await findWorkspaceFile(project.path) ?? undefined);
     const projectSettingsHtml = getSettingsDropdownHtml(context, project);
     const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor, workspaceFile);
     const projectId = getProjectId(project);
@@ -105,6 +108,13 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                             </svg>
                         </button>
                         <div class="quick-menu" id="quick-menu-${escAttr(projectId)}">
+                            ${isRemote ? `
+                            <button class="quick-menu-item" onclick="openRemoteProject('${escOnclickArg(project.remoteUrl!)}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                                Open Remote
+                            </button>` : `
                             <button class="quick-menu-item" onclick="openProject('${escOnclickArg(project.path)}')">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M5 3l14 9-14 9V3z"/>
@@ -116,13 +126,14 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                                     <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                                 </svg>
                                 New Window
-                            </button>
+                            </button>`}
+                            ${!isRemote ? `
                             <button class="quick-menu-item" onclick="window.vscodeApi.postMessage({ command: 'showInFileManager', project: { path: '${escOnclickArg(project.path)}', name: '${escOnclickArg(project.name)}' } })">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                                 </svg>
                                 Reveal in Explorer
-                            </button>
+                            </button>` : ''}
                             ${workspaceFile ? `
                             <button class="quick-menu-item" onclick="openWorkspace('${escOnclickArg(workspaceFile)}')">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">

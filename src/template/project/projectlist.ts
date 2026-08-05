@@ -132,10 +132,15 @@ export async function getProjectListHtml(
     }
     const projects = Array.from(seen.values());
 
-    // Check which paths still exist on disk (parallel)
+    // Check which paths still exist on disk (parallel). Remote projects are
+    // always treated as available since they are opened via a remote workflow.
     const existsMap = new Map<string, boolean>();
     await Promise.all(
         projects.map(async p => {
+            if (p.remoteUrl) {
+                existsMap.set(p.path, true);
+                return;
+            }
             try {
                 await fs.promises.access(p.path);
                 existsMap.set(p.path, true);
@@ -145,7 +150,10 @@ export async function getProjectListHtml(
         })
     );
 
-    const commonRoot = findCommonRoot(projects.map(p => p.path));
+    // Only local project paths participate in common-root grouping. Remote
+    // repositories use their explicit group or appear ungrouped.
+    const localPaths = projects.filter(p => !p.remoteUrl).map(p => p.path);
+    const commonRoot = findCommonRoot(localPaths);
 
     // Build a nested group tree.
     // Explicit group field → single flat level; path-based inference → multi-level.
@@ -154,7 +162,7 @@ export async function getProjectListHtml(
         const explicitGroup = project.group?.trim();
         const groupParts = explicitGroup
             ? [explicitGroup]
-            : inferGroupPath(project.path, commonRoot);
+            : (project.remoteUrl ? [] : inferGroupPath(project.path, commonRoot));
 
         let node = rootNode;
         for (const part of groupParts) {

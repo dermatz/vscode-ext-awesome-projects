@@ -16,6 +16,13 @@ export async function getAddToHtml(): Promise<string> {
                     </svg>
                     Scan for Projects
                 </button>
+                <button class="button secondary" onclick="addRemoteProject()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke="none" d="M0 0h24v24H0z"/>
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-2h-2v2zm0-4h2V7h-2v6z"/>
+                    </svg>
+                    Connect to Repository
+                </button>
             </div>
         </div>
         <script>
@@ -32,6 +39,12 @@ export async function getAddToHtml(): Promise<string> {
             function scanProjects() {
                 window.vscodeApi.postMessage({
                     command: 'scanProjects'
+                });
+            }
+
+            function addRemoteProject() {
+                window.vscodeApi.postMessage({
+                    command: 'addRemoteProject'
                 });
             }
         </script>

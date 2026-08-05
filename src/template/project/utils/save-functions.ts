@@ -90,6 +90,14 @@ export function getSaveFunctionsScript(): string {
             });
         }
 
+        function openRemoteProject(remoteUrl, forceNewWindow) {
+            window.vscodeApi.postMessage({
+                command: 'openRemoteProject',
+                remoteUrl: remoteUrl,
+                forceNewWindow: !!forceNewWindow
+            });
+        }
+
         function openWorkspace(workspacePath) {
             const normalizedPath = workspacePath.replace(/\\\\/g, '\\\\');
             window.vscodeApi.postMessage({
