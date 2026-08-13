@@ -4,10 +4,11 @@
 
 **The smarter way to manage your VS Code projects**
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/MathiasElle.awesome-projects?style=flat-square&label=Marketplace&color=0078D4)](https://marketplace.visualstudio.com/items?itemName=MathiasElle.awesome-projects)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/MathiasElle.awesome-projects?style=flat-square&color=brightgreen)](https://marketplace.visualstudio.com/items?itemName=MathiasElle.awesome-projects)
-[![Rating](https://img.shields.io/visual-studio-marketplace/r/MathiasElle.awesome-projects?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=MathiasElle.awesome-projects)
+[![Tests](https://github.com/dermatz/vscode-ext-awesome-projects/actions/workflows/test.yml/badge.svg?style=flat-square)](https://github.com/dermatz/vscode-ext-awesome-projects/actions/workflows/test.yml)
+[![Release Please](https://github.com/dermatz/vscode-ext-awesome-projects/actions/workflows/release-please.yml/badge.svg?style=flat-square)](https://github.com/dermatz/vscode-ext-awesome-projects/actions/workflows/release-please.yml)
+[![Semantic Pull Request](https://github.com/dermatz/vscode-ext-awesome-projects/actions/workflows/semantic-pull-request.yml/badge.svg?style=flat-square)](https://github.com/dermatz/vscode-ext-awesome-projects/actions/workflows/semantic-pull-request.yml)
 [![Codacy Grade](https://img.shields.io/codacy/grade/aa3fe284550449ec9088834773d3b1fb?style=flat-square&label=Code%20Quality)](https://app.codacy.com/gh/dermatz/vscode-ext-awesome-projects/dashboard)
+[![VS Code Marketplace](https://img.shields.io/badge/VS%20Code%20Marketplace-Install-0078D4?style=flat-square&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=MathiasElle.awesome-projects)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](LICENSE)
 
 ![Awesome Projects Preview](resources/image.png)
