@@ -13,6 +13,13 @@
 body {
     padding: 0;
     margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse 140% 70% at 50% -15%, rgba(65, 88, 208, 0.18) 0%, transparent 55%),
+        radial-gradient(ellipse 100% 55% at 85% 0%, rgba(200, 80, 192, 0.1) 0%, transparent 45%),
+        radial-gradient(ellipse 80% 40% at 15% 0%, rgba(255, 204, 112, 0.06) 0%, transparent 40%),
+        var(--vscode-editor-background);
+    background-attachment: fixed;
 }
 
 section {
@@ -32,10 +39,52 @@ header {
     gap: 1rem;
 }
 
+header.award-header {
+    position: relative;
+    padding: 1rem 1.25rem;
+    margin: 0.5rem 0.5rem 0.75rem;
+    border-radius: var(--border-radius-large);
+    background: color-mix(in srgb, var(--vscode-editor-background) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 40%, transparent);
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 10px 30px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+header.award-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--gradient-brand);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+header.award-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
 header .logo {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     color: var(--vscode-button-background);
     white-space: nowrap;
 }
@@ -45,16 +94,26 @@ header .logo svg {
     height: 2.5rem;
 }
 
+header .brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
 header h1 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     background-clip: text;
     -webkit-background-clip: text;
-    line-height: 1.5rem;
+    line-height: 1.4rem;
     color: transparent;
     background-color: #4158D0;
-    text-shadow: 0 5px 5px rgba(0, 0, 0, 0.3);
     background-image: var(--gradient-brand);
+    background-size: 200% 200%;
+    animation: shimmerGradient 5s ease infinite;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 header .linkbar {
@@ -64,20 +123,34 @@ header .linkbar {
 
 header .version {
     color: var(--vscode-button-secondaryForeground);
-    opacity: 0.7;
+    opacity: 0.85;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 0.75rem;
+}
+
+header .version-label {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
 }
 
 header .version .badge {
     background: var(--gradient-brand);
     color: #4C0519;
-    padding: 0.1rem 0.3rem;
-    border-radius: 3px;
+    padding: 0.15rem 0.4rem;
+    border-radius: 999px;
     font-size: 0.6rem;
     text-transform: uppercase;
-    font-weight: bold;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    box-shadow: 0 2px 6px rgba(200, 80, 192, 0.35);
+}
+
+header .version .badge-stable {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35);
 }
 
 header .button {
@@ -96,15 +169,20 @@ header .button {
     cursor: pointer;
     color: var(--vscode-button-foreground);
     background: var(--vscode-button-background);
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-large);
     gap: 4px;
     font-weight: 500;
     transition: all var(--transition-fast);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
-    background-color: var(--vscode-button-secondaryHoverBackground)
+    background-color: var(--vscode-button-hoverBackground)
+}
+
+.button:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+    transform: translateY(-1px);
 }
 
 .button:active {
@@ -144,24 +222,36 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.25rem 0.5rem;
+    padding: 0.45rem 0.75rem;
     cursor: pointer;
-    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+    transition:
+        background-color var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        transform var(--transition-fast);
     border-radius: var(--border-radius-large);
     position: relative;
-    background-color: var(--vscode-list-inactiveSelectionBackground, rgba(255,255,255,0.04));
-    border: 1px solid transparent;
+    background-color: color-mix(in srgb, var(--vscode-list-inactiveSelectionBackground, rgba(255,255,255,0.04)) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 18%, transparent);
     border-left: 10px solid color-mix(in srgb, var(--bg-color, var(--vscode-panel-border)) 70%, transparent);
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.04),
+        0 3px 10px rgba(0, 0, 0, 0.06);
 }
 
 .project-item:hover {
-    background-color: color-mix(in srgb, var(--bg-color, var(--vscode-list-hoverBackground, rgba(255,255,255,0.07))) 12%, var(--vscode-list-hoverBackground, rgba(255,255,255,0.07)));
-    border-color: transparent;
+    background-color: color-mix(in srgb, var(--bg-color, var(--vscode-list-hoverBackground, rgba(255,255,255,0.07))) 14%, var(--vscode-list-hoverBackground, rgba(255,255,255,0.07)));
+    border-color: color-mix(in srgb, var(--vscode-panel-border) 35%, transparent);
     border-left-color: color-mix(in srgb, var(--bg-color, var(--vscode-focusBorder)) 90%, transparent);
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.1),
+        0 1px 2px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
 }
 
 .project-item:active {
     background-color: var(--vscode-list-activeSelectionBackground, rgba(255,255,255,0.1));
+    transform: translateY(0);
 }
 
 .project-icon {
@@ -230,25 +320,33 @@ button:hover {
 
 /* Card & Dropdown Styles */
 .card {
-    background: var(--vscode-menu-background);
-    border-radius: 0.5rem;
-    box-shadow: var(--shadow-light);
-    padding: 0.5rem 1rem;
+    background: color-mix(in srgb, var(--vscode-menu-background) 92%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 35%, transparent);
+    border-radius: var(--border-radius-large);
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 6px 18px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    padding: 0.75rem 1rem;
     transition: all var(--transition-normal);
     margin-bottom: 1rem;
+    backdrop-filter: blur(8px);
 }
 
 .dropdown {
     display: none;
-    background: var(--vscode-editor-background);
+    background: color-mix(in srgb, var(--vscode-editor-background) 92%, transparent);
     border-radius: 0 0 var(--border-radius-large) var(--border-radius-large);
     padding: 20px;
     margin-top: -1px;
     margin-bottom: 12px;
-    box-shadow: var(--shadow-medium);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.14),
+        0 2px 6px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
     border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 50%, transparent);
     border-top: none;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(10px);
 }
 
 .dropdown.show {
@@ -350,6 +448,8 @@ body.hide-hover-buttons .project-settings {
     justify-content: space-between;
     gap: 0.5rem;
     margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--vscode-panel-border) 40%, transparent);
 }
 
 .info-header-meta {
@@ -360,8 +460,9 @@ body.hide-hover-buttons .project-settings {
 }
 
 .info-header-name {
-    font-size: 1.1em;
+    font-size: 1.15em;
     font-weight: 700;
+    letter-spacing: -0.01em;
     color: var(--vscode-foreground);
     white-space: nowrap;
     overflow: hidden;
@@ -389,30 +490,37 @@ body.hide-hover-buttons .project-settings {
     align-items: center;
     justify-content: center;
     background: none;
-    border: none;
+    border: 1px solid transparent;
     color: var(--vscode-foreground);
     opacity: 0.5;
     cursor: pointer;
-    padding: 2px;
+    padding: 4px;
     border-radius: var(--border-radius);
-    transition: opacity var(--transition-fast);
+    transition: all var(--transition-fast);
 }
 
 .info-close-button:hover {
     opacity: 1;
     background: var(--vscode-toolbar-hoverBackground);
+    border-color: color-mix(in srgb, var(--vscode-panel-border) 50%, transparent);
 }
 
 .info-section {
     margin-bottom: 12px;
+    padding: 12px;
+    border-radius: var(--border-radius-large);
+    background: color-mix(in srgb, var(--vscode-menu-background) 60%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 25%, transparent);
 }
 
 .info-label {
-    font-size: 0.85em;
+    font-size: 0.75em;
     color: var(--vscode-foreground);
-    opacity: 0.7;
-    margin-bottom: 4px;
-    font-weight: 600;
+    opacity: 0.55;
+    margin-bottom: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 .info-value {
@@ -425,9 +533,9 @@ body.hide-hover-buttons .project-settings {
 /* Action Grid */
 .action-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 8px;
-    margin-top: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+    gap: 10px;
+    margin-top: 14px;
 }
 
 .action-card {
@@ -436,19 +544,30 @@ body.hide-hover-buttons .project-settings {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 16px 8px;
-    background: var(--vscode-button-secondaryBackground);
+    padding: 18px 10px;
+    background: color-mix(in srgb, var(--vscode-button-secondaryBackground) 80%, transparent);
     color: var(--vscode-button-secondaryForeground);
-    border: none;
-    border-radius: var(--border-radius);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 25%, transparent);
+    border-radius: var(--border-radius-large);
     cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: background var(--transition-fast), opacity var(--transition-fast);
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition:
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        transform var(--transition-fast);
 }
 
 .action-card:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
+    background: color-mix(in srgb, var(--vscode-button-secondaryHoverBackground) 90%, transparent);
+    border-color: color-mix(in srgb, var(--vscode-panel-border) 50%, transparent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.action-card:active {
+    transform: translateY(0);
 }
 
 .action-card svg {
@@ -458,12 +577,16 @@ body.hide-hover-buttons .project-settings {
 }
 
 .action-card-primary {
-    background: var(--vscode-button-background);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--vscode-button-background) 95%, #4158D0) 0%, var(--vscode-button-background) 100%);
     color: var(--vscode-button-foreground);
+    border-color: color-mix(in srgb, var(--vscode-button-background) 60%, transparent);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--vscode-button-background) 30%, transparent);
 }
 
 .action-card-primary:hover {
-    background: var(--vscode-button-hoverBackground);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--vscode-button-hoverBackground) 95%, #C850C0) 0%, var(--vscode-button-hoverBackground) 100%);
+    border-color: color-mix(in srgb, var(--vscode-button-hoverBackground) 70%, transparent);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--vscode-button-hoverBackground) 35%, transparent);
 }
 
 .info-actions {
@@ -489,11 +612,16 @@ body.hide-hover-buttons .project-settings {
 /* Support & Links */
 .support-box {
     margin-top: 2rem;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     align-items: flex-start;
     position: relative;
+    border-radius: var(--border-radius-large);
+    background: color-mix(in srgb, var(--vscode-menu-background) 50%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 25%, transparent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .support-link,
@@ -526,33 +654,35 @@ a.info-item-value:hover {
 .project-group {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.35rem;
     margin-top: 0.75rem;
-    padding-left: 0.75rem;
-    border-left: 2px solid var(--vscode-panel-border, rgba(255,255,255,0.1));
+    padding-left: 0.85rem;
+    border-left: 2px solid color-mix(in srgb, var(--vscode-panel-border, rgba(255,255,255,0.1)) 70%, transparent);
 }
 
 .project-group-header {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.1rem 0.25rem;
-    margin-left: -0.75rem;
-    margin-bottom: 0.1rem;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
+    gap: 0.4rem;
+    padding: 0.2rem 0.45rem;
+    margin-left: -0.85rem;
+    margin-bottom: 0.15rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--vscode-foreground);
-    opacity: 0.5;
+    opacity: 0.45;
     user-select: none;
     cursor: pointer;
-    border-radius: var(--border-radius);
-    transition: opacity var(--transition-fast);
+    border-radius: var(--border-radius-large);
+    transition: all var(--transition-fast);
+    width: fit-content;
 }
 
 .project-group-header:hover {
     opacity: 0.85;
+    background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 50%, transparent);
 }
 
 .project-group-header svg {
@@ -662,9 +792,12 @@ a.info-item-value:hover {
 }
 
 .project-item-wrapper.current-project .project-item {
-    background-color: color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 10%, transparent);
+    background-color: color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 12%, transparent);
     border-left-color: var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background)));
     border-left-width: 10px;
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 25%, transparent),
+        0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
 .project-item-wrapper.current-project:has(.project-item.active)::before {
@@ -674,6 +807,12 @@ a.info-item-value:hover {
 
 
 /* Keyframe Animations */
+@keyframes shimmerGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 @keyframes glow {
     0%, 100% { opacity: 0.5; }
     50% { opacity: 1; }
@@ -709,13 +848,11 @@ a.info-item-value:hover {
 .loading-spinner::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 4px solid rgba(65, 88, 208, 0.1);
-    border-top: 4px solid var(--vscode-progressBar-background);
+    inset: 0;
     border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--vscode-progressBar-background), #C850C0, #FFCC70, var(--vscode-progressBar-background));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #fff calc(100% - 4px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #fff calc(100% - 4px));
     animation: spin 1s linear infinite;
 }
 

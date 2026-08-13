@@ -49,13 +49,13 @@ export async function getHeaderHtml(context: vscode.ExtensionContext): Promise<s
     }
 
     return `
-        <header>
+        <header class="award-header">
             <div class="logo">
-              <div>
+              <div class="brand-text">
                 <h1>Awesome Projects</h1>
                 <small class="version">
-                  Version: ${packageJson.version}
-                  ${isBetaVersion(packageJson.version) ? '<span class="badge">Beta</span>' : ''}
+                  <span class="version-label">Version ${packageJson.version}</span>
+                  ${isBetaVersion(packageJson.version) ? '<span class="badge">Beta</span>' : '<span class="badge badge-stable">Award Winning</span>'}
                 </small>
               </div>
             </div>
