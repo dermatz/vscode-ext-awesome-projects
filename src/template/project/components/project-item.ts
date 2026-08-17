@@ -102,7 +102,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                 </div>
                 <div class="project-settings">
                     <div class="quick-menu-wrapper">
-                        <button class="button mini" onclick="toggleQuickMenu(event, '${escOnclickArg(projectId)}')" title="Open options">
+                        <button type="button" class="button mini quick-menu-toggle" onclick="toggleQuickMenu(event, '${escOnclickArg(projectId)}')" title="Open options">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
                                 <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
                             </svg>
