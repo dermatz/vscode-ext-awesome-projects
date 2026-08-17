@@ -216,6 +216,248 @@ button:hover {
     padding: 0.25rem 0.4rem;
 }
 
+/* Add Project Section */
+.add-project-section {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 1rem;
+    margin: 0.5rem 0 1rem;
+    border-radius: var(--border-radius-large);
+    background: color-mix(in srgb, var(--vscode-menu-background) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 35%, transparent);
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 10px 30px rgba(0, 0, 0, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.add-project-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--gradient-brand);
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.55;
+    pointer-events: none;
+    animation: borderGlow 4s ease-in-out infinite;
+}
+
+.add-project-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.add-project-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.add-project-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--vscode-foreground);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.add-project-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--vscode-panel-border) 60%, transparent) 0%, transparent 100%);
+}
+
+.add-project-subtitle {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--vscode-foreground);
+    opacity: 0.55;
+}
+
+.add-project-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.625rem;
+    position: relative;
+    z-index: 1;
+}
+
+.add-project-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.875rem 0.5rem;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-large);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    text-align: center;
+    transition:
+        background-color var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.add-project-button-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.add-project-button-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.add-project-button-label {
+    font-size: 0.85rem;
+    line-height: 1.1;
+}
+
+.add-project-button-desc {
+    font-size: 0.65rem;
+    font-weight: 500;
+    opacity: 0.75;
+    line-height: 1.1;
+}
+
+.add-project-button-primary {
+    color: var(--vscode-button-foreground);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--vscode-button-background) 90%, #4158D0) 0%, var(--vscode-button-background) 100%);
+    border-color: color-mix(in srgb, var(--vscode-button-background) 55%, transparent);
+    box-shadow:
+        0 2px 6px color-mix(in srgb, var(--vscode-button-background) 25%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.add-project-button-primary:hover {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--vscode-button-hoverBackground) 88%, #C850C0) 0%, var(--vscode-button-hoverBackground) 100%);
+    border-color: color-mix(in srgb, var(--vscode-button-hoverBackground) 70%, transparent);
+    box-shadow:
+        0 5px 14px color-mix(in srgb, var(--vscode-button-hoverBackground) 30%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.add-project-button-primary .add-project-button-icon {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.add-project-button-primary:hover .add-project-button-icon {
+    transform: scale(1.08) rotate(-2deg);
+}
+
+.add-project-button-primary:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.add-project-button-secondary {
+    color: var(--vscode-button-secondaryForeground);
+    background: color-mix(in srgb, var(--vscode-button-secondaryBackground) 70%, transparent);
+    border-color: color-mix(in srgb, var(--vscode-panel-border) 55%, transparent);
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.add-project-button-secondary:hover {
+    background: color-mix(in srgb, var(--vscode-button-secondaryHoverBackground) 90%, transparent);
+    border-color: color-mix(in srgb, var(--vscode-panel-border) 70%, transparent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.add-project-button-secondary:hover .add-project-button-icon {
+    transform: scale(1.1);
+}
+
+.add-project-button-secondary:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.add-project-button:focus-visible {
+    outline: 2px solid var(--vscode-focusBorder);
+    outline-offset: 2px;
+}
+
+@media screen and (max-width: 320px) {
+    .add-project-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .add-project-button {
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 0.75rem;
+        padding: 0.625rem 0.75rem;
+        text-align: left;
+    }
+
+    .add-project-button-icon {
+        width: 1.75rem;
+        height: 1.75rem;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .add-project-button-label {
+        font-size: 0.9rem;
+    }
+
+    .add-project-button-desc {
+        display: none;
+    }
+}
+
+@media screen and (min-width: 321px) and (max-width: 420px) {
+    .add-project-actions {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .add-project-button {
+        padding: 0.75rem 0.35rem;
+    }
+
+    .add-project-button-label {
+        font-size: 0.75rem;
+    }
+
+    .add-project-button-desc {
+        font-size: 0.6rem;
+    }
+}
+
 
 /* Project Item Styles */
 .project-item {
@@ -802,6 +1044,11 @@ a.info-item-value:hover {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
+}
+
+@keyframes borderGlow {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.75; }
 }
 
 @keyframes glow {
