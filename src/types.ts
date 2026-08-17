@@ -5,6 +5,7 @@ export interface Project {
     color?: string;
     icon?: string;
     remoteUrl?: string;
+    isRemote?: boolean;
     productionUrl?: string;
     devUrl?: string;
     stagingUrl?: string;

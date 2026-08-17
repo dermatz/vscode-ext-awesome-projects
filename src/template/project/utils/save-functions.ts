@@ -34,15 +34,17 @@ export function getSaveFunctionsScript(): string {
         function handleInput(event, projectId) {
             const input = event.target;
             const field = input.dataset.field;
-            const value = input.value;
+            const isCheckbox = input.type === 'checkbox';
+            const value = isCheckbox ? input.checked : input.value;
             const initialValue = input.dataset.initialValue || '';
+            const initialBool = isCheckbox ? (initialValue === 'true') : initialValue;
 
             if (!window.pendingChanges[projectId]) {
                 window.pendingChanges[projectId] = {};
             }
 
-            if (value !== initialValue) {
-                window.pendingChanges[projectId][field] = value || null;
+            if (value !== initialBool) {
+                window.pendingChanges[projectId][field] = isCheckbox ? input.checked : (value || null);
             } else {
                 delete window.pendingChanges[projectId][field];
             }
@@ -63,8 +65,13 @@ export function getSaveFunctionsScript(): string {
                     Object.entries(window.pendingChanges[projectId]).forEach(([field, value]) => {
                         const input = settingsElement.querySelector('input[data-field="' + field + '"]');
                         if (input) {
-                            input.value = value ?? '';
-                            input.dataset.initialValue = value ?? '';
+                            if (input.type === 'checkbox') {
+                                input.checked = !!value;
+                                input.dataset.initialValue = value ? 'true' : 'false';
+                            } else {
+                                input.value = value ?? '';
+                                input.dataset.initialValue = value ?? '';
+                            }
                         }
                     });
                 }

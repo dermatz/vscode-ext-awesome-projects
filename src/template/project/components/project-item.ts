@@ -29,7 +29,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const { project, index, useFavicons, currentWorkspace, pathExists = true } = props;
     const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
 
-    const isRemote = !!project.remoteUrl;
+    const isRemote = !!project.isRemote;
     const isCurrentProject = currentWorkspace === project.path;
     const currentProjectClass = isCurrentProject ? 'current-project' : '';
     const missingClass = pathExists || isRemote ? '' : 'missing';

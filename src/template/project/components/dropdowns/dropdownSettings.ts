@@ -11,7 +11,7 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
     const projectId = getProjectId(project);
     const escapedId = escOnclickArg(projectId);
 
-    const isRemote = !!project.remoteUrl;
+    const isRemote = !!project.isRemote;
     const basicInputs = [
         { label: 'Project name:', type: 'text', value: escAttr(project.name), placeholder: 'Projectname', field: 'name' },
         { label: isRemote ? 'Remote URL:' : 'Local path:', type: 'text', value: escAttr(project.path), placeholder: isRemote ? 'https://github.com/owner/repo' : '~/path/to/your/project/', field: 'path' },
@@ -39,6 +39,12 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
                     <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" data-field="${input.field}" data-initial-value="${input.value}" oninput="handleInput(event, '${escapedId}')">
                 </div>
                 `).join('')}
+                <div class="settings-item settings-item-checkbox">
+                    <label class="checkbox-label">
+                        <input type="checkbox" ${project.isRemote ? 'checked' : ''} data-field="isRemote" data-initial-value="${project.isRemote ? 'true' : 'false'}" onchange="handleInput(event, '${escapedId}')">
+                        <span>Open as Remote Project</span>
+                    </label>
+                </div>
                 <div class="settings-item">
                     <label>Color:</label>
                     <p>Choose a color to colorize the project card.</p>

@@ -120,7 +120,8 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                     id: getProjectId({ path: trimmedUrl, name: projectName.trim(), id: '' } as Project),
                     path: trimmedUrl,
                     name: projectName.trim(),
-                    remoteUrl: trimmedUrl
+                    remoteUrl: trimmedUrl,
+                    isRemote: true
                 };
 
                 await configuration.update(

@@ -13,6 +13,7 @@ export interface Project {
     color?: string | null;  // Make color optional
     icon?: string;
     remoteUrl?: string;
+    isRemote?: boolean;
     productionUrl?: string;
     devUrl?: string;
     stagingUrl?: string;
@@ -49,19 +50,21 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(statusBarManager);
     statusBarManager.update();
 
-    // Check project IDs immediately but asynchronously
+    // Migrate project settings immediately but asynchronously
     (async () => {
         const projects = configuration.get<Project[]>('projects') || [];
-        const needsUpdate = projects.some(p => !p.id);
+        const needsIdUpdate = projects.some(p => !p.id);
+        const needsRemoteUpdate = projects.some(p => p.remoteUrl && p.isRemote === undefined);
 
-        if (needsUpdate) {
+        if (needsIdUpdate || needsRemoteUpdate) {
             const updatedProjects = projects.map(project => ({
                 ...project,
-                id: project.id || getProjectId(project)
+                id: project.id || getProjectId(project),
+                isRemote: project.isRemote ?? (project.remoteUrl ? true : undefined)
             }));
             await configuration.update('projects', updatedProjects, vscode.ConfigurationTarget.Global);
         }
-    })().catch(err => console.error('Error updating project IDs:', err));
+    })().catch(err => console.error('Error migrating project settings:', err));
 
     // Handle messages from the webview
     projectsProvider.onDidReceiveMessage(async (message: WebviewMessage) => {

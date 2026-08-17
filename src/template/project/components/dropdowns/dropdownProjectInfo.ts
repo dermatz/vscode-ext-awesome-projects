@@ -6,7 +6,7 @@ import { safeUrl, escAttr, escOnclickArg, escHtml, sanitizeCssColor } from '../.
 export async function getProjectInfoDropdownHtml(project: Project, color?: string, workspaceFile?: string): Promise<string> {
     const projectId = getProjectId(project);
     const escapedId = escOnclickArg(projectId);
-    const isRemote = !!project.remoteUrl;
+    const isRemote = !!project.isRemote;
     const safeBorderColor = sanitizeCssColor(color || "var(--vscode-list-activeSelectionBackground)");
 
     return `

@@ -1254,6 +1254,25 @@ input[type="color"].project-color-input:focus::-webkit-color-swatch {
     margin-bottom: 0;
 }
 
+.settings-item-checkbox {
+    margin-top: 0.25rem;
+}
+
+.settings-item-checkbox .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: var(--vscode-foreground);
+    font-size: 0.9rem;
+}
+
+.settings-item-checkbox input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+}
+
 
 /* Lists & Repository Links */
 ul.submodules {

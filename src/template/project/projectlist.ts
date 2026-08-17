@@ -137,7 +137,7 @@ export async function getProjectListHtml(
     const existsMap = new Map<string, boolean>();
     await Promise.all(
         projects.map(async p => {
-            if (p.remoteUrl) {
+            if (p.isRemote) {
                 existsMap.set(p.path, true);
                 return;
             }
@@ -152,7 +152,7 @@ export async function getProjectListHtml(
 
     // Only local project paths participate in common-root grouping. Remote
     // repositories use their explicit group or appear ungrouped.
-    const localPaths = projects.filter(p => !p.remoteUrl).map(p => p.path);
+    const localPaths = projects.filter(p => !p.isRemote).map(p => p.path);
     const commonRoot = findCommonRoot(localPaths);
 
     // Build a nested group tree.
@@ -163,7 +163,7 @@ export async function getProjectListHtml(
         const explicitGroup = project.group?.trim();
         const groupParts = explicitGroup
             ? [explicitGroup]
-            : (project.remoteUrl ? ['Remote'] : inferGroupPath(project.path, commonRoot));
+            : (project.isRemote ? ['Remote'] : inferGroupPath(project.path, commonRoot));
 
         let node = rootNode;
         for (const part of groupParts) {
