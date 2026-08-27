@@ -220,6 +220,53 @@ export async function getProjectListHtml(
                     }
                 };
             })();
+
+            // Live project search: filter tiles by name and hide empty groups
+            (function() {
+                const searchInput = document.getElementById('project-search');
+                const projectsList = document.getElementById('projects-list');
+                if (!searchInput || !projectsList) { return; }
+
+                let preSearchCollapsedGroups = null;
+
+                searchInput.addEventListener('input', function() {
+                    const query = this.value.trim().toLowerCase();
+
+                    if (query !== '' && preSearchCollapsedGroups === null) {
+                        preSearchCollapsedGroups = new Set();
+                        projectsList.querySelectorAll('.project-group.collapsed').forEach(group => {
+                            preSearchCollapsedGroups.add(group.getAttribute('data-group'));
+                            group.classList.remove('collapsed');
+                        });
+                    } else if (query === '' && preSearchCollapsedGroups !== null) {
+                        projectsList.querySelectorAll('.project-group').forEach(group => {
+                            if (preSearchCollapsedGroups.has(group.getAttribute('data-group'))) {
+                                group.classList.add('collapsed');
+                            }
+                        });
+                        preSearchCollapsedGroups = null;
+                    }
+
+                    const items = projectsList.querySelectorAll('.project-item-wrapper');
+                    items.forEach(item => {
+                        const nameEl = item.querySelector('.project-name');
+                        const name = nameEl ? nameEl.textContent.toLowerCase() : '';
+                        item.style.display = (query === '' || name.includes(query)) ? '' : 'none';
+                    });
+
+                    // Process groups bottom-up so parents stay visible when children match
+                    const groups = Array.from(projectsList.querySelectorAll('.project-group')).reverse();
+                    groups.forEach(group => {
+                        if (query === '') {
+                            group.style.display = '';
+                            return;
+                        }
+                        const hasVisibleItems = group.querySelectorAll('.project-item-wrapper:not([style*="display: none"])').length > 0;
+                        const hasVisibleChildGroups = group.querySelectorAll('.project-group:not([style*="display: none"])').length > 0;
+                        group.style.display = (hasVisibleItems || hasVisibleChildGroups) ? '' : 'none';
+                    });
+                });
+            })();
         </script>
     `;
 }

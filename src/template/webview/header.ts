@@ -50,7 +50,7 @@ export async function getHeaderHtml(context: vscode.ExtensionContext): Promise<s
 
     return `
         <header class="award-header">
-            <div class="logo">
+            <div class="award-header-top">
               <div class="brand-text">
                 <h1>Awesome Projects</h1>
                 <small class="version">
@@ -58,6 +58,13 @@ export async function getHeaderHtml(context: vscode.ExtensionContext): Promise<s
                   ${isBetaVersion(packageJson.version) ? '<span class="badge">Beta</span>' : '<span class="badge badge-stable">Award Winning</span>'}
                 </small>
               </div>
+            </div>
+            <div class="award-header-search">
+              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input type="search" id="project-search" placeholder="Search projects..." autocomplete="off">
             </div>
           </header>
     `;
