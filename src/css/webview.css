@@ -257,6 +257,9 @@ button:hover {
     -webkit-mask:
         linear-gradient(#fff 0 0) content-box,
         linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     opacity: 0.55;
@@ -778,9 +781,9 @@ body.hide-hover-buttons .project-settings {
 /* Action Grid */
 .action-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
-    gap: 10px;
-    margin-top: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
 }
 
 .action-card {
@@ -788,26 +791,29 @@ body.hide-hover-buttons .project-settings {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 18px 10px;
-    background: color-mix(in srgb, var(--vscode-button-secondaryBackground) 80%, transparent);
+    gap: 6px;
+    padding: 12px 8px;
+    background: color-mix(in srgb, var(--vscode-button-secondaryBackground) 50%, transparent);
     color: var(--vscode-button-secondaryForeground);
-    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 25%, transparent);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 20%, transparent);
     border-radius: var(--border-radius-large);
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     font-weight: 600;
+    opacity: 0.85;
     transition:
         background var(--transition-fast),
         border-color var(--transition-fast),
         box-shadow var(--transition-fast),
-        transform var(--transition-fast);
+        transform var(--transition-fast),
+        opacity var(--transition-fast);
 }
 
 .action-card:hover {
-    background: color-mix(in srgb, var(--vscode-button-secondaryHoverBackground) 90%, transparent);
-    border-color: color-mix(in srgb, var(--vscode-panel-border) 50%, transparent);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    background: color-mix(in srgb, var(--vscode-button-secondaryHoverBackground) 70%, transparent);
+    border-color: color-mix(in srgb, var(--vscode-panel-border) 45%, transparent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    opacity: 1;
     transform: translateY(-2px);
 }
 
@@ -816,8 +822,8 @@ body.hide-hover-buttons .project-settings {
 }
 
 .action-card svg {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.15rem;
+    height: 1.15rem;
     flex-shrink: 0;
 }
 
