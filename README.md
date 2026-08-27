@@ -126,7 +126,7 @@ Projects are stored in VS Code settings and can be edited directly or managed th
 | `path` | ✅ | Absolute path to the project folder or repository URL for remote projects |
 | `name` | ✅ | Display name shown in the sidebar |
 | `color` | — | HEX color for the project card accent |
-| `icon` | — | Custom icon for the project |
+| `icon` | — | Tabler Icons name (e.g. `brand-github`, `heart-filled`) or emoji/text for the project icon |
 | `remoteUrl` | — | Remote repository URL. When set, the project opens via VS Code:'s Remote Repositories workflow |
 | `group` | — | Group name for organizing projects into collapsible sections |
 | `productionUrl` | — | Production environment URL |

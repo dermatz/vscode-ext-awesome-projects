@@ -51,6 +51,14 @@ const extensionConfig = {
         {
           from: 'src/css',
           to: 'css'
+        },
+        {
+          from: 'node_modules/@tabler/icons/tabler-nodes-outline.json',
+          to: 'tabler-nodes-outline.json'
+        },
+        {
+          from: 'node_modules/@tabler/icons/tabler-nodes-filled.json',
+          to: 'tabler-nodes-filled.json'
         }
       ]
     })

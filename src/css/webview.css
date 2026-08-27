@@ -530,6 +530,56 @@ button:hover {
     border-radius: 2px;
 }
 
+.project-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.icon-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.icon-input-row input[type="text"] {
+    flex: 1;
+    margin: 0;
+}
+
+.icon-preview {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: var(--border-radius);
+    background: color-mix(in srgb, var(--vscode-button-background) 15%, transparent);
+    color: var(--vscode-foreground);
+    font-size: 14px;
+}
+
+.icon-preview svg {
+    width: 18px;
+    height: 18px;
+}
+
+.text-link {
+    display: inline;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: none;
+    color: var(--vscode-textLink-foreground);
+    text-decoration: underline;
+    cursor: pointer;
+    font: inherit;
+}
+
+.text-link:hover {
+    color: var(--vscode-textLink-activeForeground);
+}
+
 .project-info {
     flex: 1;
     transition: transform var(--transition-fast);

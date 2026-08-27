@@ -5,6 +5,7 @@ import { Project } from '../../../extension';
 import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
 import { getProjectId } from '../utils/project-id';
+import { getTablerIconSvg } from '../utils/tablerIcons';
 import { escHtml, escAttr, escOnclickArg, sanitizeCssColor } from '../../utils/escaping';
 
 async function findWorkspaceFile(projectPath: string): Promise<string | null> {
@@ -73,12 +74,18 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
         }
     };
 
-    const baseUrl = useFavicons
-        ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
-        : null;
-    const faviconHtml = baseUrl && useFavicons
-        ? `<img loading="lazy" src="https://www.google.com/s2/favicons?domain=${escAttr(baseUrl)}" onerror="this.parentElement.textContent='${isRemote ? '\u{1F310}' : '\u{1F4C1}'}">`
-        : (isRemote ? "🌐" : "📁");
+    let iconHtml: string;
+    if (project.icon) {
+        const tablerIcon = getTablerIconSvg(context, project.icon);
+        iconHtml = tablerIcon || escHtml(project.icon);
+    } else {
+        const baseUrl = useFavicons
+            ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
+            : null;
+        iconHtml = baseUrl && useFavicons
+            ? `<img loading="lazy" src="https://www.google.com/s2/favicons?domain=${escAttr(baseUrl)}" onerror="this.parentElement.textContent='${isRemote ? '\u{1F310}' : '\u{1F4C1}'}'">`
+            : (isRemote ? "🌐" : "📁");
+    }
 
     const workspaceFile = isRemote ? undefined : (await findWorkspaceFile(project.path) ?? undefined);
     const projectSettingsHtml = getSettingsDropdownHtml(context, project);
@@ -92,7 +99,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                 style="--bg-color: ${sanitizeCssColor(bgColor)}"
                 onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'info')"
             >
-                <span class="project-icon">${faviconHtml}</span>
+                <span class="project-icon">${iconHtml}</span>
                 <div class="project-info">
                     <div class="project-name"
                         onclick="if(event.detail>=2)event.stopPropagation()"

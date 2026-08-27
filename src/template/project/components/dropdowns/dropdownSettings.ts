@@ -2,7 +2,8 @@ import * as vscode from "vscode";
 import { Project } from '../../../../extension';
 import { getColorPickerHtml } from '../colorpicker/colorPicker';
 import { getProjectId } from '../../utils/project-id';
-import { escAttr, escOnclickArg, sanitizeCssColor } from '../../../utils/escaping';
+import { getTablerIconSvg } from '../../utils/tablerIcons';
+import { escAttr, escOnclickArg, sanitizeCssColor, escHtml } from '../../../utils/escaping';
 
 export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, project: Project): string {
     const defaultBgColor = "var(--vscode-list-activeSelectionBackground)";
@@ -12,6 +13,11 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
     const escapedId = escOnclickArg(projectId);
 
     const isRemote = !!project.isRemote;
+    const iconPreviewSvg = project.icon ? getTablerIconSvg(_context, project.icon) : null;
+    const iconPreviewHtml = iconPreviewSvg
+        ? `<span class="icon-preview">${iconPreviewSvg}</span>`
+        : (project.icon ? `<span class="icon-preview">${escHtml(project.icon)}</span>` : '');
+
     const basicInputs = [
         { label: 'Project name:', type: 'text', value: escAttr(project.name), placeholder: 'Projectname', field: 'name' },
         { label: isRemote ? 'Remote URL:' : 'Local path:', type: 'text', value: escAttr(project.path), placeholder: isRemote ? 'https://github.com/owner/repo' : '~/path/to/your/project/', field: 'path' },
@@ -53,6 +59,14 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
                         currentColor: projectColor,
                         defaultColor: bgColor
                     })}
+                </div>
+                <div class="settings-item">
+                    <label>Icon:</label>
+                    <p>Pick an icon from <button type="button" class="text-link" onclick="window.vscodeApi.postMessage({ command: 'openUrl', url: 'https://tabler.io/icons' })">Tabler Icons</button>. Add <code>-filled</code> for filled variants (e.g. <code>heart-filled</code>). You can also use an emoji.</p>
+                    <div class="icon-input-row">
+                        <input type="text" placeholder="brand-github" value="${escAttr(project.icon || '')}" data-field="icon" data-initial-value="${escAttr(project.icon || '')}" oninput="handleInput(event, '${escapedId}')">
+                        ${iconPreviewHtml}
+                    </div>
                 </div>
             </div>
 

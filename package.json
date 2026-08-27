@@ -163,6 +163,10 @@
                 "type": "string",
                 "description": "Custom color for the project"
               },
+              "icon": {
+                "type": "string",
+                "description": "Tabler Icons name (e.g. brand-github or heart-filled) or emoji/text for the project icon"
+              },
               "productionUrl": {
                 "type": "string",
                 "description": "Production URL of the project"
@@ -247,5 +251,8 @@
     "typescript": "^5.7.2",
     "webpack": "^5.105.0",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@tabler/icons": "^3.46.0"
   }
 }
