@@ -1197,39 +1197,179 @@ a.info-item-value:hover {
     100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+@keyframes loadingDots {
+    0% { content: ""; }
+    25% { content: "."; }
+    50% { content: ".."; }
+    75% { content: "..."; }
+    100% { content: ""; }
+}
+
+@keyframes pulseGlow {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50% { opacity: 0.75; transform: scale(1.15); }
+}
+
+/* Loading View */
+.loading-view {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.loading-view .projects-header {
+    filter: grayscale(0.3);
+    opacity: 0.85;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    flex: 1;
+    gap: 1.5rem;
+    padding: 2.5rem 1rem 2rem;
+}
+
+.loading-brand {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    margin-top: 1.5rem;
+    filter: drop-shadow(0 4px 14px rgba(200, 80, 192, 0.28));
+}
+
+.loading-brand::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #4158D0, #C850C0, #FFCC70, #4158D0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #fff calc(100% - 7px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #fff calc(100% - 7px));
+    animation: spin 1.2s linear infinite;
+}
+
+.loading-brand::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin-top: -10px;
+    margin-left: -10px;
+    border-radius: 50%;
+    background: rgba(200, 80, 192, 0.35);
+    animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
+.loading-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--vscode-foreground);
+    display: flex;
+    align-items: center;
+    gap: 0.1rem;
+    letter-spacing: -0.01em;
+}
+
+.loading-dots::after {
+    content: "...";
+    animation: loadingDots 1.5s steps(4, end) infinite;
+    width: 1.4em;
+    display: inline-block;
+    text-align: left;
+}
+
+.loading-skeletons {
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.loading-skeleton {
+    height: 52px;
+    border-radius: var(--border-radius-large);
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--vscode-input-background) 60%, transparent) 25%,
+        color-mix(in srgb, var(--vscode-input-background) 85%, transparent) 50%,
+        color-mix(in srgb, var(--vscode-input-background) 60%, transparent) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s infinite;
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 30%, transparent);
+}
+
+.loading-skeleton:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.loading-skeleton:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
 /* Utility Classes */
 .loading-spinner {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 50px;
-    height: 50px;
+    width: 56px;
+    height: 56px;
     z-index: 1000;
 }
 
 .loading-spinner::before {
     content: "";
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     background: conic-gradient(from 0deg, var(--vscode-progressBar-background), #C850C0, #FFCC70, var(--vscode-progressBar-background));
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #fff calc(100% - 4px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #fff calc(100% - 4px));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #fff calc(100% - 6px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #fff calc(100% - 6px));
     animation: spin 1s linear infinite;
 }
 
 .loading-spinner::after {
     content: "";
     position: absolute;
-    top: 8px;
-    left: 8px;
-    width: calc(100% - 16px);
-    height: calc(100% - 16px);
-    border: 2px solid transparent;
-    border-top: 2px solid rgba(200, 80, 192, 0.8);
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    margin-top: -9px;
+    margin-left: -9px;
     border-radius: 50%;
-    animation: spin 0.7s linear infinite reverse;
+    background: rgba(200, 80, 192, 0.45);
+    animation: pulseGlow 1.6s ease-in-out infinite;
+}
+
+.loading-backdrop {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in srgb, var(--vscode-editor-background) 80%, transparent);
+    backdrop-filter: blur(1px);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .hidden {

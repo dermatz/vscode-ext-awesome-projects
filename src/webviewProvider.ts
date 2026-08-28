@@ -69,42 +69,39 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     // This also ensures tests observing CSS load count during resolveWebviewView can detect the initial load.
     await this._loadStaticResources();
 
-        // Initially only load a loading indicator
+        // Initially show an exciting loading view that already includes the brand header
         if (this._isFirstLoad) {
             webviewView.webview.html = `
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <style>
-                        .loading-spinner {
-                            position: fixed;
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            border: 4px solid rgba(0, 0, 0, 0.1);
-                            border-top: 4px solid var(--vscode-progressBar-background);
-                            border-radius: 50%;
-                            width: 40px;
-                            height: 40px;
-                            animation: spin 1s linear infinite;
-                        }
-                        @keyframes spin {
-                            0% { transform: translate(-50%, -50%) rotate(0deg); }
-                            100% { transform: translate(-50%, -50%) rotate(360deg); }
-                        }
-                    </style>
+                    <style>${this._cachedCss}</style>
                 </head>
-                <body>
-                    <div class="loading-spinner"></div>
+                <body class="loading-view">
+                    ${this._cachedHeaderHtml}
+                    <main class="loading-content">
+                        <div class="loading-brand"></div>
+                        <div class="loading-title">Loading projects<span class="loading-dots"></span></div>
+                        <div class="loading-skeletons">
+                            <div class="loading-skeleton"></div>
+                            <div class="loading-skeleton"></div>
+                            <div class="loading-skeleton"></div>
+                        </div>
+                    </main>
                 </body>
                 </html>
             `;
 
-            // Delay loading the full content
+            // Delay loading the full content (extendable via env var for development)
+            const debugDelay = process.env.AWESOME_PROJECTS_DEBUG_SLOW_LOAD
+                ? parseInt(process.env.AWESOME_PROJECTS_DEBUG_SLOW_LOAD, 10)
+                : 100;
+            const loadDelay = isNaN(debugDelay) ? 100 : Math.max(100, debugDelay);
+
             setTimeout(async () => {
                 webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
                 this._isFirstLoad = false;
-            }, 100);
+            }, loadDelay);
         } else {
             webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
         }
@@ -485,6 +482,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
                     document.addEventListener('DOMContentLoaded', () => {
                         const loadingSpinner = document.getElementById('loading-spinner');
+                        const loadingBackdrop = document.getElementById('loading-backdrop');
 
                         // Setup event listeners
                         document.querySelectorAll('.project-color-input').forEach(input => {
@@ -523,9 +521,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             const message = event.data;
                             if (message.command === 'setLoading') {
                             if (message.isLoading) {
-                                loadingSpinner.classList.remove('hidden');
+                                loadingBackdrop?.classList.remove('hidden');
+                                loadingSpinner?.classList.remove('hidden');
                             } else {
-                                loadingSpinner.classList.add('hidden');
+                                loadingBackdrop?.classList.add('hidden');
+                                loadingSpinner?.classList.add('hidden');
                             }
                             } else if (message.command === 'updateIconPreview') {
                                 if (typeof updateIconPreview === 'function') {
@@ -539,7 +539,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             <body class="${bodyClass.trim()}">
                 ${this._cachedHeaderHtml}
                 <div class="projects-wrapper">
-                    <div id="loading-spinner" class="loading-spinner hidden"></div>
+                    <div id="loading-backdrop" class="loading-backdrop hidden">
+                        <div id="loading-spinner" class="loading-spinner"></div>
+                    </div>
                     ${projectListHtml}
                 </div>
                 ${this._cachedFooterHtml}
