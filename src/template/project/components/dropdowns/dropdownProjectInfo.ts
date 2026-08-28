@@ -12,7 +12,7 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
     return `
         <div id="info-${projectId}"
              class="dropdown project-info-dropdown"
-             style="border-left: 1px solid ${safeBorderColor}; border-right: 1px solid ${safeBorderColor}; border-bottom: 1px solid ${safeBorderColor};"
+             style="border-left: 1px solid ${safeBorderColor}; border-right: 1px solid ${safeBorderColor}; border-bottom: 1px solid ${safeBorderColor}; background: linear-gradient(0deg, color-mix(in srgb, ${safeBorderColor} 10%, var(--vscode-editor-background)) 0%, color-mix(in srgb, var(--vscode-editor-background) 92%, transparent) 55%);"
         >
             <div class="info-header">
                 <div class="info-header-meta">

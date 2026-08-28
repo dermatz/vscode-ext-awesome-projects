@@ -843,7 +843,7 @@ body.hide-hover-buttons .project-settings {
     justify-content: center;
     gap: 6px;
     padding: 12px 8px;
-    background: color-mix(in srgb, var(--vscode-button-secondaryBackground) 50%, transparent);
+    background: var(--vscode-editor-background);
     color: var(--vscode-button-secondaryForeground);
     border: 0.5px solid color-mix(in srgb, var(--vscode-panel-border) 55%, transparent);
     border-radius: var(--border-radius-large);
@@ -860,7 +860,7 @@ body.hide-hover-buttons .project-settings {
 }
 
 .action-card:hover {
-    background: color-mix(in srgb, var(--vscode-button-secondaryHoverBackground) 70%, transparent);
+    background: color-mix(in srgb, var(--vscode-list-hoverBackground) 70%, var(--vscode-editor-background));
     border-color: color-mix(in srgb, var(--vscode-panel-border) 45%, transparent);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     opacity: 1;

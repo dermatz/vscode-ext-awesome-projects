@@ -33,7 +33,7 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
     const safeBgColor = sanitizeCssColor(bgColor);
     return `
         <div class="dropdown settings-dropdown"
-            style="border-left: 1px solid ${safeBgColor}; border-right: 1px solid ${safeBgColor}; border-bottom: 1px solid ${safeBgColor};"
+            style="border-left: 1px solid ${safeBgColor}; border-right: 1px solid ${safeBgColor}; border-bottom: 1px solid ${safeBgColor}; background: linear-gradient(0deg, color-mix(in srgb, ${safeBgColor} 10%, var(--vscode-editor-background)) 0%, color-mix(in srgb, var(--vscode-editor-background) 92%, transparent) 55%);"
             id="settings-${projectId}"
             data-settings-id="${projectId}">
 
