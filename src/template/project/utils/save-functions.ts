@@ -113,13 +113,40 @@ export function getSaveFunctionsScript(): string {
             });
         }
 
-        function toggleUrlSettings(event) {
+        function toggleAccordion(event) {
             const button = event.currentTarget;
             const content = button.nextElementSibling;
             const isExpanded = button.classList.contains('expanded');
 
             button.classList.toggle('expanded');
             content.style.maxHeight = isExpanded ? '0' : content.scrollHeight + 'px';
+        }
+
+        function handleIconInput(event, projectId) {
+            handleInput(event, projectId);
+
+            const input = event.target;
+            const preview = document.getElementById('icon-preview-' + projectId);
+            if (!preview) { return; }
+
+            const value = input.value.trim();
+            if (!value) {
+                preview.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 12h.01"/></svg>';
+                return;
+            }
+
+            window.vscodeApi.postMessage({
+                command: 'previewIcon',
+                projectId: projectId,
+                iconName: value
+            });
+        }
+
+        function updateIconPreview(projectId, iconHtml) {
+            const preview = document.getElementById('icon-preview-' + projectId);
+            if (preview) {
+                preview.innerHTML = iconHtml;
+            }
         }
 
         function handleDeleteProject(projectId) {

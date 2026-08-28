@@ -8,6 +8,8 @@ import { scanForGitProjects, addScannedProjects } from './utils/scanForProjects'
 import { openProjectInNewWindow, openUrl, openRemoteProject } from './template/project/utils/projectOpener';
 import { WebviewMessage } from './types/webviewMessages';
 import { getProjectId } from './template/project/utils/project-id';
+import { getTablerIconSvg } from './template/project/utils/tablerIcons';
+import { escHtml } from './template/utils/escaping';
 import * as path from 'path';
 
 /**
@@ -188,6 +190,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         this._updateProject(message.projectId, message.updates);
                     }
                     break;
+                case 'previewIcon':
+                    if (message.projectId !== undefined && message.iconName !== undefined) {
+                        this._previewIcon(message.projectId, message.iconName);
+                    }
+                    break;
                 case 'openUrl':
                     if (message.url !== undefined) {
                         openUrl(message.url);
@@ -291,6 +298,16 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to update project: ${error}`);
         }
+    }
+
+    private _previewIcon(projectId: string, iconName: string) {
+        const svg = getTablerIconSvg(this._context, iconName);
+        const html = svg ?? escHtml(iconName);
+        this._view?.webview.postMessage({
+            command: 'updateIconPreview',
+            projectId,
+            iconHtml: html
+        });
     }
 
     private async _relocateProject(projectId: string) {
@@ -525,6 +542,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             } else {
                                 loadingSpinner.classList.add('hidden');
                             }
+                            } else if (message.command === 'updateIconPreview') {
+                                if (typeof updateIconPreview === 'function') {
+                                    updateIconPreview(message.projectId, message.iconHtml);
+                                }
                             }
                         });
                     });

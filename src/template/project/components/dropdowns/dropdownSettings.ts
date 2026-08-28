@@ -51,27 +51,38 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
                         <span>Open as Remote Project</span>
                     </label>
                 </div>
-                <div class="settings-item">
-                    <label>Color:</label>
-                    <p>Choose a color to colorize the project card.</p>
-                    ${getColorPickerHtml({
-                        projectId: projectId,
-                        currentColor: projectColor,
-                        defaultColor: bgColor
-                    })}
-                </div>
-                <div class="settings-item">
-                    <label>Icon:</label>
-                    <p>Pick an icon from <button type="button" class="text-link" onclick="window.vscodeApi.postMessage({ command: 'openUrl', url: 'https://tabler.io/icons' })">Tabler Icons</button>. Add <code>-filled</code> for filled variants (e.g. <code>heart-filled</code>). You can also use an emoji.</p>
-                    <div class="icon-input-row">
-                        <input type="text" placeholder="brand-github" value="${escAttr(project.icon || '')}" data-field="icon" data-initial-value="${escAttr(project.icon || '')}" oninput="handleInput(event, '${escapedId}')">
-                        ${iconPreviewHtml}
+            </div>
+
+            <div class="settings-accordion">
+                <button class="accordion-toggle" onclick="toggleAccordion(event)">
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
+                    </svg>
+                    Appearance
+                </button>
+                <div class="accordion-content">
+                    <div class="settings-item appearance-section">
+                        <label>Color:</label>
+                        <p>Choose a color to colorize the project card.</p>
+                        ${getColorPickerHtml({
+                            projectId: projectId,
+                            currentColor: projectColor,
+                            defaultColor: bgColor
+                        })}
+                    </div>
+                    <div class="settings-item appearance-section">
+                        <label>Icon:</label>
+                        <p>Pick an icon from <button type="button" class="text-link" onclick="window.vscodeApi.postMessage({ command: 'openUrl', url: 'https://tabler.io/icons' })">Tabler Icons</button>. Add <code>-filled</code> for filled variants (e.g. <code>heart-filled</code>). You can also use an emoji.</p>
+                        <div class="icon-input-row">
+                            <input type="text" placeholder="brand-github" value="${escAttr(project.icon || '')}" data-field="icon" data-initial-value="${escAttr(project.icon || '')}" oninput="handleIconInput(event, '${escapedId}')">
+                            <span class="icon-preview" id="icon-preview-${projectId}">${iconPreviewHtml ? iconPreviewHtml.replace(/<span class="icon-preview">|<\/span>/g, '') : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 12h.01"/></svg>'}</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="settings-accordion">
-                <button class="accordion-toggle" onclick="toggleUrlSettings(event)">
+                <button class="accordion-toggle" onclick="toggleAccordion(event)">
                     <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
                     </svg>
