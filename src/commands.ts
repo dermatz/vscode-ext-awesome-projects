@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Project } from './extension';
 import { ProjectsWebviewProvider } from './webviewProvider';
 import { getProjectId } from './template/project/utils/project-id';
+import { showWhatsNewPanel } from './whatsNewPanel';
 
 export const Commands = {
     ADD_PROJECT: 'awesome-projects.addProject',
@@ -9,7 +10,8 @@ export const Commands = {
     OPEN_PROJECT: 'awesome-projects.openProject',
     REFRESH_PROJECTS: 'awesome-projects.refreshProjects',
     UPDATE_PROJECT: 'awesome-projects.updateProject',
-    DELETE_PROJECT: 'awesome-projects.deleteProject'
+    DELETE_PROJECT: 'awesome-projects.deleteProject',
+    SHOW_WHATS_NEW: 'awesome-projects.showWhatsNew'
 };
 
 export const registerCommands = (context: vscode.ExtensionContext, projectsProvider: ProjectsWebviewProvider): void => {
@@ -202,6 +204,10 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                 vscode.window.showErrorMessage(`Failed to delete project: ${error}`);
                 return false;
             }
+        }),
+
+        vscode.commands.registerCommand(Commands.SHOW_WHATS_NEW, async () => {
+            await showWhatsNewPanel(context);
         })
     );
 };

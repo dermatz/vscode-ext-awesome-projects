@@ -79,6 +79,12 @@
         "title": "Show in File Manager",
         "category": "Awesome Projects",
         "icon": "$(folder-opened)"
+      },
+      {
+        "command": "awesome-projects.showWhatsNew",
+        "title": "Show What's New",
+        "category": "Awesome Projects",
+        "icon": "$(feedback)"
       }
     ],
     "menus": {
