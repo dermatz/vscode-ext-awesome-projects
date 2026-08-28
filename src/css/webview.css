@@ -149,12 +149,13 @@ header .award-header-search input[type="search"] {
     background: color-mix(in srgb, var(--vscode-input-background) 90%, transparent);
     border: 1px solid color-mix(in srgb, var(--vscode-input-border, var(--vscode-panel-border)) 45%, transparent);
     border-radius: var(--border-radius);
-    outline: none;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), outline-color var(--transition-fast);
 }
 
 header .award-header-search input[type="search"]::placeholder {
-    color: var(--vscode-input-placeholderForeground);
+    color: color-mix(in srgb, var(--vscode-input-placeholderForeground) 80%, var(--vscode-input-foreground));
 }
 
 header .award-header-search input[type="search"]:focus {
@@ -488,7 +489,12 @@ button:hover {
         transform var(--transition-fast);
     border-radius: var(--border-radius-large);
     position: relative;
-    background-color: color-mix(in srgb, var(--vscode-list-inactiveSelectionBackground, rgba(255,255,255,0.04)) 80%, transparent);
+    background:
+        linear-gradient(90deg,
+            color-mix(in srgb, var(--bg-color, transparent) 18%, transparent) 0px,
+            transparent 75px
+        ),
+        color-mix(in srgb, var(--vscode-list-inactiveSelectionBackground, rgba(255,255,255,0.04)) 80%, transparent);
     border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 18%, transparent);
     border-left: 10px solid color-mix(in srgb, var(--bg-color, var(--vscode-panel-border)) 70%, transparent);
     box-shadow:
@@ -497,7 +503,12 @@ button:hover {
 }
 
 .project-item:hover {
-    background-color: color-mix(in srgb, var(--bg-color, var(--vscode-list-hoverBackground, rgba(255,255,255,0.07))) 14%, var(--vscode-list-hoverBackground, rgba(255,255,255,0.07)));
+    background:
+        linear-gradient(90deg,
+            color-mix(in srgb, var(--bg-color, transparent) 24%, transparent) 0px,
+            transparent 75px
+        ),
+        color-mix(in srgb, var(--vscode-list-hoverBackground, rgba(255,255,255,0.07)) 86%, transparent);
     border-color: color-mix(in srgb, var(--vscode-panel-border) 35%, transparent);
     border-left-color: color-mix(in srgb, var(--bg-color, var(--vscode-focusBorder)) 90%, transparent);
     box-shadow:
@@ -1093,12 +1104,29 @@ a.info-item-value:hover {
 }
 
 .project-item-wrapper.current-project .project-item {
-    background-color: color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 12%, transparent);
+    background:
+        linear-gradient(90deg,
+            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 28%, transparent) 0%,
+            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 10%, transparent) 50%,
+            transparent 100%
+        ),
+        color-mix(in srgb, var(--vscode-list-activeSelectionBackground, rgba(255,255,255,0.1)) 60%, transparent);
     border-left-color: var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background)));
     border-left-width: 10px;
     box-shadow:
-        0 0 0 1px color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 25%, transparent),
-        0 4px 14px rgba(0, 0, 0, 0.1);
+        0 0 0 1px color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 45%, transparent),
+        0 0 18px color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 20%, transparent),
+        0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.project-item-wrapper.current-project .project-item:hover {
+    background:
+        linear-gradient(90deg,
+            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 34%, transparent) 0%,
+            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 12%, transparent) 50%,
+            transparent 100%
+        ),
+        color-mix(in srgb, var(--vscode-list-activeSelectionBackground, rgba(255,255,255,0.1)) 70%, transparent);
 }
 
 .project-item-wrapper.current-project:has(.project-item.active)::before {
