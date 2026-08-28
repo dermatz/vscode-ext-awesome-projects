@@ -9,6 +9,34 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 * mark `awesomeProjects.projects` as machine-scoped so the project list is no longer synced across devices
 * add support for remote repositories via "Connect to Repository"
 
+## [0.28.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.27.1...awesome-projects-v0.28.0) (2026-08-28)
+
+
+### Features
+
+* add 'Open in Terminal' functionality ([a6f450f](https://github.com/dermatz/vscode-ext-awesome-projects/commit/a6f450fecf5159af8ee77bca07af883b16b4ae77))
+* add "Show What's New" command and site for extension updates ([e10ed0b](https://github.com/dermatz/vscode-ext-awesome-projects/commit/e10ed0bb2a8645b54ea07e0b82dee31b6075297e))
+* add new quick action buttons on project item card ([82249ab](https://github.com/dermatz/vscode-ext-awesome-projects/commit/82249ab775f37cb264c16b2e56eccf05cfe606bb))
+* enhance project group header styles and add separator ([3dc8f6e](https://github.com/dermatz/vscode-ext-awesome-projects/commit/3dc8f6ed46d79f6c9777e3fa5b0350657c4d4593))
+* enhanced new loading view ([4db18bd](https://github.com/dermatz/vscode-ext-awesome-projects/commit/4db18bddb48482c49fec69744968d2ce65611cbe))
+
+
+### Bug Fixes
+
+* adjust project-item z-indexes ([746116b](https://github.com/dermatz/vscode-ext-awesome-projects/commit/746116bd7e96b53a78b78d68ae88fdb2646833a0))
+* adjust z-index for quick menu dropdown ([928a2f2](https://github.com/dermatz/vscode-ext-awesome-projects/commit/928a2f226f0a54e30057e19c05379ad090f25268))
+
+
+### Refactoring
+
+* remove old unused code ([574188a](https://github.com/dermatz/vscode-ext-awesome-projects/commit/574188a72279ae31762132756acb4cc7a77d9c38))
+* rename css header classes ([9a5fad0](https://github.com/dermatz/vscode-ext-awesome-projects/commit/9a5fad0694f678241b0cb569bad0639fa3a82b6a))
+
+
+### UX Improvements
+
+* adjust search bar ([9f7ec1b](https://github.com/dermatz/vscode-ext-awesome-projects/commit/9f7ec1b5a60895d2268fc8f692546f205e03b6bc))
+
 ## [0.27.1](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.27.0...awesome-projects-v0.27.1) (2026-08-28)
 
 
