@@ -1233,6 +1233,12 @@ input[type="url"]:focus {
     margin-top: 0.25rem;
 }
 
+.settings-item .hint {
+    font-size: 0.78rem;
+    color: var(--vscode-descriptionForeground);
+    margin: 0.25rem 0 0.5rem;
+}
+
 input[type="color"].project-color-input {
     appearance: none;
     -webkit-appearance: none;
