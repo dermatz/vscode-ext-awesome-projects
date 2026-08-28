@@ -40,9 +40,7 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
             : ""
             }
 
-            <div class="info-section">
-                ${await getGitRepositoriesHtml(project)}
-            </div>
+            ${await getGitRepositoriesHtml(project)}
 
             <div class="action-grid">
                 ${isRemote ? `
