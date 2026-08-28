@@ -3,7 +3,7 @@ import { Project } from '../extension';
 export interface WebviewMessage {
     command: 'deleteProject' | 'updateProject' | 'openProject' | 'openProjectNewWindow' | 'openRemoteProject' |
              'openWorkspace' | 'openUrl' | 'addProject' | 'addRemoteProject' | 'projectSelected' |
-             'reorderProjects' | 'sortProjects' | 'scanProjects' | 'setLoading' | 'relocateProject' |
+             'sortProjects' | 'scanProjects' | 'setLoading' | 'relocateProject' |
              'toggleGroupCollapse' | 'showInFileManager' | 'previewIcon' | 'openInTerminal';
     projectId?: string;
     projectPath?: string;
@@ -12,8 +12,6 @@ export interface WebviewMessage {
     url?: string;
     updates?: Partial<Project>;
     path?: string;
-    oldIndex?: number;
-    newIndex?: number;
     isLoading?: boolean;
     sortedProjectIds?: string[];
     groupName?: string;

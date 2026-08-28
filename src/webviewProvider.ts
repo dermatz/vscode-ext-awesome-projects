@@ -200,11 +200,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         openUrl(message.url);
                     }
                     break;
-                case 'reorderProjects':
-                    if (message.oldIndex !== undefined && message.newIndex !== undefined) {
-                        this._reorderProjects(message.oldIndex, message.newIndex);
-                    }
-                    break;
                 case 'sortProjects':
                     if (message.sortedProjectIds !== undefined) {
                         this._sortProjectsByIds(message.sortedProjectIds);
@@ -354,25 +349,6 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             path: newPath,
             group: newGroup ?? project.group
         });
-    }
-
-    private async _reorderProjects(oldIndex: number, newIndex: number) {
-        try {
-            this._setLoading(true);
-            const configuration = this.getCachedConfiguration();
-            const projects = [...(configuration.get<Project[]>('projects') || [])];
-            const [movedProject] = projects.splice(oldIndex, 1);
-            projects.splice(newIndex, 0, movedProject);
-            await configuration.update('projects', projects, vscode.ConfigurationTarget.Global);
-            // Invalidate cache after update
-            this._configurationLoaded = false;
-            this._cachedConfiguration = undefined;
-            this.refresh();
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to reorder projects: ${error}`);
-        } finally {
-            this._setLoading(false);
-        }
     }
 
     private async _sortProjectsByIds(sortedProjectIds: string[]) {
