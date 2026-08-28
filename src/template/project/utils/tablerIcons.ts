@@ -43,12 +43,6 @@ export function parseIconName(rawName: string): { name: string; variant: IconVar
         return null;
     }
 
-    const filledSuffix = '-filled';
-    const isFilled = trimmed.toLowerCase().endsWith(filledSuffix);
-    if (isFilled) {
-        trimmed = trimmed.slice(0, -filledSuffix.length);
-    }
-
     trimmed = trimmed
         .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
         .replace(/[\s_]+/g, '-')
@@ -58,6 +52,12 @@ export function parseIconName(rawName: string): { name: string; variant: IconVar
         trimmed = trimmed.slice(5);
     } else if (trimmed.startsWith('ti-')) {
         trimmed = trimmed.slice(3);
+    }
+
+    const filledSuffix = '-filled';
+    const isFilled = trimmed.endsWith(filledSuffix);
+    if (isFilled) {
+        trimmed = trimmed.slice(0, -filledSuffix.length);
     }
 
     if (!trimmed) {

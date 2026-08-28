@@ -40,9 +40,12 @@ suite('Tabler Icons helper', () => {
     });
 
     test('getTablerIconSvg renders filled SVG', () => {
-        const context = createMockContext({
-            'heart': [['path', { d: 'M12 21l-1-1H5L4 8h16l-1 12h-6l-1 1z' }]]
-        });
+        const context = createMockContext(
+            {},
+            {
+                'heart': [['path', { d: 'M12 21l-1-1H5L4 8h16l-1 12h-6l-1 1z' }]]
+            }
+        );
         const svg = getTablerIconSvg(context, 'heart-filled');
         assert.ok(svg);
         assert.ok(svg!.includes('fill="currentColor"'));
