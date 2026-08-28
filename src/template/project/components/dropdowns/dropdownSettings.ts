@@ -18,8 +18,7 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
         ? `<span class="icon-preview">${iconPreviewSvg}</span>`
         : (project.icon ? `<span class="icon-preview">${escHtml(project.icon)}</span>` : '');
 
-    const basicInputs = [
-        { label: 'Project name:', type: 'text', value: escAttr(project.name), placeholder: 'Projectname', field: 'name' },
+    const projectDetailsInputs = [
         { label: isRemote ? 'Remote URL:' : 'Local path:', type: 'text', value: escAttr(project.path), placeholder: isRemote ? 'https://github.com/owner/repo' : '~/path/to/your/project/', field: 'path' },
         { label: 'Repository URL:', type: 'url', value: escAttr(project.remoteUrl || ""), placeholder: 'https://github.com/owner/repo', field: 'remoteUrl' },
     ];
@@ -39,17 +38,33 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
             data-settings-id="${projectId}">
 
             <div class="settings-fields">
-                ${basicInputs.map(input => `
                 <div class="settings-item">
-                    <label>${input.label}</label>
-                    <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" data-field="${input.field}" data-initial-value="${input.value}" oninput="handleInput(event, '${escapedId}')">
+                    <label>Project name:</label>
+                    <input type="text" placeholder="Projectname" value="${escAttr(project.name)}" data-field="name" data-initial-value="${escAttr(project.name)}" oninput="handleInput(event, '${escapedId}')">
                 </div>
-                `).join('')}
-                <div class="settings-item settings-item-checkbox">
-                    <label class="checkbox-label">
-                        <input type="checkbox" ${project.isRemote ? 'checked' : ''} data-field="isRemote" data-initial-value="${project.isRemote ? 'true' : 'false'}" onchange="handleInput(event, '${escapedId}')">
-                        <span>Open as Remote Project</span>
-                    </label>
+            </div>
+
+            <div class="settings-accordion">
+                <button class="accordion-toggle" onclick="toggleAccordion(event)">
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M7.976 10.072l4.357-4.357.62.618L8.284 11h-.618L3 6.333l.619-.618 4.357 4.357z"/>
+                    </svg>
+                    Connection
+                </button>
+                <div class="accordion-content">
+                    <p>Configure how this project is opened and where its source lives.</p>
+                    ${projectDetailsInputs.map(input => `
+                        <div class="settings-item">
+                            <label>${input.label}</label>
+                            <input type="${input.type}" placeholder="${input.placeholder}" value="${input.value}" data-field="${input.field}" data-initial-value="${input.value}" oninput="handleInput(event, '${escapedId}')">
+                        </div>
+                    `).join('')}
+                    <div class="settings-item settings-item-checkbox">
+                        <label class="checkbox-label">
+                            <input type="checkbox" ${project.isRemote ? 'checked' : ''} data-field="isRemote" data-initial-value="${project.isRemote ? 'true' : 'false'}" onchange="handleInput(event, '${escapedId}')">
+                            <span>Open as Remote Project</span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
