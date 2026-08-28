@@ -702,6 +702,32 @@ body.hide-hover-buttons .project-settings {
     position: relative;
 }
 
+.quick-action-button,
+.quick-menu-toggle {
+    background: transparent;
+    color: var(--vscode-foreground);
+    opacity: 0.45;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+    padding: 0.25rem;
+    transition: opacity var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.quick-action-button:hover,
+.quick-action-button:focus-visible,
+.quick-menu-toggle:hover,
+.quick-menu-toggle:focus-visible,
+.quick-menu-wrapper:has(.quick-menu.show) .quick-menu-toggle {
+    opacity: 1;
+    background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground, var(--vscode-panel-border)) 60%, transparent);
+    border-color: color-mix(in srgb, var(--vscode-panel-border) 40%, transparent);
+}
+
+.project-item:hover .quick-action-button,
+.project-item:hover .quick-menu-toggle {
+    opacity: 0.7;
+}
+
 .quick-menu {
     display: none;
     position: absolute;
