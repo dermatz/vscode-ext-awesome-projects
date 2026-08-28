@@ -9,6 +9,20 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 * mark `awesomeProjects.projects` as machine-scoped so the project list is no longer synced across devices
 * add support for remote repositories via "Connect to Repository"
 
+## [0.27.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.26.0...awesome-projects-v0.27.0) (2026-08-28)
+
+
+### Features
+
+* add hint for favcon input in settings dropdown ([9a4bae7](https://github.com/dermatz/vscode-ext-awesome-projects/commit/9a4bae79ba60bb47525d73845fb2c6322a06e969))
+* add support for Tabler Icons in project settings and UI ([160e603](https://github.com/dermatz/vscode-ext-awesome-projects/commit/160e603541676f21d98d9bbfea42bd3c2ce8a5b6))
+* adjust styling for project settings button ([c31f8e0](https://github.com/dermatz/vscode-ext-awesome-projects/commit/c31f8e081b69d9de3df8175b28e6a37183919031))
+* enhance button and search input styles with gradient backgrounds ([1e8b7d9](https://github.com/dermatz/vscode-ext-awesome-projects/commit/1e8b7d91beefcf9acd94443cf8e298e57e6ed103))
+* enhance project card appearance settings ([4b7ef34](https://github.com/dermatz/vscode-ext-awesome-projects/commit/4b7ef3439b1309ee81df875a3a096715b21195fe))
+* restructure project settings dropdown for clarity ([70eb186](https://github.com/dermatz/vscode-ext-awesome-projects/commit/70eb186a92eefc861013ede44218ee53f3495c7c))
+* simplify project info dropdown styling ([558c489](https://github.com/dermatz/vscode-ext-awesome-projects/commit/558c489da9089f77ad31e007e670a7dec93b76fc))
+* update dropdown styles with gradient backgrounds for improved aesthetics ([de35616](https://github.com/dermatz/vscode-ext-awesome-projects/commit/de356162d9b8417f763da29893d6c4190c9b323b))
+
 ## [0.26.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.25.0...awesome-projects-v0.26.0) (2026-08-27)
 
 
