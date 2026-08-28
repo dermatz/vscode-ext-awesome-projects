@@ -238,6 +238,15 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.project.path));
                     }
                     break;
+                case 'openInTerminal':
+                    if (message.projectPath !== undefined) {
+                        const terminal = vscode.window.createTerminal({
+                            cwd: message.projectPath,
+                            name: path.basename(message.projectPath)
+                        });
+                        terminal.show();
+                    }
+                    break;
                 case 'toggleGroupCollapse':
                     if (message.groupName !== undefined && message.isCollapsed !== undefined) {
                         const collapsedGroups = this._context.globalState.get<Record<string, boolean>>('collapsedGroups', {});

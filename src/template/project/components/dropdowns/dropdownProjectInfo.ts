@@ -78,6 +78,12 @@ export async function getProjectInfoDropdownHtml(project: Project, color?: strin
                         <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                     </svg>
                     <span>Reveal in Explorer</span>
+                </button>
+                <button class="action-card" onclick="window.vscodeApi.postMessage({ command: 'openInTerminal', projectPath: '${escOnclickArg(project.path)}' })">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 17l6-6-6-6M12 19h8"/>
+                    </svg>
+                    <span>Open in Terminal</span>
                 </button>` : ''}
                 <button class="action-card" onclick="toggleDropdown(event, '${escapedId}', 'settings')">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

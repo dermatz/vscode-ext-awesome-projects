@@ -4,7 +4,7 @@ export interface WebviewMessage {
     command: 'deleteProject' | 'updateProject' | 'openProject' | 'openProjectNewWindow' | 'openRemoteProject' |
              'openWorkspace' | 'openUrl' | 'addProject' | 'addRemoteProject' | 'projectSelected' |
              'reorderProjects' | 'sortProjects' | 'scanProjects' | 'setLoading' | 'relocateProject' |
-             'toggleGroupCollapse' | 'showInFileManager' | 'previewIcon';
+             'toggleGroupCollapse' | 'showInFileManager' | 'previewIcon' | 'openInTerminal';
     projectId?: string;
     projectPath?: string;
     remoteUrl?: string;
