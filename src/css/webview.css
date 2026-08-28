@@ -489,7 +489,7 @@ button:hover {
         transform var(--transition-fast);
     border-radius: var(--border-radius-large);
     position: relative;
-    z-index: 200;
+    z-index: 60;
     background:
         linear-gradient(90deg,
             color-mix(in srgb, var(--bg-color, transparent) 18%, transparent) 0px,
