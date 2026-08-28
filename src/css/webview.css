@@ -39,7 +39,7 @@ header {
     gap: 1rem;
 }
 
-header.award-header {
+header.projects-header {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -53,7 +53,7 @@ header.award-header {
     overflow: hidden;
 }
 
-header .award-header-top {
+header .projects-header-top {
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
@@ -124,14 +124,14 @@ header .button {
 }
 
 /* Header Search */
-header .award-header-search {
+header .projects-header-search {
     position: relative;
     display: flex;
     align-items: center;
     width: 100%;
 }
 
-header .award-header-search .search-icon {
+header .projects-header-search .search-icon {
     position: absolute;
     left: 0.55rem;
     width: 0.85rem;
@@ -140,7 +140,7 @@ header .award-header-search .search-icon {
     pointer-events: none;
 }
 
-header .award-header-search input[type="search"] {
+header .projects-header-search input[type="search"] {
     width: 100%;
     padding: 0.6rem 1.65rem;
     font-size: 0.82rem;
@@ -154,18 +154,18 @@ header .award-header-search input[type="search"] {
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), outline-color var(--transition-fast);
 }
 
-header .award-header-search input[type="search"]::placeholder {
+header .projects-header-search input[type="search"]::placeholder {
     color: color-mix(in srgb, var(--vscode-input-placeholderForeground) 80%, var(--vscode-input-foreground));
 }
 
-header .award-header-search input[type="search"]:focus {
+header .projects-header-search input[type="search"]:focus {
     background: var(--vscode-input-background);
     border-color: color-mix(in srgb, var(--vscode-focusBorder) 70%, transparent);
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--vscode-focusBorder) 30%, transparent);
 }
 
-header .award-header-search input[type="search"]::-webkit-search-decoration,
-header .award-header-search input[type="search"]::-webkit-search-cancel-button {
+header .projects-header-search input[type="search"]::-webkit-search-decoration,
+header .projects-header-search input[type="search"]::-webkit-search-cancel-button {
     -webkit-appearance: none;
     appearance: none;
 }
