@@ -845,7 +845,7 @@ body.hide-hover-buttons .project-settings {
     padding: 12px 8px;
     background: color-mix(in srgb, var(--vscode-button-secondaryBackground) 50%, transparent);
     color: var(--vscode-button-secondaryForeground);
-    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 20%, transparent);
+    border: 0.5px solid color-mix(in srgb, var(--vscode-panel-border) 55%, transparent);
     border-radius: var(--border-radius-large);
     cursor: pointer;
     font-size: 0.75rem;
