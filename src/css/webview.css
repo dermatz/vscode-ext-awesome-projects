@@ -489,6 +489,7 @@ button:hover {
         transform var(--transition-fast);
     border-radius: var(--border-radius-large);
     position: relative;
+    z-index: 200;
     background:
         linear-gradient(90deg,
             color-mix(in srgb, var(--bg-color, transparent) 18%, transparent) 0px,
@@ -669,6 +670,8 @@ button:hover {
 
 .dropdown.show {
     display: block;
+    position: relative;
+    z-index: 50;
     animation: slideDown var(--transition-normal) ease-out;
 }
 
@@ -710,7 +713,7 @@ body.hide-hover-buttons .project-settings {
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-medium);
     overflow: hidden;
-    z-index: 100;
+    z-index: 9999;
 }
 
 .quick-menu.show {
