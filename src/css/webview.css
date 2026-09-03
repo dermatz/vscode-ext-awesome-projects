@@ -594,12 +594,17 @@ button:hover {
 
 .project-info {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
     transition: transform var(--transition-fast);
 }
 
 .project-name {
     font-weight: 500;
     margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .project-name-input {
@@ -677,10 +682,6 @@ button:hover {
 
 /* Settings Styles */
 .project-settings {
-    position: absolute;
-    top: 50%;
-    right: 0;
-    transform: translateY(-50%);
     cursor: pointer;
     padding: 2px 8px;
     border-radius: var(--border-radius);
