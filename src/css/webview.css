@@ -683,15 +683,37 @@ button:hover {
 /* Settings Styles */
 .project-settings {
     cursor: pointer;
-    padding: 2px 8px;
+    padding: 2px 8px 2px 12px;
+    margin-right: -4px;
     border-radius: var(--border-radius);
     display: flex;
     align-items: center;
     gap: 0.25rem;
 }
 
-body.hide-hover-buttons .project-settings {
+body.hide-quick-action-buttons .project-settings {
     display: none;
+}
+
+body.hover-quick-action-buttons .project-settings {
+    display: none;
+}
+
+body.hover-quick-action-buttons .project-item:hover .project-settings,
+body.hover-quick-action-buttons .project-settings:has(.quick-menu.show) {
+    display: flex;
+}
+
+body.hover-quick-action-buttons .project-item:hover .project-settings .quick-action-button,
+body.hover-quick-action-buttons .project-item:hover .project-settings .quick-menu-toggle,
+body.hover-quick-action-buttons .project-settings:has(.quick-menu.show) .quick-menu-toggle {
+    opacity: 0.7;
+}
+
+body.hover-quick-action-buttons .project-item:hover .project-settings .quick-action-button:hover,
+body.hover-quick-action-buttons .project-item:hover .project-settings .quick-menu-toggle:hover,
+body.hover-quick-action-buttons .project-settings:has(.quick-menu.show) .quick-menu-toggle:hover {
+    opacity: 1;
 }
 
 .project-item-wrapper:has(.project-settings.menu-open) {

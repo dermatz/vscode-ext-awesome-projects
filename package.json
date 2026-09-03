@@ -197,10 +197,20 @@
           "default": true,
           "description": "Use Google's favicon service to fetch project icons if production url is provided"
         },
-        "awesomeProjects.showButtonsOnHover": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show action buttons (Open, New Window, Workspace) when hovering over a project"
+        "awesomeProjects.quickActionButtonDisplay": {
+          "type": "string",
+          "default": "hover",
+          "enum": [
+            "always",
+            "hover",
+            "hidden"
+          ],
+          "enumDescriptions": [
+            "Always show quick action buttons on each project",
+            "Show quick action buttons only when hovering over a project",
+            "Hide quick action buttons completely"
+          ],
+          "description": "Controls when quick action buttons (open, open in new window, actions menu) are shown on each project"
         },
         "awesomeProjects.groupSortOrder": {
           "type": "string",
