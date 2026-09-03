@@ -118,6 +118,11 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                             <path d="m5 3 14 9-14 9V3z"/>
                         </svg>
+                    </button>
+                    <button type="button" class="button mini quick-action-button" onclick="openProjectNewWindow('${escOnclickArg(project.path)}')" title="Open project in new window">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                            <path d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
                     </button>`}
                     <div class="quick-menu-wrapper">
                         <button type="button" class="button mini quick-menu-toggle" onclick="toggleQuickMenu(event, '${escOnclickArg(projectId)}')" title="Project actions">
