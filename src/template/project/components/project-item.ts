@@ -92,6 +92,8 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor, workspaceFile);
     const projectId = getProjectId(project);
 
+    const activeBadge = isCurrentProject ? '<span class="current-project-badge" title="Current workspace"></span>' : '';
+
     return `
         <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${escAttr(projectId)}"
         >
@@ -99,6 +101,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                 style="--bg-color: ${sanitizeCssColor(bgColor)}"
                 onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'info')"
             >
+                ${activeBadge}
                 <span class="project-icon">${iconHtml}</span>
                 <div class="project-info">
                     <div class="project-name"

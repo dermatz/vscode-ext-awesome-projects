@@ -1170,29 +1170,57 @@ a.info-item-value:hover {
 }
 
 .project-item-wrapper.current-project .project-item {
+    position: relative;
     background:
         linear-gradient(90deg,
-            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 28%, transparent) 0%,
-            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 10%, transparent) 50%,
+            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 26%, transparent) 0%,
+            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 8%, transparent) 55%,
             transparent 100%
         ),
         color-mix(in srgb, var(--vscode-list-activeSelectionBackground, rgba(255,255,255,0.1)) 60%, transparent);
     border-left-color: var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background)));
-    border-left-width: 10px;
+    border-left-width: 6px;
+    border-radius: 0 var(--border-radius-large) var(--border-radius-large) 0;
     box-shadow:
-        0 0 0 1px color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 45%, transparent),
-        0 0 18px color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 20%, transparent),
+        0 0 0 1px color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 40%, transparent),
+        0 0 24px color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 18%, transparent),
         0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.project-item-wrapper.current-project .project-item::before {
+    content: '';
+    position: absolute;
+    left: -3px;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 999px;
+    background: var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background)));
+    box-shadow: 0 0 8px color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 70%, transparent);
 }
 
 .project-item-wrapper.current-project .project-item:hover {
     background:
         linear-gradient(90deg,
-            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 34%, transparent) 0%,
-            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 12%, transparent) 50%,
+            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 32%, transparent) 0%,
+            color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 10%, transparent) 55%,
             transparent 100%
         ),
         color-mix(in srgb, var(--vscode-list-activeSelectionBackground, rgba(255,255,255,0.1)) 70%, transparent);
+}
+
+.current-project-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background)));
+    box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--vscode-editor-background) 60%, transparent),
+        0 0 10px color-mix(in srgb, var(--bg-color, var(--vscode-activityBar-activeBorder, var(--vscode-button-background))) 80%, transparent);
+    z-index: 5;
 }
 
 .project-item-wrapper.current-project:has(.project-item.active)::before {
