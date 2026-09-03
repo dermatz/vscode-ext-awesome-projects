@@ -9,6 +9,21 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 * mark `awesomeProjects.projects` as machine-scoped so the project list is no longer synced across devices
 * add support for remote repositories via "Connect to Repository"
 
+## [0.29.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.28.0...awesome-projects-v0.29.0) (2026-09-03)
+
+
+### Features
+
+* add current project badge to indicate active workspace ([6545434](https://github.com/dermatz/vscode-ext-awesome-projects/commit/6545434263c52a0fb416a7e5d607c9776bfdd87f))
+* add project name truncation and overflow handling ([48f56a2](https://github.com/dermatz/vscode-ext-awesome-projects/commit/48f56a2e1f6a5252db98921bc70889b7441eec61))
+* add quick action button display settings ([f8dd4ea](https://github.com/dermatz/vscode-ext-awesome-projects/commit/f8dd4ea92c385cc40e7e94107961076010b81f41))
+* add quick action button to open project in new window ([988158e](https://github.com/dermatz/vscode-ext-awesome-projects/commit/988158edf0dc705dd2ef8327a7e43686f12bdfe9))
+
+
+### Bug Fixes
+
+* update dependencies to fix security vulnerabilities ([cf97ad6](https://github.com/dermatz/vscode-ext-awesome-projects/commit/cf97ad6cc85f75403c635295dee71e24e0b8dc2d))
+
 ## [0.28.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.27.1...awesome-projects-v0.28.0) (2026-08-28)
 
 
