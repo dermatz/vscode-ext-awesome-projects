@@ -214,7 +214,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         if (folderUri && folderUri[0]) {
                             try {
                                 this._setLoading(true);
-                                const projects = await scanForGitProjects(folderUri[0].fsPath);
+                                const scanDepth = this.getCachedConfiguration().get<number>('scan.depth', 5);
+                                const projects = await scanForGitProjects(folderUri[0].fsPath, scanDepth);
                                 await addScannedProjects(projects);
                                 this.refresh();
                             } catch (error) {

@@ -192,6 +192,13 @@
                 }
               }
             }
+          },
+          "awesomeProjects.scan.depth": {
+            "type": "number",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 20,
+            "description": "Maximum recursion depth when scanning a folder for Git projects"
           }
         }
       },

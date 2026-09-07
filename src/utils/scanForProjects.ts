@@ -23,11 +23,11 @@ export interface ScannedProject {
     group: string;
 }
 
-export async function scanForGitProjects(startPath: string): Promise<ScannedProject[]> {
+export async function scanForGitProjects(startPath: string, maxDepth: number = 5): Promise<ScannedProject[]> {
     const gitProjects: ScannedProject[] = [];
 
     async function scan(dir: string, depth: number = 0) {
-        if (depth > 5) {
+        if (depth > maxDepth) {
             return;
         } // Limit recursion depth
 
