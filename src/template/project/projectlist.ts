@@ -118,8 +118,12 @@ export async function getProjectListHtml(
 ): Promise<string> {
     const config = configuration || vscode.workspace.getConfiguration('awesomeProjects');
     const rawProjects = config.get<Project[]>('projects') || [];
-    const useFavicons = config.get<boolean>('useFavicons') ?? true;
-    const groupSortOrder = config.get<string>('groupSortOrder') ?? 'alphabetical';
+    const useFavicons = config.get<boolean>('appearance.useFavicons')
+        ?? config.get<boolean>('useFavicons')
+        ?? true;
+    const groupSortOrder = config.get<string>('groups.sortOrder')
+        ?? config.get<string>('groupSortOrder')
+        ?? 'alphabetical';
 
     // Deduplicate by path: if the same path appears multiple times, keep the
     // entry that has an explicit group set (it contains more information).

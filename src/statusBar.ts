@@ -21,6 +21,7 @@ export class StatusBarManager implements vscode.Disposable {
             vscode.workspace.onDidChangeWorkspaceFolders(() => this.update()),
             vscode.workspace.onDidChangeConfiguration(e => {
                 if (
+                    e.affectsConfiguration('awesomeProjects.statusBar.enabled') ||
                     e.affectsConfiguration('awesomeProjects.showStatusBar') ||
                     e.affectsConfiguration('awesomeProjects.projects')
                 ) {
@@ -35,7 +36,8 @@ export class StatusBarManager implements vscode.Disposable {
      */
     public update(): void {
         const config = vscode.workspace.getConfiguration('awesomeProjects');
-        const enabled = config.get<boolean>('showStatusBar', true);
+        const enabled = config.get<boolean>('statusBar.enabled')
+            ?? config.get<boolean>('showStatusBar', true);
 
         if (!enabled) {
             this._statusBarItem.hide();

@@ -138,102 +138,179 @@
         }
       ]
     },
-    "configuration": {
-      "title": "Awesome Projects",
-      "properties": {
-        "awesomeProjects.projects": {
-          "type": "array",
-          "default": [],
-          "scope": "machine",
-          "description": "List of saved projects (machine-specific, not synced across devices)",
-          "items": {
-            "type": "object",
-            "required": [
-              "path",
-              "name"
-            ],
-            "properties": {
-              "path": {
-                "type": "string",
-                "description": "Path to the project"
-              },
-              "name": {
-                "type": "string",
-                "description": "Display name of the project"
-              },
-              "remoteUrl": {
-                "type": "string",
-                "description": "Remote repository URL (e.g. https://github.com/owner/repo). When set, the project opens via VS Code:'s Remote Repositories workflow."
-              },
-              "color": {
-                "type": "string",
-                "description": "Custom color for the project"
-              },
-              "icon": {
-                "type": "string",
-                "description": "Tabler Icons name (e.g. brand-github or heart-filled) or emoji/text for the project icon"
-              },
-              "productionUrl": {
-                "type": "string",
-                "description": "Production URL of the project"
-              },
-              "stagingUrl": {
-                "type": "string",
-                "description": "Staging URL of the project"
-              },
-              "devUrl": {
-                "type": "string",
-                "description": "Development URL of the project"
-              },
-              "managementUrl": {
-                "type": "string",
-                "description": "Management URL of the project"
+    "configuration": [
+      {
+        "title": "Projects",
+        "properties": {
+          "awesomeProjects.projects": {
+            "type": "array",
+            "default": [],
+            "scope": "machine",
+            "description": "List of saved projects (machine-specific, not synced across devices)",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "name"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Path to the project"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Display name of the project"
+                },
+                "remoteUrl": {
+                  "type": "string",
+                  "description": "Remote repository URL (e.g. https://github.com/owner/repo). When set, the project opens via VS Code:'s Remote Repositories workflow."
+                },
+                "color": {
+                  "type": "string",
+                  "description": "Custom color for the project"
+                },
+                "icon": {
+                  "type": "string",
+                  "description": "Tabler Icons name (e.g. brand-github or heart-filled) or emoji/text for the project icon"
+                },
+                "productionUrl": {
+                  "type": "string",
+                  "description": "Production URL of the project"
+                },
+                "stagingUrl": {
+                  "type": "string",
+                  "description": "Staging URL of the project"
+                },
+                "devUrl": {
+                  "type": "string",
+                  "description": "Development URL of the project"
+                },
+                "managementUrl": {
+                  "type": "string",
+                  "description": "Management URL of the project"
+                }
               }
             }
           }
-        },
-        "awesomeProjects.useFavicons": {
-          "type": "boolean",
-          "default": true,
-          "description": "Use Google's favicon service to fetch project icons if production url is provided"
-        },
-        "awesomeProjects.quickActionButtonDisplay": {
-          "type": "string",
-          "default": "hover",
-          "enum": [
-            "always",
-            "hover",
-            "hidden"
-          ],
-          "enumDescriptions": [
-            "Always show quick action buttons on each project",
-            "Show quick action buttons only when hovering over a project",
-            "Hide quick action buttons completely"
-          ],
-          "description": "Controls when quick action buttons (open, open in new window, actions menu) are shown on each project"
-        },
-        "awesomeProjects.groupSortOrder": {
-          "type": "string",
-          "default": "alphabetical",
-          "enum": [
-            "alphabetical",
-            "alphabetical-desc",
-            "manual"
-          ],
-          "enumDescriptions": [
-            "Sort groups alphabetically (A–Z)",
-            "Sort groups reverse alphabetically (Z–A)",
-            "Keep groups in the order they appear in the project list"
-          ],
-          "description": "Controls the sort order of project groups in the sidebar"
-        },
-        "awesomeProjects.showStatusBar": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the current project in the status bar when a registered project is open"
+        }
+      },
+      {
+        "title": "Appearance",
+        "properties": {
+          "awesomeProjects.appearance.useFavicons": {
+            "type": "boolean",
+            "default": true,
+            "description": "Use Google's favicon service to fetch project icons if a production URL is provided"
+          },
+          "awesomeProjects.appearance.quickActionButtonDisplay": {
+            "type": "string",
+            "default": "hover",
+            "enum": [
+              "always",
+              "hover",
+              "hidden"
+            ],
+            "enumDescriptions": [
+              "Always show quick action buttons on each project",
+              "Show quick action buttons only when hovering over a project",
+              "Hide quick action buttons completely"
+            ],
+            "description": "Controls when quick action buttons (open, open in new window, actions menu) are shown on each project"
+          },
+          "awesomeProjects.useFavicons": {
+            "type": "boolean",
+            "default": true,
+            "description": "Deprecated: use awesomeProjects.appearance.useFavicons instead.",
+            "deprecationMessage": "Use the awesomeProjects.appearance.useFavicons setting instead."
+          },
+          "awesomeProjects.quickActionButtonDisplay": {
+            "type": "string",
+            "default": "hover",
+            "enum": [
+              "always",
+              "hover",
+              "hidden"
+            ],
+            "enumDescriptions": [
+              "Always show quick action buttons on each project",
+              "Show quick action buttons only when hovering over a project",
+              "Hide quick action buttons completely"
+            ],
+            "description": "Deprecated: use awesomeProjects.appearance.quickActionButtonDisplay instead.",
+            "deprecationMessage": "Use the awesomeProjects.appearance.quickActionButtonDisplay setting instead."
+          }
+        }
+      },
+      {
+        "title": "Groups",
+        "properties": {
+          "awesomeProjects.groups.sortOrder": {
+            "type": "string",
+            "default": "alphabetical",
+            "enum": [
+              "alphabetical",
+              "alphabetical-desc",
+              "manual"
+            ],
+            "enumDescriptions": [
+              "Sort groups alphabetically (A–Z)",
+              "Sort groups reverse alphabetically (Z–A)",
+              "Keep groups in the order they appear in the project list"
+            ],
+            "description": "Controls the sort order of project groups in the sidebar"
+          },
+          "awesomeProjects.groupSortOrder": {
+            "type": "string",
+            "default": "alphabetical",
+            "enum": [
+              "alphabetical",
+              "alphabetical-desc",
+              "manual"
+            ],
+            "enumDescriptions": [
+              "Sort groups alphabetically (A–Z)",
+              "Sort groups reverse alphabetically (Z–A)",
+              "Keep groups in the order they appear in the project list"
+            ],
+            "description": "Deprecated: use awesomeProjects.groups.sortOrder instead.",
+            "deprecationMessage": "Use the awesomeProjects.groups.sortOrder setting instead."
+          }
+        }
+      },
+      {
+        "title": "Status Bar",
+        "properties": {
+          "awesomeProjects.statusBar.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Show the current project in the status bar when a registered project is open"
+          },
+          "awesomeProjects.showStatusBar": {
+            "type": "boolean",
+            "default": true,
+            "description": "Deprecated: use awesomeProjects.statusBar.enabled instead.",
+            "deprecationMessage": "Use the awesomeProjects.statusBar.enabled setting instead."
+          }
+        }
+      },
+      {
+        "title": "Updates",
+        "properties": {
+          "awesomeProjects.updates.showUpdateNotification": {
+            "type": "boolean",
+            "default": true,
+            "description": "Show the What's New panel and update notification when the extension is updated"
+          },
+          "awesomeProjects.showUpdateNotification": {
+            "type": "boolean",
+            "default": true,
+            "description": "Deprecated: use awesomeProjects.updates.showUpdateNotification instead.",
+            "deprecationMessage": "Use the awesomeProjects.updates.showUpdateNotification setting instead."
+          }
         }
       }
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "webpack --mode production --devtool hidden-source-map && npm run copy-resources",

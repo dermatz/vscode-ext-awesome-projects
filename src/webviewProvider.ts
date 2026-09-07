@@ -39,6 +39,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         this._disposables.push(
             vscode.workspace.onDidChangeConfiguration(e => {
                 if (e.affectsConfiguration('awesomeProjects.projects') ||
+                    e.affectsConfiguration('awesomeProjects.groups.sortOrder') ||
+                    e.affectsConfiguration('awesomeProjects.appearance.quickActionButtonDisplay') ||
                     e.affectsConfiguration('awesomeProjects.groupSortOrder') ||
                     e.affectsConfiguration('awesomeProjects.quickActionButtonDisplay')) {
                     this._configurationLoaded = false;
@@ -470,7 +472,9 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         // Only generate the project list HTML each time, as it changes frequently
         const collapsedGroups = this._context.globalState.get<Record<string, boolean>>('collapsedGroups', {});
         const projectListHtml = await getProjectListHtml(this._context, currentWorkspace, this.getCachedConfiguration(), collapsedGroups);
-        const quickActionDisplay = this.getCachedConfiguration().get<string>('quickActionButtonDisplay', 'hover');
+        const config = this.getCachedConfiguration();
+        const quickActionDisplay = config.get<string>('appearance.quickActionButtonDisplay')
+            ?? config.get<string>('quickActionButtonDisplay', 'hover');
         const bodyClass = quickActionDisplay === 'hidden'
             ? ' hide-quick-action-buttons'
             : quickActionDisplay === 'hover'

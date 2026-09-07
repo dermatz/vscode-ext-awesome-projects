@@ -7,6 +7,13 @@ export async function showUpdateNotification(context: vscode.ExtensionContext) {
         return;
     }
 
+    const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+    const showNotification = configuration.get<boolean>('updates.showUpdateNotification')
+        ?? configuration.get<boolean>('showUpdateNotification', true);
+    if (!showNotification) {
+        return;
+    }
+
     const currentVersion = extension.packageJSON.version;
     const lastVersion = context.globalState.get<string>('lastVersion');
 

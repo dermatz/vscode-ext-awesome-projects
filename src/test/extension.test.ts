@@ -47,7 +47,11 @@ suite('Awesome Projects Extension Test Suite', () => {
     test('Should have correct configuration settings', () => {
         const config = vscode.workspace.getConfiguration('awesomeProjects');
         assert.ok(config.has('projects'), "Projects setting is missing");
-        assert.ok(config.has('useFavicons'), "useFavicons setting is missing");
+        assert.ok(config.has('appearance.useFavicons'), "appearance.useFavicons setting is missing");
+        assert.ok(config.has('appearance.quickActionButtonDisplay'), "appearance.quickActionButtonDisplay setting is missing");
+        assert.ok(config.has('groups.sortOrder'), "groups.sortOrder setting is missing");
+        assert.ok(config.has('statusBar.enabled'), "statusBar.enabled setting is missing");
+        assert.ok(config.has('updates.showUpdateNotification'), "updates.showUpdateNotification setting is missing");
     });
 
     test('Should be able to add a project', async () => {
@@ -466,9 +470,9 @@ suite('Awesome Projects Extension Test Suite', () => {
             manager.dispose();
         });
 
-        test('Should have showStatusBar configuration setting', () => {
+        test('Should have statusBar.enabled configuration setting', () => {
             const config = vscode.workspace.getConfiguration('awesomeProjects');
-            assert.ok(config.has('showStatusBar'), 'showStatusBar setting should exist');
+            assert.ok(config.has('statusBar.enabled'), 'statusBar.enabled setting should exist');
         });
 
         test('Should call update without error when no workspace is open', () => {
@@ -482,18 +486,18 @@ suite('Awesome Projects Extension Test Suite', () => {
             assert.doesNotThrow(() => manager.dispose(), 'dispose() should not throw');
         });
 
-        test('Should hide status bar when showStatusBar is false', async () => {
+        test('Should hide status bar when statusBar.enabled is false', async () => {
             const config = vscode.workspace.getConfiguration('awesomeProjects');
-            const original = config.get<boolean>('showStatusBar');
+            const original = config.get<boolean>('statusBar.enabled');
 
             try {
-                await config.update('showStatusBar', false, vscode.ConfigurationTarget.Global);
+                await config.update('statusBar.enabled', false, vscode.ConfigurationTarget.Global);
                 const manager = new StatusBarManager();
                 // update() should not throw even when disabled
                 assert.doesNotThrow(() => manager.update());
                 manager.dispose();
             } finally {
-                await config.update('showStatusBar', original, vscode.ConfigurationTarget.Global);
+                await config.update('statusBar.enabled', original, vscode.ConfigurationTarget.Global);
             }
         });
     });

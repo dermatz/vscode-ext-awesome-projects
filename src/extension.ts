@@ -28,6 +28,9 @@ export interface Project {
  */
 export function activate(context: vscode.ExtensionContext) {
 
+    // Migrate legacy flat settings to the new subgroup structure once
+    migrateLegacySettings();
+
     // Show Update-Popup
     showUpdateNotification(context);
 
@@ -86,3 +89,31 @@ export function activate(context: vscode.ExtensionContext) {
  * Deactivates the extension.
  */
 export function deactivate() {}
+
+/**
+ * Migrates legacy flat settings to the new subgroup structure.
+ * Existing values are preserved and the old keys are removed afterwards.
+ */
+async function migrateLegacySettings(): Promise<void> {
+    const configuration = vscode.workspace.getConfiguration('awesomeProjects');
+    const target = vscode.ConfigurationTarget.Global;
+
+    const migrations: { legacy: string; current: string; defaultValue?: unknown }[] = [
+        { legacy: 'useFavicons', current: 'appearance.useFavicons', defaultValue: true },
+        { legacy: 'quickActionButtonDisplay', current: 'appearance.quickActionButtonDisplay', defaultValue: 'hover' },
+        { legacy: 'groupSortOrder', current: 'groups.sortOrder', defaultValue: 'alphabetical' },
+        { legacy: 'showStatusBar', current: 'statusBar.enabled', defaultValue: true },
+        { legacy: 'showUpdateNotification', current: 'updates.showUpdateNotification', defaultValue: true }
+    ];
+
+    for (const { legacy, current } of migrations) {
+        const legacyValue = configuration.inspect(legacy);
+        if (legacyValue?.globalValue !== undefined) {
+            const currentValue = configuration.inspect(current)?.globalValue;
+            if (currentValue === undefined) {
+                await configuration.update(current, legacyValue.globalValue, target);
+            }
+            await configuration.update(legacy, undefined, target);
+        }
+    }
+}
