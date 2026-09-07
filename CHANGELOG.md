@@ -9,6 +9,23 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 * mark `awesomeProjects.projects` as machine-scoped so the project list is no longer synced across devices
 * add support for remote repositories via "Connect to Repository"
 
+## [0.30.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.29.0...awesome-projects-v0.30.0) (2026-09-07)
+
+
+### Features
+
+* add a migration to new settings groups ([268bcc7](https://github.com/dermatz/vscode-ext-awesome-projects/commit/268bcc790645f232ccbde9700e4636f1925ac1f0))
+* add customizable status bar format setting ([6894da4](https://github.com/dermatz/vscode-ext-awesome-projects/commit/6894da402c1089a6a7911b9c1f4486155598a950))
+* add exclude patterns setting for Git project scanning ([1b5675b](https://github.com/dermatz/vscode-ext-awesome-projects/commit/1b5675bfd0c233fb843499c9e605c4b043a9caa0))
+* add grouping options in Appearance for projects ([293911c](https://github.com/dermatz/vscode-ext-awesome-projects/commit/293911cef143af4e2a0bf94af9c00b725f609198))
+* add max recursion depth setting for Git project scanning ([bd1a489](https://github.com/dermatz/vscode-ext-awesome-projects/commit/bd1a489b51c9741bb499d2a212cc2e83ec5a9b4c))
+* add show and hide missing projects setting and quick action icon ([e2d99a1](https://github.com/dermatz/vscode-ext-awesome-projects/commit/e2d99a1d078227b7c89a77c37b00844dbbc31eaf))
+
+
+### Maintenance
+
+* update dependencies ([1ed24cd](https://github.com/dermatz/vscode-ext-awesome-projects/commit/1ed24cda09c87e494310bf630e0cb110ddfdb73d))
+
 ## [0.29.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.28.0...awesome-projects-v0.29.0) (2026-09-03)
 
 
