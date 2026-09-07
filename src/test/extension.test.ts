@@ -475,6 +475,11 @@ suite('Awesome Projects Extension Test Suite', () => {
             assert.ok(config.has('statusBar.enabled'), 'statusBar.enabled setting should exist');
         });
 
+        test('Should have statusBar.format configuration setting', () => {
+            const config = vscode.workspace.getConfiguration('awesomeProjects');
+            assert.ok(config.has('statusBar.format'), 'statusBar.format setting should exist');
+        });
+
         test('Should call update without error when no workspace is open', () => {
             const manager = new StatusBarManager();
             assert.doesNotThrow(() => manager.update(), 'update() should not throw');

@@ -22,6 +22,7 @@ export class StatusBarManager implements vscode.Disposable {
             vscode.workspace.onDidChangeConfiguration(e => {
                 if (
                     e.affectsConfiguration('awesomeProjects.statusBar.enabled') ||
+                    e.affectsConfiguration('awesomeProjects.statusBar.format') ||
                     e.affectsConfiguration('awesomeProjects.showStatusBar') ||
                     e.affectsConfiguration('awesomeProjects.projects')
                 ) {
@@ -59,10 +60,14 @@ export class StatusBarManager implements vscode.Disposable {
             return;
         }
 
+        const format = config.get<string>('statusBar.format', '$(folder) ${parent} > ${name}');
         const parentFolder = path.basename(path.dirname(matchedProject.path));
         const projectName = matchedProject.name;
 
-        this._statusBarItem.text = `$(folder) ${parentFolder} > ${projectName}`;
+        this._statusBarItem.text = format
+            .replace(/\$\{name\}/g, projectName)
+            .replace(/\$\{parent\}/g, parentFolder)
+            .replace(/\$\{path\}/g, matchedProject.path);
         this._statusBarItem.show();
     }
 

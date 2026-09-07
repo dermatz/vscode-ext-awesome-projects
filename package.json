@@ -286,6 +286,11 @@
             "default": true,
             "description": "Show the current project in the status bar when a registered project is open"
           },
+          "awesomeProjects.statusBar.format": {
+            "type": "string",
+            "default": "$(folder) ${parent} > ${name}",
+            "description": "Format of the status bar text. Available placeholders: ${name}, ${parent}, ${path}"
+          },
           "awesomeProjects.showStatusBar": {
             "type": "boolean",
             "default": true,
