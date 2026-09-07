@@ -199,6 +199,19 @@
             "minimum": 1,
             "maximum": 20,
             "description": "Maximum recursion depth when scanning a folder for Git projects"
+          },
+          "awesomeProjects.scan.excludePatterns": {
+            "type": "array",
+            "default": [
+              "node_modules",
+              "vendor",
+              "dist",
+              "build"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Folder names to exclude when scanning for Git projects"
           }
         }
       },

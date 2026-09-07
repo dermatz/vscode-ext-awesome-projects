@@ -23,7 +23,7 @@ export interface ScannedProject {
     group: string;
 }
 
-export async function scanForGitProjects(startPath: string, maxDepth: number = 5): Promise<ScannedProject[]> {
+export async function scanForGitProjects(startPath: string, maxDepth: number = 5, excludePatterns: string[] = []): Promise<ScannedProject[]> {
     const gitProjects: ScannedProject[] = [];
 
     async function scan(dir: string, depth: number = 0) {
@@ -58,7 +58,8 @@ export async function scanForGitProjects(startPath: string, maxDepth: number = 5
             const statResults = await Promise.all(statPromises);
 
             // Process directories in parallel (but limit concurrency to avoid overwhelming the system)
-            const validDirectories = statResults.filter(result => result.isValid);
+            const normalizedExcludePatterns = excludePatterns.map(p => p.toLowerCase());
+            const validDirectories = statResults.filter(result => result.isValid && !normalizedExcludePatterns.includes(result.file.toLowerCase()));
             const batchSize = 10; // Process max 10 directories at once
 
             for (let i = 0; i < validDirectories.length; i += batchSize) {
