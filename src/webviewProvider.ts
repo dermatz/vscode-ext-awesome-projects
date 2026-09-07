@@ -42,9 +42,12 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     e.affectsConfiguration('awesomeProjects.groups.sortOrder') ||
                     e.affectsConfiguration('awesomeProjects.appearance.quickActionButtonDisplay') ||
                     e.affectsConfiguration('awesomeProjects.groupSortOrder') ||
-                    e.affectsConfiguration('awesomeProjects.quickActionButtonDisplay')) {
+                    e.affectsConfiguration('awesomeProjects.quickActionButtonDisplay') ||
+                    e.affectsConfiguration('awesomeProjects.projects.hideMissing')) {
                     this._configurationLoaded = false;
                     this._cachedConfiguration = undefined;
+                    const hideMissing = vscode.workspace.getConfiguration('awesomeProjects').get<boolean>('projects.hideMissing') ?? false;
+                    vscode.commands.executeCommand('setContext', 'awesomeProjects.hideMissing', hideMissing);
                     if (!this._suppressRefresh) {
                         this.refresh();
                     }

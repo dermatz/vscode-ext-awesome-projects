@@ -85,6 +85,18 @@
         "title": "Show What's New",
         "category": "Awesome Projects",
         "icon": "$(feedback)"
+      },
+      {
+        "command": "awesome-projects.hideMissingProjects",
+        "title": "Hide Missing Projects",
+        "category": "Awesome Projects",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "awesome-projects.showMissingProjects",
+        "title": "Show Missing Projects",
+        "category": "Awesome Projects",
+        "icon": "$(eye)"
       }
     ],
     "menus": {
@@ -104,17 +116,27 @@
         {
           "command": "awesome-projects.addProject",
           "when": "view == awesomeProjectsView",
-          "group": "navigation"
+          "group": "navigation@0"
         },
         {
           "command": "awesome-projects.addRemoteProject",
           "when": "view == awesomeProjectsView",
-          "group": "navigation"
+          "group": "navigation@1"
         },
         {
           "command": "awesome-projects.refreshProjects",
           "when": "view == awesomeProjectsView",
-          "group": "navigation"
+          "group": "navigation@2"
+        },
+        {
+          "command": "awesome-projects.hideMissingProjects",
+          "when": "view == awesomeProjectsView && !awesomeProjects.hideMissing",
+          "group": "navigation@3"
+        },
+        {
+          "command": "awesome-projects.showMissingProjects",
+          "when": "view == awesomeProjectsView && awesomeProjects.hideMissing",
+          "group": "navigation@3"
         }
       ]
     },
@@ -212,6 +234,11 @@
               "type": "string"
             },
             "description": "Folder names to exclude when scanning for Git projects"
+          },
+          "awesomeProjects.projects.hideMissing": {
+            "type": "boolean",
+            "default": false,
+            "description": "Hide projects whose local path no longer exists"
           }
         }
       },

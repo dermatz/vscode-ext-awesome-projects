@@ -38,6 +38,10 @@ export function activate(context: vscode.ExtensionContext) {
     const projectsProvider = new ProjectsWebviewProvider(context.extensionUri, context);
     const configuration = vscode.workspace.getConfiguration('awesomeProjects');
 
+    // Keep the view title context in sync with the hideMissing setting
+    const hideMissing = configuration.get<boolean>('projects.hideMissing') ?? false;
+    vscode.commands.executeCommand('setContext', 'awesomeProjects.hideMissing', hideMissing);
+
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             ProjectsWebviewProvider.viewType,

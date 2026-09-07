@@ -11,7 +11,9 @@ export const Commands = {
     REFRESH_PROJECTS: 'awesome-projects.refreshProjects',
     UPDATE_PROJECT: 'awesome-projects.updateProject',
     DELETE_PROJECT: 'awesome-projects.deleteProject',
-    SHOW_WHATS_NEW: 'awesome-projects.showWhatsNew'
+    SHOW_WHATS_NEW: 'awesome-projects.showWhatsNew',
+    HIDE_MISSING_PROJECTS: 'awesome-projects.hideMissingProjects',
+    SHOW_MISSING_PROJECTS: 'awesome-projects.showMissingProjects'
 };
 
 export const registerCommands = (context: vscode.ExtensionContext, projectsProvider: ProjectsWebviewProvider): void => {
@@ -141,6 +143,20 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
         }),
 
         vscode.commands.registerCommand(Commands.REFRESH_PROJECTS, () => {
+            projectsProvider.refresh();
+        }),
+
+        vscode.commands.registerCommand(Commands.HIDE_MISSING_PROJECTS, async () => {
+            const configuration = projectsProvider.getCachedConfiguration();
+            await configuration.update('projects.hideMissing', true, vscode.ConfigurationTarget.Global);
+            vscode.commands.executeCommand('setContext', 'awesomeProjects.hideMissing', true);
+            projectsProvider.refresh();
+        }),
+
+        vscode.commands.registerCommand(Commands.SHOW_MISSING_PROJECTS, async () => {
+            const configuration = projectsProvider.getCachedConfiguration();
+            await configuration.update('projects.hideMissing', false, vscode.ConfigurationTarget.Global);
+            vscode.commands.executeCommand('setContext', 'awesomeProjects.hideMissing', false);
             projectsProvider.refresh();
         }),
 

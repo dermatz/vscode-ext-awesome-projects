@@ -124,6 +124,7 @@ export async function getProjectListHtml(
     const groupSortOrder = config.get<string>('groups.sortOrder')
         ?? config.get<string>('groupSortOrder')
         ?? 'alphabetical';
+    const hideMissing = config.get<boolean>('projects.hideMissing') ?? false;
 
     // Deduplicate by path: if the same path appears multiple times, keep the
     // entry that has an explicit group set (it contains more information).
@@ -154,16 +155,21 @@ export async function getProjectListHtml(
         })
     );
 
+    // Filter out missing local projects when the user chose to hide them.
+    const visibleProjects = hideMissing
+        ? projects.filter(p => p.isRemote || (existsMap.get(p.path) ?? false))
+        : projects;
+
     // Only local project paths participate in common-root grouping. Remote
     // repositories use their explicit group or appear ungrouped.
-    const localPaths = projects.filter(p => !p.isRemote).map(p => p.path);
+    const localPaths = visibleProjects.filter(p => !p.isRemote).map(p => p.path);
     const commonRoot = findCommonRoot(localPaths);
 
     // Build a nested group tree.
     // Explicit group field → single flat level; path-based inference → multi-level.
     // Remote projects without an explicit group are collected under "Remote".
     const rootNode: GroupTreeNode = { children: new Map(), items: [] };
-    projects.forEach((project, index) => {
+    visibleProjects.forEach((project, index) => {
         const explicitGroup = project.group?.trim();
         const groupParts = explicitGroup
             ? [explicitGroup]
