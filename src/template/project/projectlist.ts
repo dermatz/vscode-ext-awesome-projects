@@ -124,6 +124,7 @@ export async function getProjectListHtml(
     const groupSortOrder = config.get<string>('groups.sortOrder')
         ?? config.get<string>('groupSortOrder')
         ?? 'alphabetical';
+    const groupBy = config.get<string>('groups.groupBy') ?? 'auto';
     const hideMissing = config.get<boolean>('projects.hideMissing') ?? false;
 
     // Deduplicate by path: if the same path appears multiple times, keep the
@@ -165,15 +166,25 @@ export async function getProjectListHtml(
     const localPaths = visibleProjects.filter(p => !p.isRemote).map(p => p.path);
     const commonRoot = findCommonRoot(localPaths);
 
-    // Build a nested group tree.
-    // Explicit group field → single flat level; path-based inference → multi-level.
-    // Remote projects without an explicit group are collected under "Remote".
+    // Build a nested group tree based on the selected grouping mode.
+    // auto: explicit group field → single flat level; path-based inference → multi-level;
+    //       remote projects without an explicit group are collected under "Remote".
+    // group-field: only projects with an explicit group field are grouped.
+    // flat: no grouping at all.
     const rootNode: GroupTreeNode = { children: new Map(), items: [] };
     visibleProjects.forEach((project, index) => {
         const explicitGroup = project.group?.trim();
-        const groupParts = explicitGroup
-            ? [explicitGroup]
-            : (project.isRemote ? ['Remote'] : inferGroupPath(project.path, commonRoot));
+        let groupParts: string[] = [];
+
+        if (groupBy === 'flat') {
+            groupParts = [];
+        } else if (groupBy === 'group-field') {
+            groupParts = explicitGroup ? [explicitGroup] : [];
+        } else {
+            groupParts = explicitGroup
+                ? [explicitGroup]
+                : (project.isRemote ? ['Remote'] : inferGroupPath(project.path, commonRoot));
+        }
 
         let node = rootNode;
         for (const part of groupParts) {

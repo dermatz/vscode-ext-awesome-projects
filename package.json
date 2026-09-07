@@ -307,6 +307,21 @@
             ],
             "description": "Controls the sort order of project groups in the sidebar"
           },
+          "awesomeProjects.groups.groupBy": {
+            "type": "string",
+            "default": "auto",
+            "enum": [
+              "auto",
+              "group-field",
+              "flat"
+            ],
+            "enumDescriptions": [
+              "Infer groups from the project path when no explicit group is set",
+              "Only group projects that have an explicit group field set",
+              "Do not group projects at all"
+            ],
+            "description": "Controls how projects are grouped in the sidebar"
+          },
           "awesomeProjects.groupSortOrder": {
             "type": "string",
             "default": "alphabetical",

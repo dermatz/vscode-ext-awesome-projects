@@ -40,6 +40,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             vscode.workspace.onDidChangeConfiguration(e => {
                 if (e.affectsConfiguration('awesomeProjects.projects') ||
                     e.affectsConfiguration('awesomeProjects.groups.sortOrder') ||
+                    e.affectsConfiguration('awesomeProjects.groups.groupBy') ||
                     e.affectsConfiguration('awesomeProjects.appearance.quickActionButtonDisplay') ||
                     e.affectsConfiguration('awesomeProjects.groupSortOrder') ||
                     e.affectsConfiguration('awesomeProjects.quickActionButtonDisplay') ||

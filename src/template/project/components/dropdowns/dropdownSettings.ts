@@ -86,6 +86,11 @@ export function getSettingsDropdownHtml(_context: vscode.ExtensionContext, proje
                         })}
                     </div>
                     <div class="settings-item appearance-section">
+                        <label>Group:</label>
+                        <p>Assign a group to organize projects in the sidebar.</p>
+                        <input type="text" placeholder="e.g. Work or Personal" value="${escAttr(project.group || '')}" data-field="group" data-initial-value="${escAttr(project.group || '')}" oninput="handleInput(event, '${escapedId}')">
+                    </div>
+                    <div class="settings-item appearance-section">
                         <label>Icon:</label>
                         <p>Pick an icon from <button type="button" class="text-link" onclick="window.vscodeApi.postMessage({ command: 'openUrl', url: 'https://tabler.io/icons' })">Tabler Icons</button>. Add <code>-filled</code> for filled variants (e.g. <code>heart-filled</code>). You can also use an emoji.</p>
                         <p class="hint">Leave empty and add a Production URL to use the website's favicon automatically.</p>
