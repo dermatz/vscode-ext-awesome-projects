@@ -295,7 +295,7 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
             }
         }),
 
-        vscode.commands.registerCommand(Commands.OPEN_TIME_TRACKING_REPORT, async (args?: { reportPeriod?: 'today' | 'week' | 'month' | 'custom'; customStartDate?: string; customEndDate?: string }) => {
+        vscode.commands.registerCommand(Commands.OPEN_TIME_TRACKING_REPORT, async (args?: { reportPeriod?: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom'; customStartDate?: string; customEndDate?: string }) => {
             await TimeTrackingPanel.createOrShow(
                 context.extensionUri,
                 context,

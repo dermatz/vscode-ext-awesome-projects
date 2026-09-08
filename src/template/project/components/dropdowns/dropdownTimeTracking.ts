@@ -52,11 +52,6 @@ export function getTimeTrackingDropdownHtml(
                     <button type="button" class="button small" onclick="window.vscodeApi.postMessage({ command: 'openTimeTrackingReport' })">
                         Open Report
                     </button>
-                    ${sessions.length > 0 ? `
-                        <button type="button" class="button small danger" onclick="window.vscodeApi.postMessage({ command: 'clearTimeTracking', projectId: '${escapedId}' })">
-                            Clear All
-                        </button>
-                    ` : ''}
                 </div>
                 ${sessions.length > 0 ? `
                     <div class="time-tracking-sessions">

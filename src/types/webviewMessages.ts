@@ -25,7 +25,7 @@ export interface WebviewMessage {
     sessionStartTime?: string;
     sessionEndTime?: string;
     sessionDurationSeconds?: number;
-    reportPeriod?: 'today' | 'week' | 'month' | 'custom';
+    reportPeriod?: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom';
     customStartDate?: string;
     customEndDate?: string;
 }
