@@ -76,9 +76,14 @@ export class TimeTrackingService implements vscode.Disposable {
             if (!api || !Array.isArray(api.repositories)) {
                 return undefined;
             }
-            const repo = api.repositories.find(
-                (r: { rootUri?: { fsPath: string } }) => r.rootUri?.fsPath === workspaceFolderPath
-            );
+            const normalizedPath = workspaceFolderPath.replace(/\\/g, '/');
+            const repo = api.repositories.find((r: { rootUri?: { fsPath: string } }) => {
+                const repoPath = r.rootUri?.fsPath?.replace(/\\/g, '/');
+                if (!repoPath) {
+                    return false;
+                }
+                return normalizedPath === repoPath || normalizedPath.startsWith(repoPath + '/');
+            });
             if (!repo) {
                 return undefined;
             }
@@ -106,7 +111,7 @@ export class TimeTrackingService implements vscode.Disposable {
         const branch = await this.getCurrentBranch(workspaceFolderPath) ?? 'unknown';
         const nowIso = new Date().toISOString();
         const sessionId = this._generateId();
-        const sessionTitle = title?.trim() || `Project – ${branch}`;
+        const sessionTitle = title?.trim() || `Work on ${branch}`;
 
         const session: TimeTrackingSession = {
             id: sessionId,
@@ -192,6 +197,48 @@ export class TimeTrackingService implements vscode.Disposable {
             }
         }
         return undefined;
+    }
+
+    /**
+     * Adds a new manual session for a project and updates the aggregated time.
+     */
+    public async addSession(
+        projectId: string,
+        session: Partial<Pick<TimeTrackingSession, 'title' | 'description' | 'startTime' | 'endTime' | 'durationSeconds'>> & { branch?: string }
+    ): Promise<TimeTrackingSession> {
+        const state = this.getState();
+        const nowIso = new Date().toISOString();
+
+        const branch = session.branch?.trim() || 'unknown';
+        const title = session.title?.trim() || branch;
+        const branchLog: BranchChange[] = [{ branch, changedAt: session.startTime || nowIso }];
+
+        const newSession: TimeTrackingSession = {
+            id: this._generateId(),
+            projectId,
+            title,
+            description: session.description,
+            startTime: session.startTime || nowIso,
+            endTime: session.endTime,
+            durationSeconds: session.durationSeconds || 0,
+            branchLog,
+            createdAt: nowIso,
+            updatedAt: nowIso
+        };
+
+        if (newSession.endTime && !newSession.durationSeconds) {
+            newSession.durationSeconds = Math.max(
+                0,
+                Math.floor((new Date(newSession.endTime).getTime() - new Date(newSession.startTime).getTime()) / 1000)
+            );
+        }
+
+        state.sessionsByProject[projectId] = state.sessionsByProject[projectId] || [];
+        state.sessionsByProject[projectId].push(newSession);
+
+        await this.addTimeToProject(projectId, newSession.durationSeconds);
+        await this._setState(state);
+        return newSession;
     }
 
     /**

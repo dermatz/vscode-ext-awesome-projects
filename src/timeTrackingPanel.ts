@@ -164,6 +164,27 @@ export class TimeTrackingPanel {
                             }
                         }
                         break;
+                    case 'addTimeTrackingSession':
+                        if (message.projectId) {
+                            try {
+                                await timeTrackingService.addSession(message.projectId, {
+                                    title: message.sessionTitle || 'Manual entry',
+                                    description: message.sessionDescription,
+                                    startTime: message.sessionStartTime,
+                                    endTime: message.sessionEndTime,
+                                    durationSeconds: message.sessionDurationSeconds || 0
+                                });
+                                panel.webview.html = await TimeTrackingPanel._getHtml(
+                                    panel.webview,
+                                    extensionUri,
+                                    context,
+                                    timeTrackingService
+                                );
+                            } catch (error) {
+                                vscode.window.showErrorMessage(`Failed to add session: ${error}`);
+                            }
+                        }
+                        break;
                     case 'exportTimeTrackingCsv':
                         await TimeTrackingPanel._exportCsv(timeTrackingService, message.reportPeriod, message.customStartDate, message.customEndDate);
                         break;

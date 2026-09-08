@@ -229,8 +229,7 @@ export function getSaveFunctionsScript(): string {
         }
 
         function toggleTimeTracking(projectId, projectPath) {
-            const button = document.querySelector('.time-tracking-toggle[data-project-id="' + projectId + '"]');
-            const isActive = button && button.classList.contains('active');
+            const isActive = window.activeTimeTrackingProjectId === projectId;
             if (isActive) {
                 window.vscodeApi.postMessage({
                     command: 'stopTimeTracking',
@@ -246,6 +245,8 @@ export function getSaveFunctionsScript(): string {
         }
 
         function updateTimeTrackingButtons(activeSession) {
+            window.activeTimeTrackingProjectId = activeSession ? activeSession.projectId : undefined;
+
             document.querySelectorAll('.time-tracking-toggle').forEach(button => {
                 const projectId = button.getAttribute('data-project-id');
                 const isActive = activeSession && activeSession.projectId === projectId;
@@ -254,6 +255,14 @@ export function getSaveFunctionsScript(): string {
                 button.innerHTML = isActive
                     ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
                     : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
+            });
+
+            document.querySelectorAll('.time-tracking-action-button').forEach(button => {
+                const projectId = button.getAttribute('data-project-id');
+                const isActive = activeSession && activeSession.projectId === projectId;
+                button.classList.toggle('active', !!isActive);
+                button.classList.toggle('secondary', !!isActive);
+                button.textContent = isActive ? 'Stop Timer' : 'Start Timer';
             });
         }
 

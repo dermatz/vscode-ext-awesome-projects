@@ -46,7 +46,7 @@ export function getTimeTrackingDropdownHtml(
                     </div>
                 </div>
                 <div class="time-tracking-actions">
-                    <button type="button" class="button small ${timerButtonClass}" onclick="toggleTimeTracking('${escapedId}', '${escOnclickArg(project.path)}')">
+                    <button type="button" class="button small time-tracking-action-button ${timerButtonClass}" data-project-id="${escapedId}" onclick="toggleTimeTracking('${escapedId}', '${escOnclickArg(project.path)}')">
                         ${timerLabel}
                     </button>
                     <button type="button" class="button small" onclick="window.vscodeApi.postMessage({ command: 'openTimeTrackingReport' })">

@@ -65,7 +65,7 @@ export async function getProjectInfoDropdownHtml(
                         <span>Total: <strong>${formatDuration(project.timeSpentSeconds || 0)}</strong></span>
                     </div>
                     <div class="time-tracking-info-actions">
-                        <button type="button" class="button small ${isTimerActive ? 'secondary' : ''}" onclick="toggleTimeTracking('${escapedId}', '${escOnclickArg(project.path)}')">
+                        <button type="button" class="button small time-tracking-action-button ${isTimerActive ? 'secondary active' : ''}" data-project-id="${escapedId}" onclick="toggleTimeTracking('${escapedId}', '${escOnclickArg(project.path)}')">
                             ${isTimerActive ? 'Stop Timer' : 'Start Timer'}
                         </button>
                         <button type="button" class="button small" onclick="window.vscodeApi.postMessage({ command: 'openTimeTrackingReport' })">

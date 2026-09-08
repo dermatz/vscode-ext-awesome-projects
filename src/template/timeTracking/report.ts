@@ -380,10 +380,24 @@ export async function getTimeTrackingReportHtml(
                 margin-top: 4px;
             }
 
-            .export-bar {
+            .time-tracking-toolbar {
                 display: flex;
                 justify-content: flex-end;
+                gap: 8px;
                 margin-bottom: 16px;
+            }
+
+            .add-session-edit select {
+                background: var(--vscode-dropdown-background);
+                color: var(--vscode-dropdown-foreground);
+                border: 1px solid var(--vscode-dropdown-border);
+                border-radius: 4px;
+                padding: 8px 10px;
+                font-family: inherit;
+                font-size: 0.95rem;
+                outline: none;
+                width: 100%;
+                box-sizing: border-box;
             }
         </style>
     </head>
@@ -411,11 +425,47 @@ export async function getTimeTrackingReportHtml(
 
             ${activeBanner}
 
-            ${filteredSessions.length > 0 ? `
-                <div class="export-bar">
+            <div class="time-tracking-toolbar">
+                <button class="button mini" data-action="addSession">+ Add Session</button>
+                ${filteredSessions.length > 0 ? `
                     <button class="button mini" data-action="exportCsv" data-period="${escAttr(period)}" data-start="${escAttr(customStartDate || '')}" data-end="${escAttr(customEndDate || '')}">Export CSV</button>
+                ` : ''}
+            </div>
+
+            <div id="add-session-form" class="inline-edit add-session-edit" style="display: none; margin-bottom: 24px;">
+                <div class="field">
+                    <label for="add-project">Project</label>
+                    <select id="add-project">
+                        ${projects.map(p => `<option value="${escAttr(p.id)}">${escHtml(p.name)}</option>`).join('')}
+                    </select>
                 </div>
-            ` : ''}
+                <div class="field">
+                    <label for="add-title">Title</label>
+                    <input type="text" id="add-title" placeholder="Session title">
+                </div>
+                <div class="field">
+                    <label for="add-desc">Description</label>
+                    <textarea id="add-desc" rows="2" placeholder="Optional description"></textarea>
+                </div>
+                <div class="inline-edit-row">
+                    <div class="field">
+                        <label for="add-start">Start</label>
+                        <input type="datetime-local" id="add-start">
+                    </div>
+                    <div class="field">
+                        <label for="add-end">End</label>
+                        <input type="datetime-local" id="add-end">
+                    </div>
+                    <div class="field" style="max-width: 120px;">
+                        <label for="add-duration">Duration (s)</label>
+                        <input type="number" id="add-duration" placeholder="Seconds">
+                    </div>
+                </div>
+                <div class="inline-edit-actions">
+                    <button class="button mini" data-action="saveNewSession">Save</button>
+                    <button class="button mini secondary" data-action="cancelAddSession">Cancel</button>
+                </div>
+            </div>
 
             ${sessionsHtml}
         </div>
@@ -519,6 +569,49 @@ export async function getTimeTrackingReportHtml(
                 });
             }
 
+            function addSession() {
+                const form = document.getElementById('add-session-form');
+                if (form) {
+                    form.style.display = 'block';
+                    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+
+            function saveNewSession() {
+                const startValue = document.getElementById('add-start').value;
+                const endValue = document.getElementById('add-end').value;
+                let durationSeconds = parseInt(document.getElementById('add-duration').value, 10) || 0;
+
+                const startTime = startValue ? localDateTimeToIso(startValue) : undefined;
+                const endTime = endValue ? localDateTimeToIso(endValue) : undefined;
+
+                if (startTime && endTime) {
+                    durationSeconds = Math.max(0, Math.floor((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000));
+                }
+
+                vscode.postMessage({
+                    command: 'addTimeTrackingSession',
+                    projectId: document.getElementById('add-project').value,
+                    sessionTitle: document.getElementById('add-title').value,
+                    sessionDescription: document.getElementById('add-desc').value,
+                    sessionStartTime: startTime,
+                    sessionEndTime: endTime,
+                    sessionDurationSeconds: durationSeconds
+                });
+            }
+
+            function cancelAddSession() {
+                const form = document.getElementById('add-session-form');
+                if (form) {
+                    form.style.display = 'none';
+                    document.getElementById('add-title').value = '';
+                    document.getElementById('add-desc').value = '';
+                    document.getElementById('add-start').value = '';
+                    document.getElementById('add-end').value = '';
+                    document.getElementById('add-duration').value = '';
+                }
+            }
+
             document.addEventListener('click', event => {
                 const target = event.target;
                 if (!target || !target.dataset) {
@@ -562,6 +655,15 @@ export async function getTimeTrackingReportHtml(
                         break;
                     case 'cancelEdit':
                         vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: target.dataset.period });
+                        break;
+                    case 'addSession':
+                        addSession();
+                        break;
+                    case 'saveNewSession':
+                        saveNewSession();
+                        break;
+                    case 'cancelAddSession':
+                        cancelAddSession();
                         break;
                 }
             });
