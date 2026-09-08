@@ -4,6 +4,7 @@ import * as path from 'path';
 import { Project } from '../../../extension';
 import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
+import { getTimeTrackingDropdownHtml } from './dropdowns/dropdownTimeTracking';
 import { getProjectId } from '../utils/project-id';
 import { getTablerIconSvg } from '../utils/tablerIcons';
 import { escHtml, escAttr, escOnclickArg, sanitizeCssColor, safeUrl } from '../../utils/escaping';
@@ -24,10 +25,22 @@ interface ProjectItemProps {
     useFavicons: boolean;
     currentWorkspace?: string;
     pathExists?: boolean;
+    todaySeconds?: number;
+    isTimerActive?: boolean;
+    sessions?: import('../../../types/timeTracking').TimeTrackingSession[];
+}
+
+function formatDuration(totalSeconds: number): string {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
 }
 
 export async function getProjectItemHtml(context: vscode.ExtensionContext, props: ProjectItemProps): Promise<string> {
-    const { project, index, useFavicons, currentWorkspace, pathExists = true } = props;
+    const { project, index, useFavicons, currentWorkspace, pathExists = true, todaySeconds = 0, isTimerActive = false, sessions = [] } = props;
     const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
 
     const isRemote = !!project.isRemote;
@@ -104,11 +117,19 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     }
 
     const workspaceFile = isRemote ? undefined : (await findWorkspaceFile(project.path) ?? undefined);
-    const projectSettingsHtml = getSettingsDropdownHtml(context, project);
-    const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor, workspaceFile);
     const projectId = getProjectId(project);
+    const projectSettingsHtml = getSettingsDropdownHtml(context, project);
+    const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor, workspaceFile, todaySeconds, isTimerActive);
+    const timeTrackingHtml = getTimeTrackingDropdownHtml(project, todaySeconds, sessions, isTimerActive);
 
     const activeBadge = isCurrentProject ? '<span class="current-project-badge" title="Current workspace"></span>' : '';
+    const timerLabel = isTimerActive ? 'Stop' : 'Start';
+    const timerIcon = isTimerActive
+        ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
+    const timeSpentHtml = todaySeconds > 0 || isTimerActive
+        ? `<span class="project-time-spent${isTimerActive ? ' active' : ''}" data-project-id="${escAttr(projectId)}">${formatDuration(todaySeconds)}</span>`
+        : '';
 
     return `
         <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${escAttr(projectId)}"
@@ -125,8 +146,20 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                         ondblclick="startInlineRename(event, '${escOnclickArg(projectId)}', '${escOnclickArg(project.name)}')"
                         title="Double-click to rename"
                     >${escHtml(project.name)}</div>
+                    ${timeSpentHtml}
                 </div>
                 <div class="project-settings">
+                    <button type="button" class="button mini quick-action-button time-tracking-toggle" data-project-id="${escAttr(projectId)}" data-project-path="${escAttr(project.path)}" onclick="toggleTimeTracking('${escOnclickArg(projectId)}', '${escOnclickArg(project.path)}')" title="${timerLabel} timer">
+                        ${timerIcon}
+                    </button>
+                    <button type="button" class="button mini quick-action-button time-tracking-menu" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'timeTracking')" title="Time tracking details">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                            <path d="M3 3v18h18"/>
+                            <path d="M18 17V9"/>
+                            <path d="M13 17V5"/>
+                            <path d="M8 17v-3"/>
+                        </svg>
+                    </button>
                     ${isRemote ? `
                     <button type="button" class="button mini quick-action-button" onclick="openRemoteProject('${escOnclickArg(project.remoteUrl!)}')" title="Open remote repository">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
@@ -204,6 +237,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                 </div>
             </div>
             ${projectInfoHtml}
+            ${timeTrackingHtml}
             ${projectSettingsHtml}
         </div>
     `;

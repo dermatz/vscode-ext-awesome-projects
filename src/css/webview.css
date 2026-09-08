@@ -219,6 +219,17 @@ button:hover {
     color: var(--vscode-inputValidation-errorForeground);
 }
 
+.button.danger {
+    background-color: color-mix(in srgb, var(--vscode-inputValidation-errorBorder) 85%, transparent);
+    color: var(--vscode-button-foreground);
+    border-color: color-mix(in srgb, var(--vscode-inputValidation-errorBorder) 70%, transparent);
+}
+
+.button.danger:hover {
+    background-color: var(--vscode-inputValidation-errorBorder);
+    color: var(--vscode-button-foreground);
+}
+
 .button svg {
     width: 1rem;
     height: 1rem;
@@ -951,6 +962,25 @@ body.hover-quick-action-buttons .project-settings:has(.quick-menu.show) .quick-m
     background: linear-gradient(135deg, color-mix(in srgb, var(--vscode-button-hoverBackground) 95%, #C850C0) 0%, var(--vscode-button-hoverBackground) 100%);
     border-color: color-mix(in srgb, var(--vscode-button-hoverBackground) 70%, transparent);
     box-shadow: 0 6px 16px color-mix(in srgb, var(--vscode-button-hoverBackground) 35%, transparent);
+}
+
+.action-card-active {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--vscode-testing-iconPassed) 90%, #4158D0) 0%, color-mix(in srgb, var(--vscode-testing-iconPassed) 70%, var(--vscode-editor-background)) 100%);
+    color: var(--vscode-button-foreground);
+    border-color: color-mix(in srgb, var(--vscode-testing-iconPassed) 60%, transparent);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--vscode-testing-iconPassed) 30%, transparent);
+    opacity: 1;
+}
+
+.action-card-active:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--vscode-testing-iconPassed) 35%, transparent);
+}
+
+.action-card-meta {
+    font-size: 0.65rem;
+    font-weight: 500;
+    opacity: 0.85;
 }
 
 .info-actions {
@@ -1799,4 +1829,192 @@ ul.submodules li + li {
     padding: 0;
     border-radius: 0;
     border: none;
+}
+
+/* Time Tracking Styles */
+.project-time-spent {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 0.15rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.project-time-spent.active {
+    color: var(--vscode-testing-iconPassed);
+    opacity: 1;
+    font-weight: 600;
+}
+
+.time-tracking-toggle.active {
+    color: var(--vscode-testing-iconPassed);
+}
+
+.time-tracking-menu.active {
+    color: var(--vscode-testing-iconPassed);
+    background: color-mix(in srgb, var(--vscode-testing-iconPassed) 15%, transparent);
+}
+
+.time-tracking-summary {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+}
+
+.time-tracking-sessions {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.time-tracking-session {
+    padding: 0.5rem;
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    border-radius: var(--border-radius);
+    font-size: 0.8rem;
+}
+
+.time-tracking-session .session-title-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: var(--vscode-foreground);
+    font-weight: 600;
+    font-size: inherit;
+    font-family: inherit;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+
+.time-tracking-session .session-title-edit:hover .session-edit-icon {
+    opacity: 1;
+}
+
+.time-tracking-session .session-edit-icon {
+    display: inline-flex;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    color: var(--vscode-textLink-foreground);
+}
+
+.time-tracking-session .session-title {
+    font-weight: 600;
+}
+
+.time-tracking-session .session-meta {
+    opacity: 0.7;
+    font-size: 0.75rem;
+}
+
+.time-tracking-session .session-branches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    opacity: 0.85;
+}
+
+.time-tracking-session .session-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.time-tracking-session .session-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem;
+    background: transparent;
+    border: none;
+    color: var(--vscode-foreground);
+    opacity: 0.45;
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: opacity var(--transition-fast), background-color var(--transition-fast);
+}
+
+.time-tracking-session .session-delete:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--vscode-inputValidation-errorBorder) 15%, transparent);
+    color: var(--vscode-inputValidation-errorBorder);
+}
+
+.time-tracking-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.button.text-button {
+    background: transparent;
+    color: var(--vscode-textLink-foreground);
+    border: none;
+    padding: 0.25rem 0.5rem;
+}
+
+.button.text-button:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+    text-decoration: underline;
+}
+
+.time-tracking-section {
+    padding: 12px;
+    background: var(--vscode-editor-inactiveSelectionBackground);
+    border-radius: var(--border-radius-large);
+    margin-top: 12px;
+}
+
+.time-tracking-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.time-tracking-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.time-tracking-section .time-tracking-summary {
+    font-size: 0.8rem;
+}
+
+.time-tracking-section .time-tracking-actions {
+    flex-wrap: wrap;
+}
+
+.time-tracking-section .time-tracking-sessions {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.time-tracking-section .time-tracking-session {
+    padding: 10px 8px;
+    background: var(--vscode-editor-background);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 50%, transparent);
+    border-radius: var(--border-radius);
+    margin-bottom: 8px;
+}
+
+.time-tracking-section .time-tracking-session:last-child {
+    margin-bottom: 0;
+}
+
+.time-tracking-section .time-tracking-sessions {
+    margin-top: 10px;
+    max-height: 220px;
+    overflow-y: auto;
 }

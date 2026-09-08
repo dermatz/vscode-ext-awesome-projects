@@ -11,5 +11,7 @@ export interface Project {
     devUrl?: string;
     stagingUrl?: string;
     managementUrl?: string;
+    description?: string;
     group?: string;
+    timeSpentSeconds?: number;
 }

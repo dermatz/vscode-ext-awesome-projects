@@ -8,6 +8,8 @@ import { getDropdownToggleScript } from './utils/dropdownUtils';
 import { getDragDropScript } from './utils/dragAndDrop';
 import { getSaveFunctionsScript } from './utils/save-functions';
 import { escHtml, escAttr } from '../utils/escaping';
+import { TimeTrackingService } from '../../timeTrackingService';
+import { TimeTrackingSession } from '../../types/timeTracking';
 
 /**
  * Find the common root directory shared by all project paths.
@@ -46,6 +48,34 @@ interface GroupTreeNode {
     items: { project: Project; index: number }[];
 }
 
+function isSameDay(a: Date, b: Date): boolean {
+    return a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate();
+}
+
+function getTodaySecondsForProject(
+    projectId: string,
+    sessions: TimeTrackingSession[],
+    activeSession?: { projectId: string; accumulatedSeconds: number }
+): number {
+    const today = new Date();
+    let seconds = 0;
+    for (const session of sessions) {
+        if (session.projectId !== projectId) {
+            continue;
+        }
+        if (!isSameDay(new Date(session.startTime), today)) {
+            continue;
+        }
+        seconds += session.durationSeconds;
+    }
+    if (activeSession && activeSession.projectId === projectId) {
+        seconds += activeSession.accumulatedSeconds;
+    }
+    return seconds;
+}
+
 /** Return the children of a group node in the requested sort order. */
 function getSortedGroupChildren(node: GroupTreeNode, sortOrder: string): [string, GroupTreeNode][] {
     const entries = Array.from(node.children.entries());
@@ -67,11 +97,25 @@ async function renderGroupNode(
     currentWorkspace: string,
     existsMap: Map<string, boolean>,
     groupSortOrder: string,
-    collapsedGroups: Record<string, boolean>
+    collapsedGroups: Record<string, boolean>,
+    timeTrackingService?: TimeTrackingService
 ): Promise<string> {
+    const state = timeTrackingService?.getState();
+    const sessionsByProject = state?.sessionsByProject || {};
+    const activeSession = state?.activeSession;
+
     const itemsHtml = (await Promise.all(
         node.items.map(({ project, index }) =>
-            getProjectItemHtml(context, { project, index, useFavicons, currentWorkspace, pathExists: existsMap.get(project.path) ?? true })
+            getProjectItemHtml(context, {
+                project,
+                index,
+                useFavicons,
+                currentWorkspace,
+                pathExists: existsMap.get(project.path) ?? true,
+                todaySeconds: getTodaySecondsForProject(project.id ?? project.path, sessionsByProject[project.id ?? project.path] || [], activeSession),
+                isTimerActive: activeSession?.projectId === (project.id ?? project.path),
+                sessions: sessionsByProject[project.id ?? project.path] || []
+            })
         )
     )).join('');
 
@@ -86,7 +130,8 @@ async function renderGroupNode(
                 currentWorkspace,
                 existsMap,
                 groupSortOrder,
-                collapsedGroups
+                collapsedGroups,
+                timeTrackingService
             )
         )
     )).join('');
@@ -114,8 +159,12 @@ export async function getProjectListHtml(
     context: vscode.ExtensionContext,
     currentWorkspace: string = '',
     configuration?: vscode.WorkspaceConfiguration,
-    collapsedGroups: Record<string, boolean> = {}
+    collapsedGroups: Record<string, boolean> = {},
+    timeTrackingService?: TimeTrackingService
 ): Promise<string> {
+    const state = timeTrackingService?.getState();
+    const sessionsByProject = state?.sessionsByProject || {};
+    const activeSession = state?.activeSession;
     const config = configuration || vscode.workspace.getConfiguration('awesomeProjects');
     const rawProjects = config.get<Project[]>('projects') || [];
     const useFavicons = config.get<boolean>('appearance.useFavicons')
@@ -199,14 +248,23 @@ export async function getProjectListHtml(
     // Render ungrouped items (items at the root of the tree)
     const ungroupedHtml = (await Promise.all(
         rootNode.items.map(({ project, index }) =>
-            getProjectItemHtml(context, { project, index, useFavicons, currentWorkspace, pathExists: existsMap.get(project.path) ?? true })
+            getProjectItemHtml(context, {
+                project,
+                index,
+                useFavicons,
+                currentWorkspace,
+                pathExists: existsMap.get(project.path) ?? true,
+                todaySeconds: getTodaySecondsForProject(project.id ?? project.path, sessionsByProject[project.id ?? project.path] || [], activeSession),
+                isTimerActive: activeSession?.projectId === (project.id ?? project.path),
+                sessions: sessionsByProject[project.id ?? project.path] || []
+            })
         )
     )).join('');
 
     // Render top-level groups (and their nested children) recursively
     const groupedHtml = (await Promise.all(
         getSortedGroupChildren(rootNode, groupSortOrder).map(([name, node]) =>
-            renderGroupNode(name, name, node, context, useFavicons, currentWorkspace, existsMap, groupSortOrder, collapsedGroups)
+            renderGroupNode(name, name, node, context, useFavicons, currentWorkspace, existsMap, groupSortOrder, collapsedGroups, timeTrackingService)
         )
     )).join('');
 

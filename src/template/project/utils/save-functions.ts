@@ -218,5 +218,70 @@ export function getSaveFunctionsScript(): string {
             input.addEventListener('blur', commit);
             input.addEventListener('click', function(e) { e.stopPropagation(); });
         }
+
+        function formatDuration(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            if (hours > 0) {
+                return hours + 'h ' + minutes + 'm';
+            }
+            return minutes + 'm';
+        }
+
+        function toggleTimeTracking(projectId, projectPath) {
+            const button = document.querySelector('.time-tracking-toggle[data-project-id="' + projectId + '"]');
+            const isActive = button && button.classList.contains('active');
+            if (isActive) {
+                window.vscodeApi.postMessage({
+                    command: 'stopTimeTracking',
+                    projectId: projectId
+                });
+            } else {
+                window.vscodeApi.postMessage({
+                    command: 'startTimeTracking',
+                    projectId: projectId,
+                    projectPath: projectPath
+                });
+            }
+        }
+
+        function updateTimeTrackingButtons(activeSession) {
+            document.querySelectorAll('.time-tracking-toggle').forEach(button => {
+                const projectId = button.getAttribute('data-project-id');
+                const isActive = activeSession && activeSession.projectId === projectId;
+                button.classList.toggle('active', !!isActive);
+                button.title = isActive ? 'Stop timer' : 'Start timer';
+                button.innerHTML = isActive
+                    ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+                    : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
+            });
+        }
+
+        function updateTimeTrackingDisplay(message) {
+            updateTimeTrackingButtons(message.activeSession);
+            if (message.activeSession) {
+                const active = message.activeSession;
+                const elapsed = active.durationSeconds || 0;
+                document.querySelectorAll('.project-time-spent').forEach(el => {
+                    const projectId = el.getAttribute('data-project-id');
+                    if (active.projectId === projectId) {
+                        el.classList.add('active');
+                        el.textContent = formatDuration(elapsed);
+                    } else {
+                        el.classList.remove('active');
+                    }
+                });
+            } else {
+                document.querySelectorAll('.project-time-spent').forEach(el => el.classList.remove('active'));
+            }
+        }
+
+        function deleteTimeTrackingSession(sessionId) {
+            window.vscodeApi.postMessage({ command: 'deleteTimeTrackingSession', sessionId: sessionId });
+        }
+
+        function editTimeTrackingSessionInline(sessionId) {
+            window.vscodeApi.postMessage({ command: 'openTimeTrackingReport', reportPeriod: 'week' });
+        }
     `;
 }

@@ -10,6 +10,8 @@ import { WebviewMessage } from './types/webviewMessages';
 import { getProjectId } from './template/project/utils/project-id';
 import { getTablerIconSvg } from './template/project/utils/tablerIcons';
 import { escHtml } from './template/utils/escaping';
+import { TimeTrackingService } from './timeTrackingService';
+import { TimeTrackingSession } from './types/timeTracking';
 import * as path from 'path';
 
 /**
@@ -31,11 +33,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     private _cachedConfiguration?: vscode.WorkspaceConfiguration;
     private _configurationLoaded: boolean = false;
     private _suppressRefresh: boolean = false;
+    public readonly timeTrackingService: TimeTrackingService;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
         private readonly _context: vscode.ExtensionContext
     ) {
+        this.timeTrackingService = new TimeTrackingService(_context);
+        this._disposables.push(this.timeTrackingService);
         this._disposables.push(
             vscode.workspace.onDidChangeConfiguration(e => {
                 if (e.affectsConfiguration('awesomeProjects.projects') ||
@@ -260,7 +265,108 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         await this._context.globalState.update('collapsedGroups', collapsedGroups);
                     }
                     break;
+                case 'startTimeTracking':
+                    if (message.projectId && message.projectPath) {
+                        try {
+                            await this.timeTrackingService.startSession(
+                                message.projectId,
+                                message.projectPath,
+                                message.sessionTitle
+                            );
+                            vscode.window.showInformationMessage('Timer started');
+                        } catch (error) {
+                            vscode.window.showErrorMessage(`Failed to start timer: ${error}`);
+                        }
+                    }
+                    break;
+                case 'stopTimeTracking':
+                    try {
+                        const stopped = await this.timeTrackingService.stopSession(message.projectId);
+                        if (stopped) {
+                            const minutes = Math.ceil(stopped.durationSeconds / 60);
+                            vscode.window.showInformationMessage(
+                                `Timer stopped: ${minutes} min on ${stopped.title}`
+                            );
+                        }
+                    } catch (error) {
+                        vscode.window.showErrorMessage(`Failed to stop timer: ${error}`);
+                    }
+                    break;
+                case 'updateTimeTrackingSession':
+                    if (message.sessionId) {
+                        try {
+                            await this.timeTrackingService.updateSession(message.sessionId, {
+                                title: message.sessionTitle,
+                                description: message.sessionDescription,
+                                startTime: message.sessionStartTime,
+                                endTime: message.sessionEndTime,
+                                durationSeconds: message.sessionDurationSeconds
+                            });
+                            this.refresh();
+                        } catch (error) {
+                            vscode.window.showErrorMessage(`Failed to update session: ${error}`);
+                        }
+                    }
+                    break;
+                case 'deleteTimeTrackingSession':
+                    if (message.sessionId) {
+                        try {
+                            const deleted = await this.timeTrackingService.deleteSession(message.sessionId);
+                            if (deleted) {
+                                this.refresh();
+                                const undo = 'Undo';
+                                const selection = await vscode.window.showInformationMessage(
+                                    `Deleted session: ${deleted.title}`,
+                                    undo
+                                );
+                                if (selection === undo) {
+                                    const state = this.timeTrackingService.getState();
+                                    state.sessionsByProject[deleted.projectId] = state.sessionsByProject[deleted.projectId] || [];
+                                    state.sessionsByProject[deleted.projectId].push(deleted);
+                                    await this._context.globalState.update('timeTrackingState', state);
+                                    await this.timeTrackingService.addTimeToProject(deleted.projectId, deleted.durationSeconds);
+                                    this.refresh();
+                                }
+                            }
+                        } catch (error) {
+                            vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
+                        }
+                    }
+                    break;
+                case 'clearTimeTracking':
+                    if (message.projectId) {
+                        try {
+                            const confirm = 'Delete all';
+                            const selection = await vscode.window.showWarningMessage(
+                                `Delete all time tracking sessions for this project? This cannot be undone.`,
+                                { modal: true },
+                                confirm
+                            );
+                            if (selection === confirm) {
+                                const clearedCount = await this.timeTrackingService.clearAllSessions(message.projectId);
+                                vscode.window.showInformationMessage(`Cleared ${clearedCount} time tracking sessions.`);
+                                this.refresh();
+                            }
+                        } catch (error) {
+                            vscode.window.showErrorMessage(`Failed to clear sessions: ${error}`);
+                        }
+                    }
+                    break;
+                case 'getTimeTrackingState':
+                    this._postTimeTrackingState();
+                    break;
+                case 'openTimeTrackingReport':
+                    vscode.commands.executeCommand('awesome-projects.openTimeTrackingReport', {
+                        reportPeriod: message.reportPeriod,
+                        customStartDate: message.customStartDate,
+                        customEndDate: message.customEndDate
+                    });
+                    break;
             }
+        });
+
+        this.timeTrackingService.onDidChangeTimer(() => {
+            this._postTimeTrackingState();
         });
     }
 
@@ -397,6 +503,21 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    private _postTimeTrackingState(): void {
+        if (!this._view) {
+            return;
+        }
+        const active = this.timeTrackingService.getActiveSession();
+        const activeSession = active
+            ? this.timeTrackingService.getActiveSessionFull()
+            : undefined;
+        this._view.webview.postMessage({
+            command: 'timeTrackingState',
+            activeSession,
+            sessionsByProject: this.timeTrackingService.getState().sessionsByProject
+        });
+    }
+
     public invalidateCache() {
         this._configurationLoaded = false;
         this._cachedConfiguration = undefined;
@@ -478,7 +599,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
         // Only generate the project list HTML each time, as it changes frequently
         const collapsedGroups = this._context.globalState.get<Record<string, boolean>>('collapsedGroups', {});
-        const projectListHtml = await getProjectListHtml(this._context, currentWorkspace, this.getCachedConfiguration(), collapsedGroups);
+        const projectListHtml = await getProjectListHtml(this._context, currentWorkspace, this.getCachedConfiguration(), collapsedGroups, this.timeTrackingService);
         const config = this.getCachedConfiguration();
         const quickActionDisplay = config.get<string>('appearance.quickActionButtonDisplay')
             ?? config.get<string>('quickActionButtonDisplay', 'hover');
@@ -546,6 +667,10 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                             } else if (message.command === 'updateIconPreview') {
                                 if (typeof updateIconPreview === 'function') {
                                     updateIconPreview(message.projectId, message.iconHtml);
+                                }
+                            } else if (message.command === 'timeTrackingState') {
+                                if (typeof updateTimeTrackingDisplay === 'function') {
+                                    updateTimeTrackingDisplay(message);
                                 }
                             }
                         });

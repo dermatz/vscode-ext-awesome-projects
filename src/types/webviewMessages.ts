@@ -4,7 +4,9 @@ export interface WebviewMessage {
     command: 'deleteProject' | 'updateProject' | 'openProject' | 'openProjectNewWindow' | 'openRemoteProject' |
              'openWorkspace' | 'openUrl' | 'addProject' | 'addRemoteProject' | 'projectSelected' |
              'sortProjects' | 'scanProjects' | 'setLoading' | 'relocateProject' |
-             'toggleGroupCollapse' | 'showInFileManager' | 'previewIcon' | 'openInTerminal';
+             'toggleGroupCollapse' | 'showInFileManager' | 'previewIcon' | 'openInTerminal' |
+             'startTimeTracking' | 'stopTimeTracking' | 'updateTimeTrackingSession' | 'deleteTimeTrackingSession' |
+             'clearTimeTracking' | 'getTimeTrackingState' | 'exportTimeTrackingCsv' | 'openTimeTrackingReport';
     projectId?: string;
     projectPath?: string;
     remoteUrl?: string;
@@ -17,4 +19,13 @@ export interface WebviewMessage {
     groupName?: string;
     isCollapsed?: boolean;
     project?: { path: string; name: string };
+    sessionId?: string;
+    sessionTitle?: string;
+    sessionDescription?: string;
+    sessionStartTime?: string;
+    sessionEndTime?: string;
+    sessionDurationSeconds?: number;
+    reportPeriod?: 'today' | 'week' | 'month' | 'custom';
+    customStartDate?: string;
+    customEndDate?: string;
 }

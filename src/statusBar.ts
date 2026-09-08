@@ -1,6 +1,17 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Project } from './extension';
+import { TimeTrackingService } from './timeTrackingService';
+
+function formatDuration(totalSeconds: number): string {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
 
 /**
  * Manages the status bar item that shows the currently open project.
@@ -8,13 +19,15 @@ import { Project } from './extension';
 export class StatusBarManager implements vscode.Disposable {
     private _statusBarItem: vscode.StatusBarItem;
     private _disposables: vscode.Disposable[] = [];
+    private _timeTrackingService?: TimeTrackingService;
 
-    constructor() {
+    constructor(timeTrackingService?: TimeTrackingService) {
+        this._timeTrackingService = timeTrackingService;
         this._statusBarItem = vscode.window.createStatusBarItem(
             vscode.StatusBarAlignment.Left,
             100
         );
-        this._statusBarItem.command = 'workbench.view.extension.awesomeProjects';
+        this._statusBarItem.command = 'awesome-projects.openTimeTrackingMenu';
         this._statusBarItem.tooltip = 'Awesome Projects – Click to open project list';
 
         this._disposables.push(
@@ -30,6 +43,12 @@ export class StatusBarManager implements vscode.Disposable {
                 }
             })
         );
+
+        if (this._timeTrackingService) {
+            this._disposables.push(
+                this._timeTrackingService.onDidChangeTimer(() => this.update())
+            );
+        }
     }
 
     /**
@@ -60,14 +79,26 @@ export class StatusBarManager implements vscode.Disposable {
             return;
         }
 
-        const format = config.get<string>('statusBar.format', '$(folder) ${parent} > ${name}');
-        const parentFolder = path.basename(path.dirname(matchedProject.path));
-        const projectName = matchedProject.name;
+        const activeSession = this._timeTrackingService?.getActiveSession();
+        const isTimerActive = activeSession?.projectId === matchedProject.id;
 
-        this._statusBarItem.text = format
-            .replace(/\$\{name\}/g, projectName)
-            .replace(/\$\{parent\}/g, parentFolder)
-            .replace(/\$\{path\}/g, matchedProject.path);
+        if (isTimerActive && this._timeTrackingService) {
+            const fullSession = this._timeTrackingService.getActiveSessionFull();
+            const elapsed = fullSession?.durationSeconds ?? activeSession.accumulatedSeconds;
+            this._statusBarItem.text = `$(watch) ${matchedProject.name} ${formatDuration(elapsed)}`;
+            this._statusBarItem.tooltip = `Timer running: ${fullSession?.title || matchedProject.name}\nBranch: ${activeSession.lastBranch}`;
+        } else {
+            const format = config.get<string>('statusBar.format', '$(folder) ${parent} > ${name}');
+            const parentFolder = path.basename(path.dirname(matchedProject.path));
+            const projectName = matchedProject.name;
+
+            this._statusBarItem.text = format
+                .replace(/\$\{name\}/g, projectName)
+                .replace(/\$\{parent\}/g, parentFolder)
+                .replace(/\$\{path\}/g, matchedProject.path);
+            this._statusBarItem.tooltip = 'Awesome Projects – Click to open project list';
+        }
+
         this._statusBarItem.show();
     }
 

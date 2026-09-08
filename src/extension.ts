@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { ProjectsWebviewProvider } from './webviewProvider';
 import { registerCommands } from './commands';
 import { getProjectId } from './template/project/utils/project-id';
@@ -21,13 +22,14 @@ export interface Project {
     managementUrl?: string;
     description?: string;
     group?: string;
+    timeSpentSeconds?: number;
 }
 
 /**
  * Activates the extension.
  * @param {vscode.ExtensionContext} context - The extension context.
  */
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 
     // Migrate legacy flat settings to the new subgroup structure once
     migrateLegacySettings();
@@ -37,6 +39,26 @@ export function activate(context: vscode.ExtensionContext) {
 
 
     const projectsProvider = new ProjectsWebviewProvider(context.extensionUri, context);
+
+    // Handle recovery of an orphaned active time tracking session
+    const orphanedActive = projectsProvider.timeTrackingService.getActiveSession();
+    if (orphanedActive) {
+        const session = projectsProvider.timeTrackingService.getActiveSessionFull();
+        const choice = await vscode.window.showInformationMessage(
+            `A time tracking session for "${session?.title || orphanedActive.projectId}" is still running.`,
+            'Resume',
+            'Stop now',
+            'Discard'
+        );
+        if (choice === 'Resume') {
+            await projectsProvider.timeTrackingService.recoverActiveSession('resume');
+        } else if (choice === 'Stop now') {
+            await projectsProvider.timeTrackingService.recoverActiveSession('stop');
+        } else if (choice === 'Discard') {
+            await projectsProvider.timeTrackingService.recoverActiveSession('discard');
+        }
+    }
+
     const configuration = vscode.workspace.getConfiguration('awesomeProjects');
 
     // Keep the view title context in sync with the hideMissing setting
@@ -54,9 +76,44 @@ export function activate(context: vscode.ExtensionContext) {
     registerCommands(context, projectsProvider);
 
     // Initialize status bar
-    const statusBarManager = new StatusBarManager();
+    const statusBarManager = new StatusBarManager(projectsProvider.timeTrackingService);
     context.subscriptions.push(statusBarManager);
     statusBarManager.update();
+
+    // Auto-start time tracking when a registered workspace is opened
+    const autoStartTimeTracking = async (workspacePath?: string) => {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        if (!config.get<boolean>('timeTracking.enabled', true) || !config.get<boolean>('timeTracking.autoStart', false)) {
+            return;
+        }
+        if (!workspacePath) {
+            return;
+        }
+        const normalizedWorkspace = path.normalize(workspacePath);
+        const projects = config.get<Project[]>('projects') || [];
+        const matchedProject = projects.find(p => path.normalize(p.path) === normalizedWorkspace);
+        if (!matchedProject || !matchedProject.id) {
+            return;
+        }
+        const active = projectsProvider.timeTrackingService.getActiveSession();
+        if (active?.projectId === matchedProject.id) {
+            return;
+        }
+        await projectsProvider.timeTrackingService.startSession(
+            matchedProject.id,
+            workspacePath,
+            `${matchedProject.name}`
+        );
+        vscode.window.showInformationMessage(`Timer started for ${matchedProject.name}`);
+    };
+
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeWorkspaceFolders(async () => {
+            const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            await autoStartTimeTracking(folder);
+        })
+    );
+    await autoStartTimeTracking(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
 
     // Migrate project settings immediately but asynchronously
     (async () => {
