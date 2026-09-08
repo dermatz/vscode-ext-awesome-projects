@@ -57,6 +57,24 @@ export async function getProjectInfoDropdownHtml(
 
             ${await getGitRepositoriesHtml(project)}
 
+            <div class="info-section time-tracking-info-section">
+                <div class="info-label">Time Tracking</div>
+                <div class="info-value time-tracking-info-value">
+                    <div class="time-tracking-info-meta">
+                        <span>Today: <strong>${formatDuration(todaySeconds)}</strong></span>
+                        <span>Total: <strong>${formatDuration(project.timeSpentSeconds || 0)}</strong></span>
+                    </div>
+                    <div class="time-tracking-info-actions">
+                        <button type="button" class="button small ${isTimerActive ? 'secondary' : ''}" onclick="toggleTimeTracking('${escapedId}', '${escOnclickArg(project.path)}')">
+                            ${isTimerActive ? 'Stop Timer' : 'Start Timer'}
+                        </button>
+                        <button type="button" class="button small" onclick="window.vscodeApi.postMessage({ command: 'openTimeTrackingReport' })">
+                            Open Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="action-grid">
                 ${isRemote ? `
                 <button class="action-card action-card-primary" onclick="openRemoteProject('${escOnclickArg(project.remoteUrl!)}')">
@@ -100,14 +118,6 @@ export async function getProjectInfoDropdownHtml(
                     </svg>
                     <span>Open in Terminal</span>
                 </button>` : ''}
-                <button class="action-card${isTimerActive ? ' action-card-active' : ''}" onclick="toggleTimeTracking('${escapedId}', '${escOnclickArg(project.path)}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 6v6l4 2"/>
-                    </svg>
-                    <span>${isTimerActive ? 'Stop Timer' : 'Start Timer'}</span>
-                    ${todaySeconds > 0 ? `<small class="action-card-meta">${formatDuration(todaySeconds)} today</small>` : ''}
-                </button>
                 <button class="action-card" onclick="toggleDropdown(event, '${escapedId}', 'settings')">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>

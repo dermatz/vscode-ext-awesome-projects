@@ -902,6 +902,24 @@ body.hover-quick-action-buttons .project-settings:has(.quick-menu.show) .quick-m
     overflow: auto;
 }
 
+.time-tracking-info-value {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.time-tracking-info-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+}
+
+.time-tracking-info-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
 /* Action Grid */
 .action-grid {
     display: grid;

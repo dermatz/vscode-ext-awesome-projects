@@ -488,17 +488,34 @@ export async function getTimeTrackingReportHtml(
                 '</div></td>';
             }
 
+            function localDateTimeToIso(localValue) {
+                if (!localValue) {
+                    return undefined;
+                }
+                return new Date(localValue).toISOString();
+            }
+
             function saveSession(sessionId) {
+                const session = sessionsMeta.find(s => s.id === sessionId);
                 const startValue = document.getElementById('edit-start-' + sessionId).value;
                 const endValue = document.getElementById('edit-end-' + sessionId).value;
+
+                const startTime = startValue ? localDateTimeToIso(startValue) : (session ? session.startTime : undefined);
+                const endTime = endValue ? localDateTimeToIso(endValue) : (session ? session.endTime : undefined);
+
+                let durationSeconds = parseInt(document.getElementById('edit-duration-' + sessionId).value, 10) || 0;
+                if (startTime && endTime) {
+                    durationSeconds = Math.max(0, Math.floor((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000));
+                }
+
                 vscode.postMessage({
                     command: 'updateTimeTrackingSession',
                     sessionId: sessionId,
                     sessionTitle: document.getElementById('edit-title-' + sessionId).value,
                     sessionDescription: document.getElementById('edit-desc-' + sessionId).value,
-                    sessionStartTime: startValue ? new Date(startValue + ':00.000Z').toISOString() : undefined,
-                    sessionEndTime: endValue ? new Date(endValue + ':00.000Z').toISOString() : undefined,
-                    sessionDurationSeconds: parseInt(document.getElementById('edit-duration-' + sessionId).value, 10) || 0
+                    sessionStartTime: startTime,
+                    sessionEndTime: endTime,
+                    sessionDurationSeconds: durationSeconds
                 });
             }
 
