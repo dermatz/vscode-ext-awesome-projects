@@ -4,6 +4,7 @@ export interface Project {
     name: string;
     color?: string;
     icon?: string | null;
+    iconUrl?: string;
     remoteUrl?: string;
     isRemote?: boolean;
     productionUrl?: string;

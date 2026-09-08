@@ -6,7 +6,7 @@ import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
 import { getProjectId } from '../utils/project-id';
 import { getTablerIconSvg } from '../utils/tablerIcons';
-import { escHtml, escAttr, escOnclickArg, sanitizeCssColor } from '../../utils/escaping';
+import { escHtml, escAttr, escOnclickArg, sanitizeCssColor, safeUrl } from '../../utils/escaping';
 
 async function findWorkspaceFile(projectPath: string): Promise<string | null> {
     try {
@@ -74,16 +74,32 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
         }
     };
 
+    const isDirectIconUrl = (url?: string): boolean => {
+        if (!url) { return false; }
+        try {
+            const parsed = new URL(url);
+            return /\.(ico|png|jpg|jpeg|svg|webp|gif|bmp)(\?.*)?$/i.test(parsed.pathname);
+        } catch {
+            return false;
+        }
+    };
+
     let iconHtml: string;
     if (project.icon) {
         const tablerIcon = getTablerIconSvg(context, project.icon);
         iconHtml = tablerIcon || escHtml(project.icon);
     } else {
-        const baseUrl = useFavicons
+        const iconUrl = useFavicons ? project.iconUrl : undefined;
+        const baseUrl = useFavicons && !iconUrl
             ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
             : null;
-        iconHtml = baseUrl && useFavicons
-            ? `<img loading="lazy" src="https://www.google.com/s2/favicons?domain=${escAttr(baseUrl)}" onerror="this.parentElement.textContent='${isRemote ? '\u{1F310}' : '\u{1F4C1}'}'">`
+        const faviconUrl = iconUrl
+            ? (isDirectIconUrl(iconUrl) ? safeUrl(iconUrl) : `https://www.google.com/s2/favicons?domain=${escAttr(getBaseUrl(iconUrl) || iconUrl)}`)
+            : baseUrl && useFavicons
+                ? `https://www.google.com/s2/favicons?domain=${escAttr(baseUrl)}`
+                : null;
+        iconHtml = faviconUrl
+            ? `<img loading="lazy" src="${faviconUrl}" onerror="this.parentElement.textContent='${isRemote ? '\u{1F310}' : '\u{1F4C1}'}'">`
             : (isRemote ? "🌐" : "📁");
     }
 

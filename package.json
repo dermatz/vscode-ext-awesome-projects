@@ -211,6 +211,10 @@
                 "managementUrl": {
                   "type": "string",
                   "description": "Management URL of the project"
+                },
+                "iconUrl": {
+                  "type": "string",
+                  "description": "Custom favicon or icon URL. When set, overrides the favicon fetched from the Production URL"
                 }
               }
             }
