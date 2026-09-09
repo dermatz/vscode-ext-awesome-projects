@@ -10,6 +10,7 @@ export class TimeTrackingPanel {
     private static _currentPeriod: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom' = 'week';
     private static _customStartDate?: string;
     private static _customEndDate?: string;
+    private static _groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate' = 'none';
 
     public static async createOrShow(
         extensionUri: vscode.Uri,
@@ -63,12 +64,14 @@ export class TimeTrackingPanel {
         disposables.push(
             timeTrackingService.onDidChangeTimer(async () => {
                 if (panel.visible) {
-                    panel.webview.html = await TimeTrackingPanel._getHtml(
-                        panel.webview,
-                        extensionUri,
-                        context,
-                        timeTrackingService
-                    );
+                    const activeSession = timeTrackingService.getActiveSessionFull();
+                    panel.webview.postMessage({
+                        command: 'timeTrackingTick',
+                        activeSession: activeSession ? {
+                            id: activeSession.id,
+                            durationSeconds: activeSession.durationSeconds
+                        } : undefined
+                    });
                 }
             })
         );
@@ -81,6 +84,9 @@ export class TimeTrackingPanel {
                             TimeTrackingPanel._currentPeriod = message.reportPeriod;
                             TimeTrackingPanel._customStartDate = message.customStartDate;
                             TimeTrackingPanel._customEndDate = message.customEndDate;
+                        }
+                        if (message.groupBy) {
+                            TimeTrackingPanel._groupBy = message.groupBy;
                         }
                         panel.webview.html = await TimeTrackingPanel._getHtml(
                             panel.webview,
@@ -259,7 +265,8 @@ export class TimeTrackingPanel {
             timeTrackingService,
             TimeTrackingPanel._currentPeriod,
             TimeTrackingPanel._customStartDate,
-            TimeTrackingPanel._customEndDate
+            TimeTrackingPanel._customEndDate,
+            TimeTrackingPanel._groupBy
         );
     }
 

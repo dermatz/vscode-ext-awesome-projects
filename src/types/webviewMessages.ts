@@ -28,4 +28,5 @@ export interface WebviewMessage {
     reportPeriod?: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom';
     customStartDate?: string;
     customEndDate?: string;
+    groupBy?: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate';
 }

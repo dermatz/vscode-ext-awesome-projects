@@ -40,9 +40,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const projectsProvider = new ProjectsWebviewProvider(context.extensionUri, context);
 
-    // Handle recovery of an orphaned active time tracking session
-    const orphanedActive = projectsProvider.timeTrackingService.getActiveSession();
-    if (orphanedActive) {
+    // Handle recovery of an orphaned active time tracking session asynchronously
+    // so the extension activation is not blocked waiting for user input.
+    (async () => {
+        const orphanedActive = projectsProvider.timeTrackingService.getActiveSession();
+        if (!orphanedActive) {
+            return;
+        }
         const session = projectsProvider.timeTrackingService.getActiveSessionFull();
         const choice = await vscode.window.showInformationMessage(
             `A time tracking session for "${session?.title || orphanedActive.projectId}" is still running.`,
@@ -57,7 +61,7 @@ export async function activate(context: vscode.ExtensionContext) {
         } else if (choice === 'Discard') {
             await projectsProvider.timeTrackingService.recoverActiveSession('discard');
         }
-    }
+    })().catch(err => console.error('Error recovering time tracking session:', err));
 
     const configuration = vscode.workspace.getConfiguration('awesomeProjects');
 

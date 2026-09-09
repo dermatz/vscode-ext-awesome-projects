@@ -111,7 +111,7 @@ export class TimeTrackingService implements vscode.Disposable {
         const branch = await this.getCurrentBranch(workspaceFolderPath) ?? 'unknown';
         const nowIso = new Date().toISOString();
         const sessionId = this._generateId();
-        const sessionTitle = title?.trim() || `Work on ${branch}`;
+        const sessionTitle = title?.trim() || this._buildDefaultSessionTitle(branch);
 
         const session: TimeTrackingSession = {
             id: sessionId,
@@ -469,6 +469,30 @@ export class TimeTrackingService implements vscode.Disposable {
             }
             await this._setState(state);
         }
+    }
+
+    /**
+     * Builds a default session title based on the current branch.
+     * If ticket ID extraction is enabled, tries to find a ticket ID in the branch name.
+     */
+    private _buildDefaultSessionTitle(branch: string): string {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const extractEnabled = config.get<boolean>('timeTracking.extractTicketIdFromBranch', false);
+        if (!extractEnabled) {
+            return `Work on ${branch}`;
+        }
+
+        const pattern = config.get<string>('timeTracking.ticketIdPattern', '[A-Z]{2,}-\\d+');
+        try {
+            const regex = new RegExp(pattern);
+            const match = branch.match(regex);
+            if (match && match[0]) {
+                return `Working on ${match[0]}`;
+            }
+        } catch {
+            // Fall back to branch name if the configured pattern is invalid.
+        }
+        return `Work on ${branch}`;
     }
 
     public dispose(): void {

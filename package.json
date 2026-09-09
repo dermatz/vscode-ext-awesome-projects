@@ -445,6 +445,16 @@
             "minimum": 1,
             "maximum": 3650,
             "description": "Number of days individual sessions are kept in history before being aggregated"
+          },
+          "awesomeProjects.timeTracking.extractTicketIdFromBranch": {
+            "type": "boolean",
+            "default": true,
+            "description": "Try to extract a ticket ID (e.g. JIRA-123) from the branch name and use it as session title"
+          },
+          "awesomeProjects.timeTracking.ticketIdPattern": {
+            "type": "string",
+            "default": "[A-Z]{2,}-\\d+",
+            "description": "Regular expression used to find ticket IDs in branch names"
           }
         }
       }

@@ -59,7 +59,8 @@ export async function getTimeTrackingReportHtml(
     timeTrackingService: TimeTrackingService,
     period: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom' = 'week',
     customStartDate?: string,
-    customEndDate?: string
+    customEndDate?: string,
+    groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate' = 'none'
 ): Promise<string> {
     let baseCss = '';
     try {
@@ -126,11 +127,11 @@ export async function getTimeTrackingReportHtml(
                     <span class="report-summary-value">${formatDuration(Math.round(totalSeconds / Math.max(1, filteredSessions.length)))}</span>
                 </div>
             </div>
-            <div class="report-table-wrapper">
+            <div class="report-table-wrapper" style="display: ${groupBy === 'none' ? 'block' : 'none'};">
                 <table class="report-table" id="time-tracking-table">
                     <thead>
                         <tr>
-                            <th class="sortable-header sort-desc" data-sort="date">Date</th>
+                            <th class="sortable-header sort-desc" data-sort="date">Date and Time</th>
                             <th class="sortable-header" data-sort="project">Project</th>
                             <th class="sortable-header" data-sort="title">Title</th>
                             <th class="sortable-header" data-sort="duration">Duration</th>
@@ -139,9 +140,13 @@ export async function getTimeTrackingReportHtml(
                         </tr>
                     </thead>
                     <tbody>
-                        ${filteredSessions.map(session => renderSessionRow(session, projectNameById, getProjectColorHex(session.projectId))).join('')}
+                        ${filteredSessions.map(session => renderSessionRow(session, projectNameById, getProjectColorHex(session.projectId), activeSession?.id === session.id)).join('')}
                     </tbody>
                 </table>
+            </div>
+
+            <div id="branch-groups" class="report-branch-groups" style="display: ${groupBy === 'none' ? 'none' : 'block'};">
+                ${renderGroups(filteredSessions, projectNameById, getProjectColorHex, activeSession?.id, groupBy)}
             </div>
         `;
 
@@ -149,7 +154,10 @@ export async function getTimeTrackingReportHtml(
         ? `
             <div class="report-active-banner">
                 <span class="report-active-indicator"></span>
-                <span>Timer running: <strong>${escHtml(activeSession.title)}</strong></span>
+                <div class="report-active-info">
+                    <span class="report-active-label">Timer running</span>
+                    <span class="report-active-title">${escHtml(activeSession.title)}</span>
+                </div>
                 <span class="report-active-time" data-active-session-id="${escAttr(activeSession.id)}">${formatDuration(activeSession.durationSeconds)}</span>
                 <button class="button mini" data-action="stopActiveTimer">Stop</button>
             </div>
@@ -257,17 +265,18 @@ export async function getTimeTrackingReportHtml(
                 display: flex;
                 align-items: center;
                 gap: 14px;
-                padding: 16px 20px;
-                background: var(--vscode-editor-inactiveSelectionBackground);
+                padding: 14px 18px;
+                background: color-mix(in srgb, var(--vscode-button-background) 8%, var(--vscode-editor-inactiveSelectionBackground));
                 border-radius: 12px;
                 margin-bottom: 24px;
-                border-left: 4px solid var(--vscode-testing-iconPassed);
+                border: 1px solid color-mix(in srgb, var(--vscode-button-background) 25%, transparent);
+                border-left: 4px solid var(--vscode-button-background);
             }
 
             .report-active-indicator {
                 width: 10px;
                 height: 10px;
-                background: var(--vscode-testing-iconPassed);
+                background: var(--vscode-button-background);
                 border-radius: 50%;
                 animation: pulse 1.5s infinite;
                 flex-shrink: 0;
@@ -277,6 +286,28 @@ export async function getTimeTrackingReportHtml(
                 0% { opacity: 1; }
                 50% { opacity: 0.4; }
                 100% { opacity: 1; }
+            }
+
+            .report-active-info {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                min-width: 0;
+            }
+
+            .report-active-label {
+                font-size: 0.7rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                opacity: 0.7;
+            }
+
+            .report-active-title {
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             .report-active-time {
@@ -364,6 +395,142 @@ export async function getTimeTrackingReportHtml(
 
             .report-toolbar .button.danger:hover {
                 background: color-mix(in srgb, var(--vscode-inputValidation-errorBorder) 85%, #000);
+            }
+
+            .report-toggle {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                font-size: 0.85rem;
+                font-weight: 500;
+                user-select: none;
+            }
+
+            .report-toggle input {
+                width: 18px;
+                height: 18px;
+                accent-color: var(--vscode-button-background);
+                cursor: pointer;
+            }
+
+            .report-grouping-bar {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 16px;
+                padding: 10px 14px;
+                background: var(--vscode-editor-inactiveSelectionBackground);
+                border-radius: 10px;
+            }
+
+            .report-grouping-bar label {
+                font-size: 0.85rem;
+                font-weight: 500;
+                opacity: 0.8;
+            }
+
+            .report-grouping-bar select {
+                background: var(--vscode-dropdown-background);
+                color: var(--vscode-dropdown-foreground);
+                border: 1px solid var(--vscode-panel-border);
+                border-radius: 8px;
+                padding: 8px 12px;
+                font-family: inherit;
+                font-size: 0.9rem;
+                cursor: pointer;
+                min-width: 160px;
+            }
+
+            .report-grouping-bar select:focus {
+                outline: none;
+                border-color: var(--vscode-focusBorder);
+            }
+
+            .report-branch-groups {
+                display: flex;
+                flex-direction: column;
+                padding-bottom: 20px;
+            }
+
+            .report-branch-group {
+                background: var(--vscode-editor-inactiveSelectionBackground);
+                border-radius: 12px;
+                overflow: hidden;
+                border: 1px solid color-mix(in srgb, var(--vscode-panel-border) 60%, transparent);
+                margin-bottom: 24px;
+            }
+
+            .report-branch-group:last-child {
+                margin-bottom: 0;
+            }
+
+            .report-branch-group-header {
+                background: color-mix(in srgb, var(--vscode-panel-border) 35%, transparent);
+                padding: 14px 18px;
+                font-weight: 700;
+                font-size: 0.9rem;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+                user-select: none;
+                position: sticky;
+                top: 0;
+                z-index: 1;
+                border-bottom: 1px solid color-mix(in srgb, var(--vscode-panel-border) 40%, transparent);
+            }
+
+            .report-branch-group-header:hover {
+                background: color-mix(in srgb, var(--vscode-panel-border) 50%, transparent);
+            }
+
+            .report-branch-group-header .branch-group-color {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: var(--project-color, var(--vscode-foreground));
+            }
+
+            .report-branch-group-header .branch-group-duration {
+                margin-left: auto;
+                font-variant-numeric: tabular-nums;
+                opacity: 0.9;
+                font-weight: 700;
+            }
+
+            .report-branch-group-header .branch-group-count {
+                opacity: 0.7;
+                font-weight: 500;
+                font-size: 0.8rem;
+            }
+
+            .report-branch-group-header .branch-group-toggle {
+                transition: transform 0.2s ease;
+                opacity: 0.6;
+            }
+
+            .report-branch-group.collapsed .branch-group-toggle {
+                transform: rotate(-90deg);
+            }
+
+            .report-branch-group.collapsed .report-table-wrapper {
+                display: none;
+            }
+
+            .report-branch-group .report-table-wrapper {
+                background: transparent;
+                border-radius: 0;
+                padding: 0;
+            }
+
+            .report-branch-group .report-table th {
+                background: var(--vscode-editor-inactiveSelectionBackground);
+                border-bottom: 1px solid color-mix(in srgb, var(--vscode-panel-border) 40%, transparent);
+            }
+
+            .report-branch-group .report-table tbody tr:last-child td {
+                border-bottom: none;
             }
 
             .report-filter-bar {
@@ -509,8 +676,44 @@ export async function getTimeTrackingReportHtml(
                 border-left: 3px solid transparent;
             }
 
+            .report-table tbody tr.session-row-active {
+                background: color-mix(in srgb, var(--vscode-button-background) 4%, transparent);
+            }
+
             .report-table tbody tr[style*="--project-color"] {
                 border-left-color: var(--project-color);
+            }
+
+            .report-table tbody tr.session-row-active[style*="--project-color"] {
+                border-left-width: 4px;
+            }
+
+            .session-row-live-indicator {
+                display: inline-inline-flex;
+                align-items: center;
+                gap: 5px;
+                margin-right: 6px;
+                font-size: 0.65rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+                color: var(--vscode-button-background);
+                padding: 1px 0;
+                line-height: 1;
+                vertical-align: middle;
+            }
+
+            .session-row-live-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background-color: var(--vscode-button-background);
+                animation: session-row-live-pulse 1.5s ease-in-out infinite;
+            }
+
+            @keyframes session-row-live-pulse {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.5; transform: scale(0.85); }
             }
 
             .project-color-dot {
@@ -535,8 +738,13 @@ export async function getTimeTrackingReportHtml(
                 gap: 8px;
             }
 
-            .branch-time {
-                opacity: 0.6;
+            .session-date {
+                display: inline;
+            }
+
+            .session-time {
+                opacity: 0.65;
+                margin-left: 8px;
                 white-space: nowrap;
             }
 
@@ -705,6 +913,17 @@ export async function getTimeTrackingReportHtml(
                         <button class="button mini danger" data-action="deleteAllSessions">Delete All</button>
                     ` : ''}
                 </div>
+            </div>
+
+            <div class="report-grouping-bar">
+                <label for="group-by">Group by</label>
+                <select id="group-by" data-action="setGroupBy">
+                    <option value="none" ${groupBy === 'none' ? 'selected' : ''}>None</option>
+                    <option value="project" ${groupBy === 'project' ? 'selected' : ''}>Project</option>
+                    <option value="title" ${groupBy === 'title' ? 'selected' : ''}>Title</option>
+                    <option value="branch" ${groupBy === 'branch' ? 'selected' : ''}>Branch</option>
+                    <option value="branchAndDate" ${groupBy === 'branchAndDate' ? 'selected' : ''}>Branch and Date</option>
+                </select>
             </div>
 
             <div class="report-filter-bar">
@@ -897,11 +1116,20 @@ export async function getTimeTrackingReportHtml(
 
             let currentSort = { column: 'date', direction: 'desc' };
 
-            function filterRows() {
-                const table = document.getElementById('time-tracking-table');
-                if (!table) {
-                    return;
+            let currentGroupBy = '${groupBy}';
+
+            function getSessionBranch(session) {
+                if (!session.branchLog || session.branchLog.length === 0) {
+                    return 'unknown';
                 }
+                return session.branchLog[session.branchLog.length - 1].branch;
+            }
+
+            function isGrouped() {
+                return currentGroupBy !== 'none';
+            }
+
+            function filterRows() {
                 const filterValue = document.getElementById('session-filter').value.toLowerCase().trim();
                 const activeProjectPill = document.querySelector('.report-filter-pill.active');
                 const activeProjectFilter = activeProjectPill ? activeProjectPill.dataset.filterProject : undefined;
@@ -910,6 +1138,31 @@ export async function getTimeTrackingReportHtml(
                     clearButton.style.display = filterValue || activeProjectFilter ? 'inline-block' : 'none';
                 }
 
+                if (isGrouped()) {
+                    document.querySelectorAll('.report-branch-group').forEach(group => {
+                        let visibleCount = 0;
+                        group.querySelectorAll('tbody tr').forEach(row => {
+                            const project = row.dataset.project || '';
+                            const title = row.dataset.title || '';
+                            const branches = row.dataset.branches || '';
+                            const matchesText = !filterValue ||
+                                project.toLowerCase().includes(filterValue) ||
+                                title.toLowerCase().includes(filterValue) ||
+                                branches.toLowerCase().includes(filterValue);
+                            const matchesProject = !activeProjectFilter || project === activeProjectFilter;
+                            const visible = matchesText && matchesProject;
+                            row.style.display = visible ? '' : 'none';
+                            if (visible) { visibleCount++; }
+                        });
+                        group.style.display = visibleCount > 0 ? '' : 'none';
+                    });
+                    return;
+                }
+
+                const table = document.getElementById('time-tracking-table');
+                if (!table) {
+                    return;
+                }
                 table.querySelectorAll('tbody tr').forEach(row => {
                     const project = row.children[1].textContent.trim();
                     const title = row.children[2].textContent.trim();
@@ -922,6 +1175,36 @@ export async function getTimeTrackingReportHtml(
                     row.style.display = matchesText && matchesProject ? '' : 'none';
                 });
             }
+
+            function updateGroupBy() {
+                currentGroupBy = document.getElementById('group-by').value;
+                const table = document.getElementById('time-tracking-table');
+                const tableWrapper = table ? table.closest('.report-table-wrapper') : null;
+                const groups = document.getElementById('branch-groups');
+                if (tableWrapper) {
+                    tableWrapper.style.display = currentGroupBy === 'none' ? 'block' : 'none';
+                }
+                if (groups) {
+                    groups.style.display = currentGroupBy === 'none' ? 'none' : 'block';
+                }
+                filterRows();
+            }
+
+            document.getElementById('group-by').addEventListener('change', () => {
+                updateGroupBy();
+                vscode.postMessage({ command: 'openTimeTrackingReport', groupBy: currentGroupBy });
+            });
+
+            document.getElementById('branch-groups').addEventListener('click', event => {
+                const header = event.target.closest('.report-branch-group-header');
+                if (!header) {
+                    return;
+                }
+                const group = header.closest('.report-branch-group');
+                if (group) {
+                    group.classList.toggle('collapsed');
+                }
+            });
 
             document.getElementById('session-filter').addEventListener('input', filterRows);
 
@@ -1061,10 +1344,20 @@ export async function getTimeTrackingReportHtml(
 
             window.addEventListener('message', event => {
                 const message = event.data;
-                if (message.command === 'timeTrackingState' && message.activeSession) {
-                    const banner = document.querySelector('.time-tracking-active-banner .active-time');
+                if ((message.command === 'timeTrackingState' || message.command === 'timeTrackingTick') && message.activeSession) {
+                    const banner = document.querySelector('.report-active-banner .report-active-time');
                     if (banner && banner.dataset.activeSessionId === message.activeSession.id) {
                         banner.textContent = formatDuration(message.activeSession.durationSeconds || 0);
+                    }
+
+                    const activeRowDuration = document.getElementById('session-duration-' + message.activeSession.id);
+                    if (activeRowDuration) {
+                        activeRowDuration.textContent = formatDuration(message.activeSession.durationSeconds || 0);
+                        activeRowDuration.dataset.seconds = String(message.activeSession.durationSeconds || 0);
+                        const row = activeRowDuration.closest('tr');
+                        if (row) {
+                            row.dataset.duration = String(message.activeSession.durationSeconds || 0);
+                        }
                     }
                 }
             });
@@ -1083,23 +1376,142 @@ export async function getTimeTrackingReportHtml(
     </html>`;
 }
 
-function renderSessionRow(session: TimeTrackingSession, projectNameById: Map<string, string>, projectColor: string = ''): string {
-    const date = new Date(session.startTime).toLocaleDateString();
+function renderGroups(
+    sessions: TimeTrackingSession[],
+    projectNameById: Map<string, string>,
+    getProjectColorHex: (projectId: string) => string,
+    activeSessionId?: string,
+    groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate' = 'branch'
+): string {
+    if (sessions.length === 0) {
+        return '';
+    }
+
+    const groups = new Map<string, { label: string; projectId: string; sessions: TimeTrackingSession[] }>();
+    for (const session of sessions) {
+        const branch = sessionBranchDisplayName(session);
+        const projectName = projectNameById.get(session.projectId) || session.projectId;
+        let key: string;
+        let label: string;
+        switch (groupBy) {
+            case 'project':
+                key = session.projectId;
+                label = projectName;
+                break;
+            case 'title':
+                key = `${session.projectId}::${session.title}`;
+                label = `${projectName} — ${session.title}`;
+                break;
+            case 'branchAndDate':
+                key = `${session.projectId}::${branch}::${new Date(session.startTime).toLocaleDateString()}`;
+                label = `${projectName} — ${branch} — ${new Date(session.startTime).toLocaleDateString()}`;
+                break;
+            case 'branch':
+            default:
+                key = `${session.projectId}::${branch}`;
+                label = `${projectName} — ${branch}`;
+                break;
+        }
+        const existing = groups.get(key);
+        if (existing) {
+            existing.sessions.push(session);
+        } else {
+            groups.set(key, { label, projectId: session.projectId, sessions: [session] });
+        }
+    }
+
+    const sortedKeys = [...groups.keys()].sort((a, b) => {
+        const aSessions = groups.get(a)!.sessions;
+        const bSessions = groups.get(b)!.sessions;
+        return new Date(bSessions[0].startTime).getTime() - new Date(aSessions[0].startTime).getTime();
+    });
+
+    return sortedKeys.map(key => {
+        const { label, projectId, sessions } = groups.get(key)!;
+        const projectColor = getProjectColorHex(projectId);
+        const totalSeconds = sessions.reduce((sum, s) => sum + s.durationSeconds, 0);
+        return `
+            <div class="report-branch-group" data-group-key="${escAttr(key)}">
+                <div class="report-branch-group-header" style="${projectColor ? `--project-color: ${escAttr(projectColor)}` : ''}">
+                    <span class="branch-group-toggle">▼</span>
+                    <span class="branch-group-color"></span>
+                    <span class="branch-group-name">${escHtml(label)}</span>
+                    <span class="branch-group-count">${sessions.length} session${sessions.length === 1 ? '' : 's'}</span>
+                    <span class="branch-group-duration">${formatDuration(totalSeconds)}</span>
+                </div>
+                <div class="report-table-wrapper">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>Date and Time</th>
+                                <th>Title</th>
+                                <th>Duration</th>
+                                <th>Branches</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sessions.map(session => renderSessionRow(session, projectNameById, projectColor, activeSessionId === session.id, true)).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function sessionBranchDisplayName(session: TimeTrackingSession): string {
+    if (session.branchLog.length === 0) {
+        return 'unknown';
+    }
+    return session.branchLog[session.branchLog.length - 1].branch;
+}
+
+function renderSessionRow(session: TimeTrackingSession, projectNameById: Map<string, string>, projectColor: string = '', isActive: boolean = false, compact: boolean = false): string {
+    const startDate = new Date(session.startTime);
+    const date = startDate.toLocaleDateString();
+    const time = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const projectName = projectNameById.get(session.projectId) || session.projectId;
     const branches = session.branchLog.map((change, index) => `
         <div class="branch-entry">
             <span class="branch-name">${index > 0 ? '→ ' : ''}${escHtml(change.branch)}</span>
-            <span class="branch-time">${new Date(change.changedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
     `).join('');
     const colorStyle = projectColor ? `style="--project-color: ${escAttr(projectColor)}"` : '';
+    const activeClass = isActive ? 'session-row-active' : '';
+    const activeIndicator = isActive ? '<span class="session-row-live-indicator" title="Running"><span class="session-row-live-dot"></span>running</span>' : '';
+
+    const branchNames = session.branchLog.map(change => change.branch).join(' → ');
+    const dataAttrs = `data-start-time="${escAttr(session.startTime)}" data-duration="${session.durationSeconds}" data-project="${escAttr(projectName)}" data-title="${escAttr(session.title)}" data-branches="${escAttr(branchNames)}"`;
+
+    if (compact) {
+        return `
+            <tr id="session-row-${escAttr(session.id)}" class="${activeClass}" ${dataAttrs} ${colorStyle}>
+                <td><span class="project-color-dot" ${colorStyle}></span><span class="session-date">${escHtml(date)}</span><span class="session-time">${escHtml(time)}</span></td>
+                <td>
+                    <div id="session-title-${escAttr(session.id)}">${activeIndicator}${escHtml(session.title)}</div>
+                    ${session.description ? `<small id="session-desc-${escAttr(session.id)}">${escHtml(session.description)}</small>` : ''}
+                </td>
+                <td id="session-duration-${escAttr(session.id)}" data-seconds="${session.durationSeconds}">${formatDuration(session.durationSeconds)}</td>
+                <td>
+                    <div class="branch-timeline">
+                        ${branches || '<span class="branch-entry">–</span>'}
+                    </div>
+                </td>
+                <td class="session-actions">
+                    <button class="button mini" data-action="editSession" data-session-id="${escAttr(session.id)}" title="Edit">Edit</button>
+                    <button class="button mini secondary" data-action="deleteSession" data-session-id="${escAttr(session.id)}" title="Delete">Delete</button>
+                </td>
+            </tr>
+        `;
+    }
 
     return `
-        <tr id="session-row-${escAttr(session.id)}" data-start-time="${escAttr(session.startTime)}" data-duration="${session.durationSeconds}" ${colorStyle}>
-            <td><span class="project-color-dot" ${colorStyle}></span>${escHtml(date)}</td>
+        <tr id="session-row-${escAttr(session.id)}" class="${activeClass}" ${dataAttrs} ${colorStyle}>
+            <td><span class="project-color-dot" ${colorStyle}></span><span class="session-date">${escHtml(date)}</span><span class="session-time">${escHtml(time)}</span></td>
             <td>${escHtml(projectName)}</td>
             <td>
-                <div id="session-title-${escAttr(session.id)}">${escHtml(session.title)}</div>
+                <div id="session-title-${escAttr(session.id)}">${activeIndicator}${escHtml(session.title)}</div>
                 ${session.description ? `<small id="session-desc-${escAttr(session.id)}">${escHtml(session.description)}</small>` : ''}
             </td>
             <td id="session-duration-${escAttr(session.id)}" data-seconds="${session.durationSeconds}">${formatDuration(session.durationSeconds)}</td>
