@@ -8,6 +8,7 @@ import { getTimeTrackingDropdownHtml } from './dropdowns/dropdownTimeTracking';
 import { getProjectId } from '../utils/project-id';
 import { getTablerIconSvg } from '../utils/tablerIcons';
 import { escHtml, escAttr, escOnclickArg, sanitizeCssColor, safeUrl } from '../../utils/escaping';
+import { TimeTrackingSession } from '../../../types/timeTracking';
 
 async function findWorkspaceFile(projectPath: string): Promise<string | null> {
     try {
@@ -27,7 +28,8 @@ interface ProjectItemProps {
     pathExists?: boolean;
     todaySeconds?: number;
     isTimerActive?: boolean;
-    sessions?: import('../../../types/timeTracking').TimeTrackingSession[];
+    sessions?: TimeTrackingSession[];
+    activeSession?: TimeTrackingSession;
 }
 
 function formatDuration(totalSeconds: number): string {
@@ -44,7 +46,7 @@ function formatDuration(totalSeconds: number): string {
 }
 
 export async function getProjectItemHtml(context: vscode.ExtensionContext, props: ProjectItemProps): Promise<string> {
-    const { project, index, useFavicons, currentWorkspace, pathExists = true, todaySeconds = 0, isTimerActive = false, sessions = [] } = props;
+    const { project, index, useFavicons, currentWorkspace, pathExists = true, todaySeconds = 0, isTimerActive = false, sessions = [], activeSession } = props;
     const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
 
     const isRemote = !!project.isRemote;
@@ -81,10 +83,15 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     `;
     }
 
+    const isAllowedIconProtocol = (protocol: string): boolean => protocol === 'http:' || protocol === 'https:';
+
     const getBaseUrl = (url?: string) => {
         if (!url) { return null; }
         try {
             const urlObj = new URL(url);
+            if (!isAllowedIconProtocol(urlObj.protocol)) {
+                return null;
+            }
             return urlObj.protocol + "//" + urlObj.hostname;
         } catch (e) {
             return null;
@@ -95,6 +102,9 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
         if (!url) { return false; }
         try {
             const parsed = new URL(url);
+            if (!isAllowedIconProtocol(parsed.protocol)) {
+                return false;
+            }
             return /\.(ico|png|jpg|jpeg|svg|webp|gif|bmp)(\?.*)?$/i.test(parsed.pathname);
         } catch {
             return false;
@@ -124,7 +134,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const projectId = getProjectId(project);
     const projectSettingsHtml = getSettingsDropdownHtml(context, project);
     const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor, workspaceFile, todaySeconds, isTimerActive);
-    const timeTrackingHtml = getTimeTrackingDropdownHtml(project, todaySeconds, sessions, isTimerActive);
+    const timeTrackingHtml = getTimeTrackingDropdownHtml(project, todaySeconds, sessions, isTimerActive, activeSession);
 
     const activeBadge = isCurrentProject ? '<span class="current-project-badge" title="Current workspace"></span>' : '';
     const timerIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="M11 7v4l2 2"/><path d="M15 21h6v-6"/><path d="M15 17l2-2 1 1 2-2"/></svg>';

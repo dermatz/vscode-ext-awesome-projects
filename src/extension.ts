@@ -100,7 +100,7 @@ export async function activate(context: vscode.ExtensionContext) {
             return;
         }
         const active = projectsProvider.timeTrackingService.getActiveSession();
-        if (active?.projectId === matchedProject.id) {
+        if (active) {
             return;
         }
         await projectsProvider.timeTrackingService.startSession(

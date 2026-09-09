@@ -61,9 +61,13 @@ export class TimeTrackingPanel {
 
         const disposables: vscode.Disposable[] = [];
         let lastActiveSessionId = timeTrackingService.getActiveSessionFull()?.id;
+        let isDisposed = false;
 
         disposables.push(
             timeTrackingService.onDidChangeTimer(async () => {
+                if (isDisposed || panel !== TimeTrackingPanel._panel) {
+                    return;
+                }
                 if (!panel.visible) {
                     return;
                 }
@@ -91,6 +95,9 @@ export class TimeTrackingPanel {
 
         disposables.push(
             panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
+                if (isDisposed) {
+                    return;
+                }
                 switch (message.command) {
                     case 'openTimeTrackingReport':
                         if (message.reportPeriod) {
@@ -110,7 +117,7 @@ export class TimeTrackingPanel {
                         break;
                     case 'stopTimeTracking':
                         try {
-                            const stopped = await timeTrackingService.stopSession(message.projectId);
+                            const stopped = await timeTrackingService.stopSession();
                             if (stopped) {
                                 const minutes = Math.ceil(stopped.durationSeconds / 60);
                                 vscode.window.showInformationMessage(
@@ -148,11 +155,14 @@ export class TimeTrackingPanel {
                                             undo
                                         );
                                         if (selection === undo) {
-                                            const state = timeTrackingService.getState();
-                                            state.sessionsByProject[deleted.projectId] = state.sessionsByProject[deleted.projectId] || [];
-                                            state.sessionsByProject[deleted.projectId].push(deleted);
-                                            await context.globalState.update('timeTrackingState', state);
-                                            await timeTrackingService.addTimeToProject(deleted.projectId, deleted.durationSeconds);
+                                            await timeTrackingService.addSession(deleted.projectId, {
+                                                title: deleted.title,
+                                                description: deleted.description,
+                                                startTime: deleted.startTime,
+                                                endTime: deleted.endTime,
+                                                durationSeconds: deleted.durationSeconds,
+                                                branch: deleted.branchLog.map(b => b.branch).join(' → ')
+                                            });
                                             panel.webview.html = await TimeTrackingPanel._getHtml(
                                                 panel.webview,
                                                 extensionUri,
@@ -244,12 +254,14 @@ export class TimeTrackingPanel {
                                     await timeTrackingService.deleteSession(session.id);
                                 }
 
-                                panel.webview.html = await TimeTrackingPanel._getHtml(
-                                    panel.webview,
-                                    extensionUri,
-                                    context,
-                                    timeTrackingService
-                                );
+                                if (TimeTrackingPanel._panel) {
+                                    TimeTrackingPanel._panel.webview.html = await TimeTrackingPanel._getHtml(
+                                        TimeTrackingPanel._panel.webview,
+                                        extensionUri,
+                                        context,
+                                        timeTrackingService
+                                    );
+                                }
                                 const infoMessage = activeSessionId
                                     ? `Deleted ${sessionsToDelete.length} sessions. Active session was skipped.`
                                     : `Deleted ${sessionsToDelete.length} sessions`;
@@ -263,6 +275,7 @@ export class TimeTrackingPanel {
 
         panel.onDidDispose(
             () => {
+                isDisposed = true;
                 TimeTrackingPanel._panel = undefined;
                 disposables.forEach(d => d.dispose());
             },
@@ -311,7 +324,13 @@ export class TimeTrackingPanel {
     ): Promise<void> {
         const state = timeTrackingService.getState();
         const allSessions = Object.values(state.sessionsByProject).flat();
-        const filtered = TimeTrackingPanel._filterSessions(allSessions, period, customStartDate, customEndDate);
+        const { start, end } = getPeriodBounds(period ?? 'all', customStartDate, customEndDate);
+        const activeSessionId = state.activeSession?.sessionId;
+
+        const filtered = allSessions.filter(session => {
+            const sessionDate = new Date(session.startTime);
+            return sessionDate >= start && sessionDate <= end;
+        });
 
         if (filtered.length === 0) {
             vscode.window.showInformationMessage('No sessions to export for the selected period.');
@@ -323,21 +342,25 @@ export class TimeTrackingPanel {
         const projectNameById = new Map(projects.map(p => [p.id, p.name]));
 
         const rows = filtered.map(session => {
-            const start = new Date(session.startTime);
-            const end = session.endTime ? new Date(session.endTime) : start;
+            const startDate = new Date(session.startTime);
+            const isActive = session.id === activeSessionId;
+            const durationSeconds = isActive
+                ? timeTrackingService.getActiveSessionFull()?.durationSeconds ?? session.durationSeconds
+                : session.durationSeconds;
+            const endTime = session.endTime || (isActive ? new Date().toISOString() : undefined);
             const branches = session.branchLog.map(b => b.branch).join(' → ');
-            const durationFormatted = TimeTrackingPanel._formatDuration(session.durationSeconds);
+            const durationFormatted = TimeTrackingPanel._formatDuration(durationSeconds);
             const projectName = projectNameById.get(session.projectId) || session.projectId;
             return [
-                start.toISOString().split('T')[0],
+                startDate.toISOString().split('T')[0],
                 TimeTrackingPanel._escapeCsv(projectName),
                 TimeTrackingPanel._escapeCsv(session.title),
                 TimeTrackingPanel._escapeCsv(session.description || ''),
-                session.durationSeconds,
+                durationSeconds,
                 durationFormatted,
                 TimeTrackingPanel._escapeCsv(branches),
                 session.startTime,
-                session.endTime || ''
+                endTime || ''
             ].join(',');
         });
 
@@ -355,49 +378,6 @@ export class TimeTrackingPanel {
 
         await fs.promises.writeFile(uri.fsPath, csvContent, 'utf8');
         vscode.window.showInformationMessage(`Exported ${filtered.length} sessions to ${uri.fsPath}`);
-    }
-
-    private static _filterSessions(
-        sessions: import('./types/timeTracking').TimeTrackingSession[],
-        period?: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom',
-        customStartDate?: string,
-        customEndDate?: string
-    ): import('./types/timeTracking').TimeTrackingSession[] {
-        const now = new Date();
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-        return sessions.filter(session => {
-            const sessionDate = new Date(session.startTime);
-            switch (period) {
-                case 'today':
-                    return sessionDate >= startOfDay;
-                case 'week': {
-                    const startOfWeek = new Date(startOfDay);
-                    startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
-                    return sessionDate >= startOfWeek;
-                }
-                case 'month': {
-                    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                    return sessionDate >= startOfMonth;
-                }
-                case 'lastMonth': {
-                    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-                    return sessionDate >= startOfLastMonth && sessionDate <= endOfLastMonth;
-                }
-                case 'all':
-                    return true;
-                case 'custom': {
-                    const start = customStartDate ? new Date(customStartDate) : null;
-                    const end = customEndDate ? new Date(customEndDate) : null;
-                    if (start) { start.setHours(0, 0, 0, 0); }
-                    if (end) { end.setHours(23, 59, 59, 999); }
-                    return (!start || sessionDate >= start) && (!end || sessionDate <= end);
-                }
-                default:
-                    return true;
-            }
-        });
     }
 
     private static _formatDuration(totalSeconds: number): string {

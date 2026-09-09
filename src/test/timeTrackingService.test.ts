@@ -98,4 +98,66 @@ suite('TimeTrackingService Tests', () => {
         await service.cleanupOldSessions(30);
         assert.strictEqual(service.getSessionsByProject('proj-1').length, 0);
     });
+
+    test('startSession serializes concurrent calls so only one active session exists', async () => {
+        service.addTimeToProject = async () => {};
+        const [first, second] = await Promise.all([
+            service.startSession('proj-1', '/workspace/a'),
+            service.startSession('proj-2', '/workspace/b')
+        ]);
+        assert.strictEqual(service.getActiveSession()?.projectId, second.projectId);
+        const allSessions = Object.values(service.getState().sessionsByProject).flat();
+        const activeCount = allSessions.filter(s => !s.endTime).length;
+        assert.strictEqual(activeCount, 1);
+    });
+
+    test('constructor resumes ticking for persisted active session', async () => {
+        service.addTimeToProject = async () => {};
+        const session = await service.startSession('proj-1', '/workspace/a');
+        await new Promise(r => setTimeout(r, 50));
+
+        const persisted = service.getState();
+        service.dispose();
+
+        const resumedService = new TimeTrackingService(context);
+        assert.strictEqual(resumedService.getActiveSession()?.sessionId, session.id);
+
+        await new Promise(r => setTimeout(r, 100));
+        const resumedSession = resumedService.getActiveSessionFull();
+        assert.ok(resumedSession);
+        assert.ok(resumedSession!.durationSeconds >= session.durationSeconds);
+        resumedService.dispose();
+    });
+
+    test('resume does not add stale duration twice', async () => {
+        service.addTimeToProject = async () => {};
+        await service.startSession('proj-1', '/workspace/a');
+        await new Promise(r => setTimeout(r, 80));
+        const stopped = await service.stopSession();
+        assert.ok(stopped);
+        const firstDuration = stopped!.durationSeconds;
+
+        await context.globalState.update(TIME_TRACKING_STATE_KEY, {
+            sessionsByProject: { 'proj-1': [stopped!] },
+            activeSession: undefined
+        });
+
+        const resumedService = new TimeTrackingService(context);
+        await new Promise(r => setTimeout(r, 80));
+        assert.strictEqual(resumedService.getActiveSession(), undefined);
+        const reloaded = resumedService.getSessionsByProject('proj-1')[0];
+        assert.strictEqual(reloaded.durationSeconds, firstDuration);
+        resumedService.dispose();
+    });
+
+    test('cleanupOldSessions never deletes active session', async () => {
+        service.addTimeToProject = async () => {};
+        const session = await service.startSession('proj-1', '/workspace/a');
+        session.startTime = new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString();
+        await context.globalState.update(TIME_TRACKING_STATE_KEY, service.getState());
+
+        await service.cleanupOldSessions(30);
+        assert.strictEqual(service.getActiveSession()?.sessionId, session.id);
+        assert.strictEqual(service.getSessionsByProject('proj-1').length, 1);
+    });
 });

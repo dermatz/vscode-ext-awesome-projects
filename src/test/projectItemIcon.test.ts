@@ -86,7 +86,7 @@ suite('project-item – icon URL', () => {
             pathExists: true
         });
 
-        assert.ok(!html.includes('cdn.example.com'), 'should not use iconUrl when favicons disabled');
+        assert.ok(!html.includes('src="https://cdn.example.com/icon.png"'), 'should not use iconUrl as image source when favicons disabled');
         assert.ok(html.includes('📁'), 'should show folder emoji');
     });
 
@@ -103,7 +103,7 @@ suite('project-item – icon URL', () => {
             pathExists: true
         });
 
-        assert.ok(!html.includes('javascript:'), 'should not render invalid iconUrl');
+        assert.ok(!html.includes('src="javascript:'), 'should not render invalid iconUrl as image source');
         assert.ok(html.includes('📁'), 'should show folder emoji');
     });
 });

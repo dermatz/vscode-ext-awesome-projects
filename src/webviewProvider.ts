@@ -281,7 +281,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     break;
                 case 'stopTimeTracking':
                     try {
-                        const stopped = await this.timeTrackingService.stopSession(message.projectId);
+                        const stopped = await this.timeTrackingService.stopSession();
                         if (stopped) {
                             const minutes = Math.ceil(stopped.durationSeconds / 60);
                             vscode.window.showInformationMessage(
@@ -320,11 +320,14 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                                     undo
                                 );
                                 if (selection === undo) {
-                                    const state = this.timeTrackingService.getState();
-                                    state.sessionsByProject[deleted.projectId] = state.sessionsByProject[deleted.projectId] || [];
-                                    state.sessionsByProject[deleted.projectId].push(deleted);
-                                    await this._context.globalState.update('timeTrackingState', state);
-                                    await this.timeTrackingService.addTimeToProject(deleted.projectId, deleted.durationSeconds);
+                                    await this.timeTrackingService.addSession(deleted.projectId, {
+                                        title: deleted.title,
+                                        description: deleted.description,
+                                        startTime: deleted.startTime,
+                                        endTime: deleted.endTime,
+                                        durationSeconds: deleted.durationSeconds,
+                                        branch: deleted.branchLog.map(b => b.branch).join(' → ')
+                                    });
                                     this.refresh();
                                 }
                             }

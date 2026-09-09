@@ -104,6 +104,10 @@ async function renderGroupNode(
     const sessionsByProject = state?.sessionsByProject || {};
     const activeSession = state?.activeSession;
 
+    const activeSessionFull = activeSession
+        ? (sessionsByProject[activeSession.projectId] || []).find(s => s.id === activeSession.sessionId)
+        : undefined;
+
     const itemsHtml = (await Promise.all(
         node.items.map(({ project, index }) =>
             getProjectItemHtml(context, {
@@ -114,7 +118,8 @@ async function renderGroupNode(
                 pathExists: existsMap.get(project.path) ?? true,
                 todaySeconds: getTodaySecondsForProject(project.id ?? project.path, sessionsByProject[project.id ?? project.path] || [], activeSession),
                 isTimerActive: activeSession?.projectId === (project.id ?? project.path),
-                sessions: sessionsByProject[project.id ?? project.path] || []
+                sessions: sessionsByProject[project.id ?? project.path] || [],
+                activeSession: activeSession && activeSession.projectId === (project.id ?? project.path) ? activeSessionFull : undefined
             })
         )
     )).join('');

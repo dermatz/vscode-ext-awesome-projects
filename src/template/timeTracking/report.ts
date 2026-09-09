@@ -96,13 +96,16 @@ export async function getTimeTrackingReportHtml(
     );
 
     const { start, end } = getPeriodBounds(period, customStartDate, customEndDate);
+    const activeSession = state.activeSession ? timeTrackingService.getActiveSessionFull() : undefined;
     const filteredSessions = allSessions.filter(session => {
+        if (activeSession && session.id === activeSession.id) {
+            return true;
+        }
         const sessionDate = new Date(session.startTime);
         return sessionDate >= start && sessionDate <= end;
     });
 
     const totalSeconds = filteredSessions.reduce((sum, session) => sum + session.durationSeconds, 0);
-    const activeSession = state.activeSession ? timeTrackingService.getActiveSessionFull() : undefined;
 
     const activeBanner = activeSession
         ? `
@@ -130,11 +133,11 @@ export async function getTimeTrackingReportHtml(
             <div class="report-summary-grid">
                 <div class="report-summary-card">
                     <span class="report-summary-label">Total Time</span>
-                    <span class="report-summary-value">${formatDuration(totalSeconds)}</span>
+                    <span class="report-summary-value" id="summary-total-time" data-total-seconds="${totalSeconds}">${formatDuration(totalSeconds)}</span>
                 </div>
                 <div class="report-summary-card">
                     <span class="report-summary-label">Sessions</span>
-                    <span class="report-summary-value">${filteredSessions.length}</span>
+                    <span class="report-summary-value" id="summary-session-count">${filteredSessions.length}</span>
                 </div>
                 <div class="report-summary-card">
                     <span class="report-summary-label">Projects</span>
@@ -142,7 +145,7 @@ export async function getTimeTrackingReportHtml(
                 </div>
                 <div class="report-summary-card">
                     <span class="report-summary-label">Daily Avg</span>
-                    <span class="report-summary-value">${formatDuration(Math.round(totalSeconds / Math.max(1, filteredSessions.length)))}</span>
+                    <span class="report-summary-value" id="summary-daily-avg">${formatDuration(Math.round(totalSeconds / Math.max(1, filteredSessions.length)))}</span>
                 </div>
             </div>
             ${activeBanner}
@@ -963,7 +966,7 @@ export async function getTimeTrackingReportHtml(
                     </div>
                     <div class="field" style="max-width: 120px;">
                         <label for="add-duration">Duration (s)</label>
-                        <input type="number" id="add-duration" placeholder="Seconds">
+                        <input type="number" id="add-duration" placeholder="Ignored when start and end are set">
                     </div>
                 </div>
                 <div class="inline-edit-actions">
@@ -983,8 +986,15 @@ export async function getTimeTrackingReportHtml(
             }
 
             function applyCustomRange() {
-                const start = document.getElementById('custom-start').value;
-                const end = document.getElementById('custom-end').value;
+                let start = document.getElementById('custom-start').value;
+                let end = document.getElementById('custom-end').value;
+                if (start && end && new Date(start) > new Date(end)) {
+                    const temp = start;
+                    start = end;
+                    end = temp;
+                    document.getElementById('custom-start').value = start;
+                    document.getElementById('custom-end').value = end;
+                }
                 vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: 'custom', customStartDate: start, customEndDate: end });
             }
 
@@ -1033,7 +1043,7 @@ export async function getTimeTrackingReportHtml(
                         '</div>' +
                         '<div class="field" style="max-width: 120px;">' +
                             '<label for="edit-duration-' + sessionId + '">Duration (s)</label>' +
-                            '<input type="number" id="edit-duration-' + sessionId + '" value="' + duration + '" placeholder="Seconds">' +
+                            '<input type="number" id="edit-duration-' + sessionId + '" value="' + duration + '" placeholder="Ignored when start and end are set">' +
                         '</div>' +
                     '</div>' +
                     '<div class="inline-edit-actions">' +
@@ -1123,7 +1133,7 @@ export async function getTimeTrackingReportHtml(
 
             function getSessionBranch(session) {
                 if (!session.branchLog || session.branchLog.length === 0) {
-                    return 'unknown';
+                    return 'Unknown, no GIT branch found';
                 }
                 return session.branchLog[session.branchLog.length - 1].branch;
             }
@@ -1346,18 +1356,47 @@ export async function getTimeTrackingReportHtml(
             window.addEventListener('message', event => {
                 const message = event.data;
                 if ((message.command === 'timeTrackingState' || message.command === 'timeTrackingTick') && message.activeSession) {
+                    const durationSeconds = message.activeSession.durationSeconds || 0;
+
                     const banner = document.querySelector('.report-active-banner .report-active-time');
                     if (banner && banner.dataset.activeSessionId === message.activeSession.id) {
-                        banner.textContent = formatDuration(message.activeSession.durationSeconds || 0);
+                        banner.textContent = formatDuration(durationSeconds);
                     }
 
                     const activeRowDuration = document.getElementById('session-duration-' + message.activeSession.id);
                     if (activeRowDuration) {
-                        activeRowDuration.textContent = formatDuration(message.activeSession.durationSeconds || 0);
-                        activeRowDuration.dataset.seconds = String(message.activeSession.durationSeconds || 0);
+                        const delta = durationSeconds - Number(activeRowDuration.dataset.seconds || 0);
+                        activeRowDuration.textContent = formatDuration(durationSeconds);
+                        activeRowDuration.dataset.seconds = String(durationSeconds);
                         const row = activeRowDuration.closest('tr');
                         if (row) {
-                            row.dataset.duration = String(message.activeSession.durationSeconds || 0);
+                            row.dataset.duration = String(durationSeconds);
+                        }
+
+                        const group = activeRowDuration.closest('.report-branch-group');
+                        if (group) {
+                            const groupDurationEl = group.querySelector('.branch-group-duration');
+                            if (groupDurationEl) {
+                                const currentTotal = Number(groupDurationEl.dataset.groupDuration || 0);
+                                groupDurationEl.dataset.groupDuration = String(currentTotal + delta);
+                                groupDurationEl.textContent = formatDuration(currentTotal + delta);
+                            }
+                        }
+
+                        const summaryTotalEl = document.getElementById('summary-total-time');
+                        if (summaryTotalEl) {
+                            const currentTotal = Number(summaryTotalEl.dataset.totalSeconds || 0);
+                            const newTotal = currentTotal + delta;
+                            summaryTotalEl.dataset.totalSeconds = String(newTotal);
+                            summaryTotalEl.textContent = formatDuration(newTotal);
+                        }
+
+                        const summaryAvgEl = document.getElementById('summary-daily-avg');
+                        const summaryCountEl = document.getElementById('summary-session-count');
+                        if (summaryAvgEl && summaryCountEl) {
+                            const count = Number(summaryCountEl.textContent || 1);
+                            const currentTotal = Number(summaryTotalEl?.dataset.totalSeconds || 0);
+                            summaryAvgEl.textContent = formatDuration(Math.round(currentTotal / Math.max(1, count)));
                         }
                     }
                 }
@@ -1427,7 +1466,12 @@ function renderGroups(
     const sortedKeys = [...groups.keys()].sort((a, b) => {
         const aSessions = groups.get(a)!.sessions;
         const bSessions = groups.get(b)!.sessions;
-        return new Date(bSessions[0].startTime).getTime() - new Date(aSessions[0].startTime).getTime();
+        const aStart = aSessions[0]?.startTime;
+        const bStart = bSessions[0]?.startTime;
+        if (!aStart || !bStart) {
+            return 0;
+        }
+        return new Date(bStart).getTime() - new Date(aStart).getTime();
     });
 
     return sortedKeys.map(key => {
@@ -1441,7 +1485,7 @@ function renderGroups(
                     <span class="branch-group-color"></span>
                     <span class="branch-group-name">${escHtml(label)}</span>
                     <span class="branch-group-count">${sessions.length} session${sessions.length === 1 ? '' : 's'}</span>
-                    <span class="branch-group-duration">${formatDuration(totalSeconds)}</span>
+                    <span class="branch-group-duration" data-group-duration="${totalSeconds}">${formatDuration(totalSeconds)}</span>
                 </div>
                 <div class="report-table-wrapper">
                     <table class="report-table">
@@ -1466,7 +1510,7 @@ function renderGroups(
 
 function sessionBranchDisplayName(session: TimeTrackingSession): string {
     if (session.branchLog.length === 0) {
-        return 'unknown';
+        return 'Unknown, no GIT branch found';
     }
     return session.branchLog[session.branchLog.length - 1].branch;
 }
@@ -1476,7 +1520,8 @@ function renderSessionRow(session: TimeTrackingSession, projectNameById: Map<str
     const date = startDate.toLocaleDateString();
     const time = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const projectName = projectNameById.get(session.projectId) || session.projectId;
-    const branches = session.branchLog.map((change, index) => `
+    const branchLogEntries = session.branchLog.slice(-5);
+    const branches = branchLogEntries.map((change, index) => `
         <div class="branch-entry">
             <span class="branch-name">${index > 0 ? '→ ' : ''}${escHtml(change.branch)}</span>
         </div>

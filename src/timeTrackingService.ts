@@ -16,12 +16,20 @@ export class TimeTrackingService implements vscode.Disposable {
     private _tickInterval: NodeJS.Timeout | undefined;
     private _onDidChangeTimer = new vscode.EventEmitter<TimeTrackingEvent>();
     private _disposables: vscode.Disposable[] = [];
+    private _startStopPromise: Promise<TimeTrackingSession | TimeTrackingSession | undefined> | undefined;
 
     public readonly onDidChangeTimer = this._onDidChangeTimer.event;
 
     constructor(context: vscode.ExtensionContext) {
         this._context = context;
         this._disposables.push(this._onDidChangeTimer);
+
+        const state = this.getState();
+        if (state.activeSession) {
+            state.activeSession.lastTickAt = Date.now();
+            void this._context.globalState.update(TIME_TRACKING_STATE_KEY, state);
+            this._startTick();
+        }
     }
 
     /**
@@ -102,13 +110,31 @@ export class TimeTrackingService implements vscode.Disposable {
         title?: string,
         description?: string
     ): Promise<TimeTrackingSession> {
+        if (this._startStopPromise) {
+            await this._startStopPromise;
+        }
+
+        this._startStopPromise = this._doStartSession(projectId, workspaceFolderPath, title, description);
+        try {
+            return (await this._startStopPromise) as TimeTrackingSession;
+        } finally {
+            this._startStopPromise = undefined;
+        }
+    }
+
+    private async _doStartSession(
+        projectId: string,
+        workspaceFolderPath: string,
+        title?: string,
+        description?: string
+    ): Promise<TimeTrackingSession> {
         const state = this.getState();
 
         if (state.activeSession) {
             await this.stopSession();
         }
 
-        const branch = await this.getCurrentBranch(workspaceFolderPath) ?? 'unknown';
+        const branch = await this.getCurrentBranch(workspaceFolderPath) ?? 'Unknown, no GIT branch found';
         const nowIso = new Date().toISOString();
         const sessionId = this._generateId();
         const sessionTitle = title?.trim() || this._buildDefaultSessionTitle(branch);
@@ -147,6 +173,14 @@ export class TimeTrackingService implements vscode.Disposable {
      * and returns the closed session.
      */
     public async stopSession(projectId?: string): Promise<TimeTrackingSession | undefined> {
+        if (this._startStopPromise) {
+            await this._startStopPromise;
+        }
+
+        return this._doStopSession(projectId);
+    }
+
+    private async _doStopSession(projectId?: string): Promise<TimeTrackingSession | undefined> {
         const state = this.getState();
         if (!state.activeSession) {
             return undefined;
@@ -209,7 +243,7 @@ export class TimeTrackingService implements vscode.Disposable {
         const state = this.getState();
         const nowIso = new Date().toISOString();
 
-        const branch = session.branch?.trim() || 'unknown';
+        const branch = session.branch?.trim() || 'Unknown, no GIT branch found';
         const title = session.title?.trim() || branch;
         const branchLog: BranchChange[] = [{ branch, changedAt: session.startTime || nowIso }];
 
@@ -417,9 +451,13 @@ export class TimeTrackingService implements vscode.Disposable {
             const sessions = state.sessionsByProject[projectId];
             const keep: TimeTrackingSession[] = [];
             for (const session of sessions) {
-                const sessionDate = new Date(session.startTime);
                 const isActive = state.activeSession?.sessionId === session.id;
-                if (sessionDate < cutoff && !isActive) {
+                if (isActive) {
+                    keep.push(session);
+                    continue;
+                }
+                const sessionDate = new Date(session.startTime);
+                if (sessionDate < cutoff) {
                     await this.addTimeToProject(session.projectId, session.durationSeconds);
                     changed = true;
                 } else {
