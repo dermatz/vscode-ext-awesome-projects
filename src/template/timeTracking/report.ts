@@ -57,50 +57,73 @@ function getWeekStartOffset(weekStartsOn: number): number {
     return (dayOfWeek + 7 - weekStartsOn) % 7;
 }
 
+function getTodayBounds(now: Date): { start: Date; end: Date } {
+    return { start: getUtcStartOfDay(now), end: getUtcEndOfDay(now) };
+}
+
+function getWeekBounds(now: Date, weekStartsOn: number): { start: Date; end: Date } {
+    const offset = getWeekStartOffset(weekStartsOn);
+    return {
+        start: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - offset, 0, 0, 0, 0)),
+        end: getUtcEndOfDay(now)
+    };
+}
+
+function getMonthBounds(now: Date): { start: Date; end: Date } {
+    return {
+        start: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0)),
+        end: getUtcEndOfDay(now)
+    };
+}
+
+function getLastMonthBounds(now: Date): { start: Date; end: Date } {
+    return {
+        start: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1, 0, 0, 0, 0)),
+        end: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59, 999))
+    };
+}
+
+function getAllBounds(): { start: Date; end: Date } {
+    return {
+        start: new Date(Date.UTC(1970, 0, 1, 0, 0, 0, 0)),
+        end: new Date(8640000000000000)
+    };
+}
+
+function getCustomBounds(
+    now: Date,
+    customStart?: string,
+    customEnd?: string
+): { start: Date; end: Date } {
+    const customStartDate = customStart && isValidDateString(customStart) ? new Date(customStart) : undefined;
+    const customEndDate = customEnd && isValidDateString(customEnd) ? new Date(customEnd) : undefined;
+    let start = customStartDate ? getUtcStartOfDay(customStartDate) : getUtcStartOfDay(now);
+    let end = customEndDate ? getUtcEndOfDay(customEndDate) : getUtcEndOfDay(now);
+    if (start > end) {
+        return { start: end, end: start };
+    }
+    return { start, end };
+}
+
+const periodBoundFactories: Record<
+    'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom',
+    (now: Date, customStart?: string, customEnd?: string, weekStartsOn?: number) => { start: Date; end: Date }
+> = {
+    today: (now) => getTodayBounds(now),
+    week: (now, _cs, _ce, weekStartsOn) => getWeekBounds(now, weekStartsOn ?? 0),
+    month: (now) => getMonthBounds(now),
+    lastMonth: (now) => getLastMonthBounds(now),
+    all: () => getAllBounds(),
+    custom: (now, customStart, customEnd) => getCustomBounds(now, customStart, customEnd)
+};
+
 export function getPeriodBounds(
     period: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom',
     customStart?: string,
     customEnd?: string,
     weekStartsOn: number = 0
 ): { start: Date; end: Date } {
-    const now = new Date();
-    let end = getUtcEndOfDay(now);
-    let start = getUtcStartOfDay(now);
-
-    switch (period) {
-        case 'today':
-            break;
-        case 'week': {
-            const offset = getWeekStartOffset(weekStartsOn);
-            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - offset, 0, 0, 0, 0));
-            break;
-        }
-        case 'month':
-            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
-            break;
-        case 'lastMonth':
-            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1, 0, 0, 0, 0));
-            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59, 999));
-            break;
-        case 'all':
-            start = new Date(Date.UTC(1970, 0, 1, 0, 0, 0, 0));
-            end = new Date(8640000000000000);
-            break;
-        case 'custom': {
-            const customStartDate = customStart && isValidDateString(customStart) ? new Date(customStart) : undefined;
-            const customEndDate = customEnd && isValidDateString(customEnd) ? new Date(customEnd) : undefined;
-            start = customStartDate ? getUtcStartOfDay(customStartDate) : start;
-            end = customEndDate ? getUtcEndOfDay(customEndDate) : end;
-            if (start > end) {
-                const temp = start;
-                start = end;
-                end = temp;
-            }
-            break;
-        }
-    }
-
-    return { start, end };
+    return periodBoundFactories[period](new Date(), customStart, customEnd, weekStartsOn);
 }
 
 interface ReportViewModel {
@@ -123,6 +146,18 @@ interface ReportViewModel {
     displaySessions: TimeTrackingSession[];
     hasMoreSessions: boolean;
     totalSeconds: number;
+}
+
+interface SessionRowContext {
+    session: TimeTrackingSession;
+    project: Project | undefined;
+    projectNameById: Map<string, string>;
+    projectColor: string;
+    isActive: boolean;
+    compact: boolean;
+    activeTimer?: { sessionId: string; accumulatedSeconds: number; lastTickAt: number };
+    context?: vscode.ExtensionContext;
+    useFavicons?: boolean;
 }
 
 async function loadBaseCss(context: vscode.ExtensionContext): Promise<string> {
@@ -221,6 +256,68 @@ function renderPaginationNotice(displayCount: number, totalCount: number): strin
         : '';
 }
 
+function renderSummaryGrid(displaySessions: TimeTrackingSession[], totalSeconds: number): string {
+    return `
+        <div class="report-summary-grid">
+            <div class="report-summary-card">
+                <span class="report-summary-label">Total Time</span>
+                <span class="report-summary-value" id="summary-total-time" data-total-seconds="${totalSeconds}">${formatDuration(totalSeconds)}</span>
+            </div>
+            <div class="report-summary-card">
+                <span class="report-summary-label">Sessions</span>
+                <span class="report-summary-value" id="summary-session-count">${displaySessions.length}</span>
+            </div>
+            <div class="report-summary-card">
+                <span class="report-summary-label">Projects</span>
+                <span class="report-summary-value">${new Set(displaySessions.map(s => s.projectId)).size}</span>
+            </div>
+            <div class="report-summary-card">
+                <span class="report-summary-label">Daily Avg</span>
+                <span class="report-summary-value" id="summary-daily-avg">${formatDuration(Math.round(totalSeconds / Math.max(1, displaySessions.length)))}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderSessionTable(
+    vm: ReportViewModel,
+    context: vscode.ExtensionContext
+): string {
+    return `
+        <div class="report-table-wrapper" style="display: ${vm.groupBy === 'none' ? 'block' : 'none'};">
+            <table class="report-table" id="time-tracking-table">
+                <thead>
+                    <tr>
+                        <th class="sortable-header sort-desc" data-sort="date">Date and Time</th>
+                        <th class="sortable-header" data-sort="project">Project</th>
+                        <th class="sortable-header" data-sort="title">Title</th>
+                        <th class="sortable-header" data-sort="duration">Duration</th>
+                        <th class="sortable-header" data-sort="branches">Branches</th>
+                        <th class="actions-header">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${vm.displaySessions.map(session => renderSessionRow({
+        session,
+        project: vm.projectById.get(session.projectId),
+        projectNameById: vm.projectNameById,
+        projectColor: getProjectColorHex(vm.projectColorById, session.projectId),
+        isActive: vm.activeSession?.id === session.id,
+        compact: false,
+        activeTimer: vm.activeTimer,
+        context,
+        useFavicons: vm.useFavicons
+    })).join('')}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="branch-groups" class="report-branch-groups" style="display: ${vm.groupBy === 'none' ? 'none' : 'block'};">
+            ${renderGroups(vm.displaySessions, vm.projectById, vm.projectNameById, (projectId) => getProjectColorHex(vm.projectColorById, projectId), vm.activeSession?.id, vm.groupBy, vm.activeTimer, context, vm.useFavicons)}
+        </div>
+    `;
+}
+
 function renderSessionsSection(vm: ReportViewModel, context: vscode.ExtensionContext): string {
     if (vm.filteredSessions.length === 0) {
         return `
@@ -235,49 +332,10 @@ function renderSessionsSection(vm: ReportViewModel, context: vscode.ExtensionCon
     const activeBanner = vm.activeSession ? renderActiveBanner(vm.activeSession) : '';
     const paginationNotice = renderPaginationNotice(vm.displaySessions.length, vm.filteredSessions.length);
 
-    return `
-        <div class="report-summary-grid">
-            <div class="report-summary-card">
-                <span class="report-summary-label">Total Time</span>
-                <span class="report-summary-value" id="summary-total-time" data-total-seconds="${vm.totalSeconds}">${formatDuration(vm.totalSeconds)}</span>
-            </div>
-            <div class="report-summary-card">
-                <span class="report-summary-label">Sessions</span>
-                <span class="report-summary-value" id="summary-session-count">${vm.displaySessions.length}</span>
-            </div>
-            <div class="report-summary-card">
-                <span class="report-summary-label">Projects</span>
-                <span class="report-summary-value">${new Set(vm.displaySessions.map(s => s.projectId)).size}</span>
-            </div>
-            <div class="report-summary-card">
-                <span class="report-summary-label">Daily Avg</span>
-                <span class="report-summary-value" id="summary-daily-avg">${formatDuration(Math.round(vm.totalSeconds / Math.max(1, vm.displaySessions.length)))}</span>
-            </div>
-        </div>
-        ${activeBanner}
-        ${paginationNotice}
-        <div class="report-table-wrapper" style="display: ${vm.groupBy === 'none' ? 'block' : 'none'};">
-            <table class="report-table" id="time-tracking-table">
-                <thead>
-                    <tr>
-                        <th class="sortable-header sort-desc" data-sort="date">Date and Time</th>
-                        <th class="sortable-header" data-sort="project">Project</th>
-                        <th class="sortable-header" data-sort="title">Title</th>
-                        <th class="sortable-header" data-sort="duration">Duration</th>
-                        <th class="sortable-header" data-sort="branches">Branches</th>
-                        <th class="actions-header">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${vm.displaySessions.map(session => renderSessionRow(session, vm.projectById.get(session.projectId), vm.projectNameById, getProjectColorHex(vm.projectColorById, session.projectId), vm.activeSession?.id === session.id, false, vm.activeTimer, context, vm.useFavicons)).join('')}
-                </tbody>
-            </table>
-        </div>
-
-        <div id="branch-groups" class="report-branch-groups" style="display: ${vm.groupBy === 'none' ? 'none' : 'block'};">
-            ${renderGroups(vm.displaySessions, vm.projectById, vm.projectNameById, (projectId) => getProjectColorHex(vm.projectColorById, projectId), vm.activeSession?.id, vm.groupBy, vm.activeTimer, context, vm.useFavicons)}
-        </div>
-    `;
+    return renderSummaryGrid(vm.displaySessions, vm.totalSeconds)
+        + activeBanner
+        + paginationNotice
+        + renderSessionTable(vm, context);
 }
 
 function renderReportHeader(vm: ReportViewModel): string {
@@ -319,14 +377,11 @@ function renderReportHeader(vm: ReportViewModel): string {
     `;
 }
 
-function renderReportToolbarAndFilters(vm: ReportViewModel): string {
+function renderReportToolbar(vm: ReportViewModel): string {
     const exportButtons = vm.displaySessions.length > 0 ? `
         <button class="button mini secondary" data-action="exportCsv" data-period="${escAttr(vm.period)}" data-start="${escAttr(vm.customStartDate || '')}" data-end="${escAttr(vm.customEndDate || '')}">Export CSV</button>
         <button class="button mini danger" data-action="deleteAllSessions">Delete All</button>
     ` : '';
-
-    const projectPills = [...new Set(vm.displaySessions.map(s => vm.projectNameById.get(s.projectId) || s.projectId))].sort()
-        .map(name => `<button class="report-filter-pill" data-filter-project="${escAttr(name)}">${escHtml(name)}</button>`).join('');
 
     return `
         <div class="report-toolbar">
@@ -337,18 +392,29 @@ function renderReportToolbarAndFilters(vm: ReportViewModel): string {
                 ${exportButtons}
             </div>
         </div>
+    `;
+}
 
+function renderReportGroupingBar(groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate'): string {
+    return `
         <div class="report-grouping-bar">
             <label for="group-by">Group by</label>
             <select id="group-by" data-action="setGroupBy">
-                <option value="none" ${vm.groupBy === 'none' ? 'selected' : ''}>None</option>
-                <option value="project" ${vm.groupBy === 'project' ? 'selected' : ''}>Project</option>
-                <option value="title" ${vm.groupBy === 'title' ? 'selected' : ''}>Title</option>
-                <option value="branch" ${vm.groupBy === 'branch' ? 'selected' : ''}>Branch</option>
-                <option value="branchAndDate" ${vm.groupBy === 'branchAndDate' ? 'selected' : ''}>Branch and Date</option>
+                <option value="none" ${groupBy === 'none' ? 'selected' : ''}>None</option>
+                <option value="project" ${groupBy === 'project' ? 'selected' : ''}>Project</option>
+                <option value="title" ${groupBy === 'title' ? 'selected' : ''}>Title</option>
+                <option value="branch" ${groupBy === 'branch' ? 'selected' : ''}>Branch</option>
+                <option value="branchAndDate" ${groupBy === 'branchAndDate' ? 'selected' : ''}>Branch and Date</option>
             </select>
         </div>
+    `;
+}
 
+function renderReportFilterBar(displaySessions: TimeTrackingSession[], projectNameById: Map<string, string>): string {
+    const projectPills = [...new Set(displaySessions.map(s => projectNameById.get(s.projectId) || s.projectId))].sort()
+        .map(name => `<button class="report-filter-pill" data-filter-project="${escAttr(name)}">${escHtml(name)}</button>`).join('');
+
+    return `
         <div class="report-filter-bar">
             <input type="text" id="session-filter" placeholder="Filter by project, title, branch...">
             <div class="report-filter-pills" id="project-filter-pills">
@@ -356,12 +422,16 @@ function renderReportToolbarAndFilters(vm: ReportViewModel): string {
             </div>
             <button class="report-filter-clear" id="filter-clear" style="display: none;">Clear</button>
         </div>
+    `;
+}
 
+function renderAddSessionForm(projects: Project[]): string {
+    return `
         <div id="add-session-form" class="inline-edit add-session-edit" style="display: none; margin-bottom: 24px;">
             <div class="field">
                 <label for="add-project">Project</label>
                 <select id="add-project">
-                    ${vm.projects.map(p => `<option value="${escAttr(p.id)}">${escHtml(p.name)}</option>`).join('')}
+                    ${projects.map(p => `<option value="${escAttr(p.id)}">${escHtml(p.name)}</option>`).join('')}
                 </select>
             </div>
             <div class="field">
@@ -394,6 +464,23 @@ function renderReportToolbarAndFilters(vm: ReportViewModel): string {
     `;
 }
 
+function renderReportToolbarAndFilters(vm: ReportViewModel): string {
+    return renderReportToolbar(vm)
+        + renderReportGroupingBar(vm.groupBy)
+        + renderReportFilterBar(vm.displaySessions, vm.projectNameById)
+        + renderAddSessionForm(vm.projects);
+}
+
+function renderReportBody(vm: ReportViewModel, context: vscode.ExtensionContext): string {
+    return `
+        <div class="time-tracking-report">
+            ${renderReportHeader(vm)}
+            ${renderReportToolbarAndFilters(vm)}
+            ${renderSessionsSection(vm, context)}
+        </div>
+    `;
+}
+
 export async function getTimeTrackingReportHtml(
     context: vscode.ExtensionContext,
     webview: vscode.Webview,
@@ -416,12 +503,7 @@ export async function getTimeTrackingReportHtml(
         ${getReportCssHtml(baseCss)}
     </head>
     <body>
-        <div class="time-tracking-report">
-            ${renderReportHeader(vm)}
-            ${renderReportToolbarAndFilters(vm)}
-            ${renderSessionsSection(vm, context)}
-        </div>
-
+        ${renderReportBody(vm, context)}
         ${getReportScriptHtml(
             JSON.stringify(vm.displaySessions.map(s => ({ id: s.id, startTime: s.startTime, endTime: s.endTime }))),
             escAttr(period),
@@ -429,6 +511,111 @@ export async function getTimeTrackingReportHtml(
         )}
     </body>
     </html>`;
+}
+
+interface GroupKeyLabel {
+    key: string;
+    label: string;
+}
+
+function getGroupKeyLabel(session: TimeTrackingSession, projectName: string, groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate'): GroupKeyLabel {
+    const branch = sessionBranchDisplayName(session);
+    switch (groupBy) {
+        case 'project':
+            return { key: session.projectId, label: projectName };
+        case 'title':
+            return { key: `${session.projectId}::${session.title}`, label: `${projectName} — ${session.title}` };
+        case 'branchAndDate':
+            return {
+                key: `${session.projectId}::${branch}::${new Date(session.startTime).toLocaleDateString()}`,
+                label: `${projectName} — ${branch} — ${new Date(session.startTime).toLocaleDateString()}`
+            };
+        case 'branch':
+        default:
+            return { key: `${session.projectId}::${branch}`, label: `${projectName} — ${branch}` };
+    }
+}
+
+function groupSessions(
+    sessions: TimeTrackingSession[],
+    projectNameById: Map<string, string>,
+    groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate'
+): Map<string, { label: string; projectId: string; sessions: TimeTrackingSession[] }> {
+    const groups = new Map<string, { label: string; projectId: string; sessions: TimeTrackingSession[] }>();
+    for (const session of sessions) {
+        const projectName = projectNameById.get(session.projectId) || session.projectId;
+        const { key, label } = getGroupKeyLabel(session, projectName, groupBy);
+        const existing = groups.get(key);
+        if (existing) {
+            existing.sessions.push(session);
+        } else {
+            groups.set(key, { label, projectId: session.projectId, sessions: [session] });
+        }
+    }
+    return groups;
+}
+
+function sortGroupKeys(groups: Map<string, { sessions: TimeTrackingSession[] }>): string[] {
+    return [...groups.keys()].sort((a, b) => {
+        const aStart = groups.get(a)!.sessions[0]?.startTime;
+        const bStart = groups.get(b)!.sessions[0]?.startTime;
+        if (!aStart || !bStart) {
+            return 0;
+        }
+        return new Date(bStart).getTime() - new Date(aStart).getTime();
+    });
+}
+
+function renderGroupHeader(label: string, projectColor: string, sessionCount: number, totalSeconds: number): string {
+    return `
+        <div class="report-branch-group-header" style="${projectColor ? `--project-color: ${escAttr(projectColor)}` : ''}">
+            <span class="branch-group-toggle">▼</span>
+            <span class="branch-group-color"></span>
+            <span class="branch-group-name">${escHtml(label)}</span>
+            <span class="branch-group-count">${sessionCount} session${sessionCount === 1 ? '' : 's'}</span>
+            <span class="branch-group-duration" data-group-duration="${totalSeconds}">${formatDuration(totalSeconds)}</span>
+        </div>
+    `;
+}
+
+function renderGroupTable(
+    sessions: TimeTrackingSession[],
+    projectById: Map<string, Project>,
+    projectNameById: Map<string, string>,
+    projectColor: string,
+    activeSessionId: string | undefined,
+    activeTimer: { sessionId: string; accumulatedSeconds: number; lastTickAt: number } | undefined,
+    context: vscode.ExtensionContext | undefined,
+    useFavicons: boolean | undefined
+): string {
+    return `
+        <div class="report-table-wrapper">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Date and Time</th>
+                        <th>Title</th>
+                        <th>Duration</th>
+                        <th>Branches</th>
+                        <th class="actions-header">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sessions.map(session => renderSessionRow({
+        session,
+        project: projectById.get(session.projectId),
+        projectNameById,
+        projectColor,
+        isActive: activeSessionId === session.id,
+        compact: true,
+        activeTimer,
+        context,
+        useFavicons
+    })).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 function renderGroups(
@@ -446,49 +633,8 @@ function renderGroups(
         return '';
     }
 
-    const groups = new Map<string, { label: string; projectId: string; sessions: TimeTrackingSession[] }>();
-    for (const session of sessions) {
-        const branch = sessionBranchDisplayName(session);
-        const projectName = projectNameById.get(session.projectId) || session.projectId;
-        let key: string;
-        let label: string;
-        switch (groupBy) {
-            case 'project':
-                key = session.projectId;
-                label = projectName;
-                break;
-            case 'title':
-                key = `${session.projectId}::${session.title}`;
-                label = `${projectName} — ${session.title}`;
-                break;
-            case 'branchAndDate':
-                key = `${session.projectId}::${branch}::${new Date(session.startTime).toLocaleDateString()}`;
-                label = `${projectName} — ${branch} — ${new Date(session.startTime).toLocaleDateString()}`;
-                break;
-            case 'branch':
-            default:
-                key = `${session.projectId}::${branch}`;
-                label = `${projectName} — ${branch}`;
-                break;
-        }
-        const existing = groups.get(key);
-        if (existing) {
-            existing.sessions.push(session);
-        } else {
-            groups.set(key, { label, projectId: session.projectId, sessions: [session] });
-        }
-    }
-
-    const sortedKeys = [...groups.keys()].sort((a, b) => {
-        const aSessions = groups.get(a)!.sessions;
-        const bSessions = groups.get(b)!.sessions;
-        const aStart = aSessions[0]?.startTime;
-        const bStart = bSessions[0]?.startTime;
-        if (!aStart || !bStart) {
-            return 0;
-        }
-        return new Date(bStart).getTime() - new Date(aStart).getTime();
-    });
+    const groups = groupSessions(sessions, projectNameById, groupBy);
+    const sortedKeys = sortGroupKeys(groups);
 
     return sortedKeys.map(key => {
         const { label, projectId, sessions } = groups.get(key)!;
@@ -496,29 +642,8 @@ function renderGroups(
         const totalSeconds = sessions.reduce((sum, s) => sum + s.durationSeconds, 0);
         return `
             <div class="report-branch-group" data-group-key="${escAttr(key)}">
-                <div class="report-branch-group-header" style="${projectColor ? `--project-color: ${escAttr(projectColor)}` : ''}">
-                    <span class="branch-group-toggle">▼</span>
-                    <span class="branch-group-color"></span>
-                    <span class="branch-group-name">${escHtml(label)}</span>
-                    <span class="branch-group-count">${sessions.length} session${sessions.length === 1 ? '' : 's'}</span>
-                    <span class="branch-group-duration" data-group-duration="${totalSeconds}">${formatDuration(totalSeconds)}</span>
-                </div>
-                <div class="report-table-wrapper">
-                    <table class="report-table">
-                        <thead>
-                            <tr>
-                                <th>Date and Time</th>
-                                <th>Title</th>
-                                <th>Duration</th>
-                                <th>Branches</th>
-                                <th class="actions-header">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${sessions.map(session => renderSessionRow(session, projectById.get(session.projectId), projectNameById, projectColor, activeSessionId === session.id, true, activeSession, context, useFavicons)).join('')}
-                        </tbody>
-                    </table>
-                </div>
+                ${renderGroupHeader(label, projectColor, sessions.length, totalSeconds)}
+                ${renderGroupTable(sessions, projectById, projectNameById, projectColor, activeSessionId, activeSession, context, useFavicons)}
             </div>
         `;
     }).join('');
@@ -531,15 +656,9 @@ function sessionBranchDisplayName(session: TimeTrackingSession): string {
     return session.branchLog[session.branchLog.length - 1].branch;
 }
 
-function renderSessionRow(session: TimeTrackingSession, project: Project | undefined, projectNameById: Map<string, string>, projectColor: string = '', isActive: boolean = false, compact: boolean = false, activeSession?: { sessionId: string; accumulatedSeconds: number; lastTickAt: number }, context?: vscode.ExtensionContext, useFavicons?: boolean): string {
-    const startDate = new Date(session.startTime);
-    const date = startDate.toLocaleDateString();
-    const time = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const projectName = projectNameById.get(session.projectId) || session.projectId;
-    const iconHtml = project && context ? `<span class="report-project-icon">${getProjectIconHtml(context, project, useFavicons ?? true)}</span>` : '';
+function cleanBranchLog(branchLog: TimeTrackingSession['branchLog']): TimeTrackingSession['branchLog'] {
     const UNKNOWN_BRANCH = 'Unknown, no GIT branch found';
-    // Collapse consecutive identical branches and prefer the last real branch.
-    const cleanedBranchLog = session.branchLog.reduce<{ branch: string; changedAt: string }[]>((acc, change) => {
+    return branchLog.reduce<{ branch: string; changedAt: string }[]>((acc, change) => {
         if (change.branch === UNKNOWN_BRANCH && acc.some(c => c.branch !== UNKNOWN_BRANCH)) {
             return acc;
         }
@@ -549,19 +668,52 @@ function renderSessionRow(session: TimeTrackingSession, project: Project | undef
         acc.push(change);
         return acc;
     }, []);
-    const branchLogEntries = (cleanedBranchLog.length > 0 ? cleanedBranchLog : session.branchLog).slice(-5);
+}
+
+function renderBranchTimeline(branchLog: TimeTrackingSession['branchLog']): string {
+    const UNKNOWN_BRANCH = 'Unknown, no GIT branch found';
+    const cleanedBranchLog = cleanBranchLog(branchLog);
+    const branchLogEntries = (cleanedBranchLog.length > 0 ? cleanedBranchLog : branchLog).slice(-5);
     const branches = branchLogEntries.map((change, index) => `
         <div class="branch-entry">
             <span class="branch-name">${index > 0 ? '→ ' : ''}${escHtml(change.branch)}</span>
         </div>
     `).join('');
+    return `
+        <div class="branch-timeline">
+            ${branches || '<span class="branch-entry">–</span>'}
+        </div>
+    `;
+}
+
+function renderSessionActions(sessionId: string, isActive: boolean): string {
+    return `
+        <td class="session-actions">
+            ${isActive ? '' : `<button class="button mini" data-action="continueSession" data-session-id="${escAttr(sessionId)}" title="Continue">Continue</button>`}
+            <button class="button mini" data-action="editSession" data-session-id="${escAttr(sessionId)}" title="Edit">Edit</button>
+            <button class="button mini secondary" data-action="deleteSession" data-session-id="${escAttr(sessionId)}" title="Delete">Delete</button>
+        </td>
+    `;
+}
+
+function renderSessionRow(options: SessionRowContext): string {
+    const { session, project, projectNameById, projectColor, isActive, compact, activeTimer, context, useFavicons } = options;
+    const startDate = new Date(session.startTime);
+    const date = startDate.toLocaleDateString();
+    const time = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const projectName = projectNameById.get(session.projectId) || session.projectId;
+    const iconHtml = project && context ? `<span class="report-project-icon">${getProjectIconHtml(context, project, useFavicons ?? true)}</span>` : '';
+
     const colorStyle = projectColor ? `style="--project-color: ${escAttr(projectColor)}"` : '';
     const activeClass = isActive ? 'session-row-active' : '';
     const activeIndicator = isActive ? '<span class="session-row-live-indicator" title="Running"><span class="session-row-live-dot"></span>running</span>' : '';
 
-    const liveDurationSeconds = getLiveDurationSeconds(session, activeSession);
+    const liveDurationSeconds = getLiveDurationSeconds(session, activeTimer);
+    const cleanedBranchLog = cleanBranchLog(session.branchLog);
     const branchNames = (cleanedBranchLog.length > 0 ? cleanedBranchLog : session.branchLog).map(change => change.branch).join(' → ');
     const dataAttrs = `data-start-time="${escAttr(session.startTime)}" data-duration="${liveDurationSeconds}" data-project="${escAttr(projectName)}" data-title="${escAttr(session.title)}" data-branches="${escAttr(branchNames)}"`;
+    const branchTimeline = renderBranchTimeline(session.branchLog);
+    const actions = renderSessionActions(session.id, isActive);
 
     if (compact) {
         return `
@@ -572,16 +724,8 @@ function renderSessionRow(session: TimeTrackingSession, project: Project | undef
                     ${session.description ? `<small id="session-desc-${escAttr(session.id)}">${escHtml(session.description)}</small>` : ''}
                 </td>
                 <td id="session-duration-${escAttr(session.id)}" data-seconds="${liveDurationSeconds}">${formatDuration(liveDurationSeconds)}</td>
-                <td>
-                    <div class="branch-timeline">
-                        ${branches || '<span class="branch-entry">–</span>'}
-                    </div>
-                </td>
-                <td class="session-actions">
-                    ${isActive ? '' : `<button class="button mini" data-action="continueSession" data-session-id="${escAttr(session.id)}" title="Continue">Continue</button>`}
-                    <button class="button mini" data-action="editSession" data-session-id="${escAttr(session.id)}" title="Edit">Edit</button>
-                    <button class="button mini secondary" data-action="deleteSession" data-session-id="${escAttr(session.id)}" title="Delete">Delete</button>
-                </td>
+                ${branchTimeline}
+                ${actions}
             </tr>
         `;
     }
@@ -595,16 +739,8 @@ function renderSessionRow(session: TimeTrackingSession, project: Project | undef
                 ${session.description ? `<small id="session-desc-${escAttr(session.id)}">${escHtml(session.description)}</small>` : ''}
             </td>
             <td id="session-duration-${escAttr(session.id)}" data-seconds="${liveDurationSeconds}">${formatDuration(liveDurationSeconds)}</td>
-            <td>
-                <div class="branch-timeline">
-                    ${branches || '<span class="branch-entry">–</span>'}
-                </div>
-            </td>
-            <td class="session-actions">
-                ${isActive ? '' : `<button class="button mini" data-action="continueSession" data-session-id="${escAttr(session.id)}" title="Continue">Continue</button>`}
-                <button class="button mini" data-action="editSession" data-session-id="${escAttr(session.id)}" title="Edit">Edit</button>
-                <button class="button mini secondary" data-action="deleteSession" data-session-id="${escAttr(session.id)}" title="Delete">Delete</button>
-            </td>
+            ${branchTimeline}
+            ${actions}
         </tr>
     `;
 }
