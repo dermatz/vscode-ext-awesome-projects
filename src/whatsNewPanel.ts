@@ -44,6 +44,35 @@ function getChangeTypeIcon(type: string): string {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8v8"/><path d="M12 12h6"/><path d="M12 12h-6"/></svg>`;
 }
 
+function getTimeTrackingHighlightHtml(): string {
+    return `
+        <div class="whats-new-highlight time-tracking-highlight">
+            <div class="highlight-glow"></div>
+            <div class="highlight-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 7v5l3 3"/>
+                    <path d="M15 21h6v-6"/>
+                    <path d="M15 17l2-2 1 1 2-2"/>
+                </svg>
+            </div>
+            <div class="highlight-content">
+                <span class="highlight-badge">New</span>
+                <h4 class="highlight-title">Time Tracking is here</h4>
+                <p class="highlight-description">
+                    Track time per project, generate weekly reports, export CSV, and continue sessions with one click.
+                </p>
+                <ul class="highlight-features">
+                    <li>Start / stop timers directly from each project</li>
+                    <li>Detailed report with filtering and grouping</li>
+                    <li>Auto-detect Git branches per session</li>
+                    <li>Export your data as CSV</li>
+                </ul>
+            </div>
+        </div>
+    `;
+}
+
 function getChangeTypeClass(type: string): string {
     const lowerType = type.toLowerCase();
     if (lowerType.includes('feature')) { return 'type-feature'; }
@@ -81,6 +110,10 @@ async function getHtmlForPanel(context: vscode.ExtensionContext, webview: vscode
             </div>
         `).join('');
 
+        const timeTrackingHighlight = isLatest && version.version === '0.31.0'
+            ? getTimeTrackingHighlightHtml()
+            : '';
+
         return `
             <article class="whats-new-version">
                 <div class="whats-new-version-header">
@@ -91,6 +124,7 @@ async function getHtmlForPanel(context: vscode.ExtensionContext, webview: vscode
                     ${isLatest ? '<span class="whats-new-latest-badge">Latest</span>' : ''}
                 </div>
                 <div class="whats-new-version-body">
+                    ${timeTrackingHighlight}
                     ${typeSections}
                 </div>
             </article>
@@ -349,6 +383,96 @@ async function getHtmlForPanel(context: vscode.ExtensionContext, webview: vscode
                 background: var(--vscode-textCodeBlock-background);
                 font-family: var(--vscode-editor-font-family);
                 font-size: 0.78rem;
+            }
+
+            .whats-new-highlight {
+                position: relative;
+                display: flex;
+                gap: 1.25rem;
+                padding: 1.25rem;
+                margin-bottom: 1.5rem;
+                border-radius: var(--border-radius-large);
+                background: linear-gradient(135deg, color-mix(in srgb, var(--vscode-button-background) 12%, var(--vscode-menu-background)) 0%, color-mix(in srgb, var(--vscode-menu-background) 80%, transparent) 100%);
+                border: 1px solid color-mix(in srgb, var(--vscode-button-background) 30%, transparent);
+                overflow: hidden;
+            }
+
+            .highlight-glow {
+                position: absolute;
+                top: -50%;
+                right: -20%;
+                width: 260px;
+                height: 260px;
+                background: radial-gradient(circle, color-mix(in srgb, var(--vscode-button-background) 35%, transparent) 0%, transparent 70%);
+                opacity: 0.5;
+                pointer-events: none;
+            }
+
+            .highlight-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                width: 64px;
+                height: 64px;
+                border-radius: 16px;
+                background: var(--gradient-brand);
+                color: #ffffff;
+                box-shadow: 0 6px 20px rgba(200, 80, 192, 0.35);
+                z-index: 1;
+            }
+
+            .highlight-content {
+                display: flex;
+                flex-direction: column;
+                gap: 0.35rem;
+                z-index: 1;
+                min-width: 0;
+            }
+
+            .highlight-badge {
+                align-self: flex-start;
+                padding: 0.15rem 0.55rem;
+                border-radius: 999px;
+                font-size: 0.6rem;
+                font-weight: 800;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: #4C0519;
+                background: var(--gradient-brand);
+            }
+
+            .highlight-title {
+                margin: 0;
+                font-size: 1.15rem;
+                font-weight: 800;
+                letter-spacing: -0.01em;
+            }
+
+            .highlight-description {
+                margin: 0;
+                font-size: 0.85rem;
+                opacity: 0.85;
+                line-height: 1.5;
+            }
+
+            .highlight-features {
+                margin: 0.4rem 0 0;
+                padding-left: 1.1rem;
+                font-size: 0.8rem;
+                opacity: 0.9;
+            }
+
+            .highlight-features li {
+                margin-bottom: 0.2rem;
+            }
+
+            @media screen and (max-width: 560px) {
+                .whats-new-highlight {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.875rem;
+                }
             }
 
             .whats-new-footer {
