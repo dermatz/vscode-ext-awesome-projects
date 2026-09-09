@@ -213,7 +213,7 @@ export class TimeTrackingService implements vscode.Disposable {
         state.activeSession = {
             sessionId: session.id,
             projectId: session.projectId,
-            workspaceFolderPath: '',
+            workspaceFolderPath: this._getWorkspaceFolderPathForProject(session.projectId),
             lastBranch: session.branchLog[session.branchLog.length - 1]?.branch || 'Unknown, no GIT branch found',
             lastTickAt: Date.now(),
             accumulatedSeconds: session.durationSeconds,
@@ -552,6 +552,12 @@ export class TimeTrackingService implements vscode.Disposable {
 
             await this._setState(state);
         });
+    }
+
+    private _getWorkspaceFolderPathForProject(projectId: string): string {
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const projects = config.get<{ id: string; path: string }[]>('projects') || [];
+        return projects.find(p => p.id === projectId)?.path || '';
     }
 
     private async _enqueueStateMutation<T>(mutation: () => Promise<T>): Promise<T> {

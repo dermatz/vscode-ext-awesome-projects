@@ -152,4 +152,44 @@ suite('TimeTrackingService Tests', () => {
         assert.strictEqual(service.getActiveSession()?.sessionId, session.id);
         assert.strictEqual(service.getSessionsByProject('proj-1').length, 1);
     });
+
+    test('continueSession reactivates a completed session and preserves duration', async () => {
+        const session = await service.startSession('proj-1', '/workspace/a', 'Task A');
+        await new Promise(r => setTimeout(r, 1100));
+        const stopped = await service.stopSession();
+        assert.ok(stopped);
+        const stoppedDuration = stopped!.durationSeconds;
+        assert.ok(stoppedDuration > 0);
+
+        let addedSeconds = 0;
+        service.addTimeToProject = async (_projectId: string, seconds: number) => {
+            addedSeconds += seconds;
+        };
+
+        const continued = await service.continueSession({ sessionId: session.id });
+        assert.ok(continued);
+        assert.strictEqual(continued!.id, session.id);
+        assert.strictEqual(continued!.endTime, undefined);
+        assert.strictEqual(continued!.durationSeconds, stoppedDuration);
+
+        const active = service.getActiveSession();
+        assert.ok(active);
+        assert.strictEqual(active!.sessionId, session.id);
+        assert.strictEqual(active!.accumulatedSeconds, stoppedDuration);
+        assert.strictEqual(addedSeconds, -stoppedDuration);
+    });
+
+    test('continueSession uses workspace folder path from project configuration', async () => {
+        const session = await service.startSession('proj-continue-path', '/workspace/continue', 'Task A');
+        await service.stopSession();
+
+        const expectedPath = vscode.workspace.getConfiguration('awesomeProjects')
+            .get<{ id: string; path: string }[]>('projects')
+            ?.find(p => p.id === 'proj-continue-path')?.path || '';
+
+        const continued = await service.continueSession({ sessionId: session.id });
+        assert.ok(continued);
+        assert.strictEqual(service.getActiveSession()?.workspaceFolderPath, expectedPath);
+        assert.strictEqual(service.getActiveSession()?.projectId, 'proj-continue-path');
+    });
 });
