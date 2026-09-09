@@ -267,6 +267,14 @@ export function getSaveFunctionsScript(): string {
             });
         }
 
+        function getRunningDurationSeconds(activeSession) {
+            if (!activeSession) { return 0; }
+            const lastTickAt = typeof activeSession.lastTickAt === 'number' ? activeSession.lastTickAt : Date.now();
+            const durationSeconds = typeof activeSession.durationSeconds === 'number' ? activeSession.durationSeconds : 0;
+            const elapsedSinceLastTick = Math.max(0, Math.floor((Date.now() - lastTickAt) / 1000));
+            return durationSeconds + elapsedSinceLastTick;
+        }
+
         function updateTimeTrackingDropdown(activeSession) {
             const dropdown = document.querySelector('.time-tracking-dropdown.show');
             if (!dropdown) { return; }
@@ -281,7 +289,8 @@ export function getSaveFunctionsScript(): string {
             }
 
             const active = activeSession;
-            const durationText = formatDuration(active.durationSeconds || 0) + ' · ' + new Date(active.startTime).toLocaleDateString();
+            const durationSeconds = getRunningDurationSeconds(active);
+            const durationText = formatDuration(durationSeconds) + ' · ' + new Date(active.startTime).toLocaleDateString();
             let activeCard = sessionsContainer.querySelector('.time-tracking-session-active');
 
             if (!activeCard) {
@@ -346,7 +355,7 @@ export function getSaveFunctionsScript(): string {
             updateTimeTrackingDropdown(message.activeSession);
             if (message.activeSession) {
                 const active = message.activeSession;
-                const elapsed = active.durationSeconds || 0;
+                const elapsed = getRunningDurationSeconds(active);
                 document.querySelectorAll('.project-time-spent').forEach(el => {
                     const projectId = el.getAttribute('data-project-id');
                     if (active.projectId === projectId) {
@@ -363,6 +372,10 @@ export function getSaveFunctionsScript(): string {
 
         function deleteTimeTrackingSession(sessionId) {
             window.vscodeApi.postMessage({ command: 'deleteTimeTrackingSession', sessionId: sessionId });
+        }
+
+        function confirmDeleteTimeTrackingSession(sessionId) {
+            window.vscodeApi.postMessage({ command: 'confirmDeleteTimeTrackingSession', sessionId: sessionId });
         }
 
         function editTimeTrackingSessionInline(sessionId) {

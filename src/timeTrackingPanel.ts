@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { TimeTrackingService } from './timeTrackingService';
-import { getTimeTrackingReportHtml, getPeriodBounds } from './template/timeTracking/report';
+import { getTimeTrackingReportHtml, getPeriodBounds, filterSessionsForPeriod, getLiveDurationSeconds } from './template/timeTracking/report';
+import { formatDuration } from './template/utils/formatDuration';
 import { WebviewMessage } from './types/webviewMessages';
 
 export class TimeTrackingPanel {
@@ -63,34 +64,47 @@ export class TimeTrackingPanel {
         let lastActiveSessionId = timeTrackingService.getActiveSessionFull()?.id;
         let isDisposed = false;
 
+        const handleTimerEvent = async (isUiTick: boolean) => {
+            if (isDisposed || panel !== TimeTrackingPanel._panel) {
+                return;
+            }
+            if (!panel.visible) {
+                return;
+            }
+            const activeSession = timeTrackingService.getActiveSessionFull();
+            const currentActiveSessionId = activeSession?.id;
+            if (currentActiveSessionId !== lastActiveSessionId) {
+                lastActiveSessionId = currentActiveSessionId;
+                panel.webview.html = await TimeTrackingPanel._getHtml(
+                    panel.webview,
+                    extensionUri,
+                    context,
+                    timeTrackingService
+                );
+            } else if (isUiTick && activeSession) {
+                panel.webview.postMessage({
+                    command: 'timeTrackingTick',
+                    activeSession: {
+                        id: activeSession.id,
+                        durationSeconds: activeSession.durationSeconds + Math.max(0, Math.floor((Date.now() - (timeTrackingService.getActiveSession()?.lastTickAt || Date.now())) / 1000))
+                    }
+                });
+            } else if (!isUiTick) {
+                panel.webview.postMessage({
+                    command: 'timeTrackingTick',
+                    activeSession: activeSession ? {
+                        id: activeSession.id,
+                        durationSeconds: activeSession.durationSeconds
+                    } : undefined
+                });
+            }
+        };
+
         disposables.push(
-            timeTrackingService.onDidChangeTimer(async () => {
-                if (isDisposed || panel !== TimeTrackingPanel._panel) {
-                    return;
-                }
-                if (!panel.visible) {
-                    return;
-                }
-                const activeSession = timeTrackingService.getActiveSessionFull();
-                const currentActiveSessionId = activeSession?.id;
-                if (currentActiveSessionId !== lastActiveSessionId) {
-                    lastActiveSessionId = currentActiveSessionId;
-                    panel.webview.html = await TimeTrackingPanel._getHtml(
-                        panel.webview,
-                        extensionUri,
-                        context,
-                        timeTrackingService
-                    );
-                } else {
-                    panel.webview.postMessage({
-                        command: 'timeTrackingTick',
-                        activeSession: activeSession ? {
-                            id: activeSession.id,
-                            durationSeconds: activeSession.durationSeconds
-                        } : undefined
-                    });
-                }
-            })
+            timeTrackingService.onDidChangeTimer(async () => { await handleTimerEvent(false); })
+        );
+        disposables.push(
+            timeTrackingService.onDidChangeUiTimer(async () => { await handleTimerEvent(true); })
         );
 
         disposables.push(
@@ -132,6 +146,24 @@ export class TimeTrackingPanel {
                             );
                         } catch (error) {
                             vscode.window.showErrorMessage(`Failed to stop timer: ${error}`);
+                        }
+                        break;
+                    case 'continueTimeTracking':
+                        if (message.sessionId) {
+                            try {
+                                const continued = await timeTrackingService.continueSession({ sessionId: message.sessionId });
+                                if (continued) {
+                                    vscode.window.showInformationMessage(`Timer continued: ${continued.title}`);
+                                    panel.webview.html = await TimeTrackingPanel._getHtml(
+                                        panel.webview,
+                                        extensionUri,
+                                        context,
+                                        timeTrackingService
+                                    );
+                                }
+                            } catch (error) {
+                                vscode.window.showErrorMessage(`Failed to continue timer: ${error}`);
+                            }
                         }
                         break;
                     case 'deleteTimeTrackingSession':
@@ -232,10 +264,13 @@ export class TimeTrackingPanel {
                             if (confirm === 'Delete') {
                                 const state = timeTrackingService.getState();
                                 const allSessions = Object.values(state.sessionsByProject).flat();
+                                const weekStartsOnSetting = vscode.workspace.getConfiguration('awesomeProjects').get<string>('timeTracking.weekStartsOn', 'sunday');
+                                const weekStartsOn = weekStartsOnSetting === 'monday' ? 1 : 0;
                                 const { start, end } = getPeriodBounds(
                                     TimeTrackingPanel._currentPeriod,
                                     TimeTrackingPanel._customStartDate,
-                                    TimeTrackingPanel._customEndDate
+                                    TimeTrackingPanel._customEndDate,
+                                    weekStartsOn
                                 );
                                 const activeSessionId = state.activeSession?.sessionId;
                                 const sessionsToDelete = allSessions.filter(session => {
@@ -324,13 +359,12 @@ export class TimeTrackingPanel {
     ): Promise<void> {
         const state = timeTrackingService.getState();
         const allSessions = Object.values(state.sessionsByProject).flat();
-        const { start, end } = getPeriodBounds(period ?? 'all', customStartDate, customEndDate);
+        const weekStartsOnSetting = vscode.workspace.getConfiguration('awesomeProjects').get<string>('timeTracking.weekStartsOn', 'sunday');
+        const weekStartsOn = weekStartsOnSetting === 'monday' ? 1 : 0;
+        const { start, end } = getPeriodBounds(period ?? 'all', customStartDate, customEndDate, weekStartsOn);
         const activeSessionId = state.activeSession?.sessionId;
 
-        const filtered = allSessions.filter(session => {
-            const sessionDate = new Date(session.startTime);
-            return sessionDate >= start && sessionDate <= end;
-        });
+        const filtered = filterSessionsForPeriod(allSessions, start, end, activeSessionId);
 
         if (filtered.length === 0) {
             vscode.window.showInformationMessage('No sessions to export for the selected period.');
@@ -344,12 +378,10 @@ export class TimeTrackingPanel {
         const rows = filtered.map(session => {
             const startDate = new Date(session.startTime);
             const isActive = session.id === activeSessionId;
-            const durationSeconds = isActive
-                ? timeTrackingService.getActiveSessionFull()?.durationSeconds ?? session.durationSeconds
-                : session.durationSeconds;
-            const endTime = session.endTime || (isActive ? new Date().toISOString() : undefined);
+            const durationSeconds = getLiveDurationSeconds(session, state.activeSession);
+            const endTime = session.endTime || (isActive ? undefined : undefined);
             const branches = session.branchLog.map(b => b.branch).join(' → ');
-            const durationFormatted = TimeTrackingPanel._formatDuration(durationSeconds);
+            const durationFormatted = formatDuration(durationSeconds);
             const projectName = projectNameById.get(session.projectId) || session.projectId;
             return [
                 startDate.toISOString().split('T')[0],
@@ -378,15 +410,6 @@ export class TimeTrackingPanel {
 
         await fs.promises.writeFile(uri.fsPath, csvContent, 'utf8');
         vscode.window.showInformationMessage(`Exported ${filtered.length} sessions to ${uri.fsPath}`);
-    }
-
-    private static _formatDuration(totalSeconds: number): string {
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        if (hours > 0) {
-            return `${hours}h ${minutes}m`;
-        }
-        return `${minutes}m`;
     }
 
     private static _escapeCsv(value: string): string {

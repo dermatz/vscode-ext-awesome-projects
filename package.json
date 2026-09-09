@@ -455,6 +455,19 @@
             "type": "string",
             "default": "[A-Z]{2,}-\\d+",
             "description": "Regular expression used to find ticket IDs in branch names"
+          },
+          "awesomeProjects.timeTracking.weekStartsOn": {
+            "type": "string",
+            "enum": ["sunday", "monday"],
+            "default": "sunday",
+            "description": "First day of the week used for the 'This Week' report"
+          },
+          "awesomeProjects.timeTracking.maxReportSessions": {
+            "type": "number",
+            "default": 500,
+            "minimum": 50,
+            "maximum": 5000,
+            "description": "Maximum number of sessions rendered in the Time Tracking Report"
           }
         }
       }

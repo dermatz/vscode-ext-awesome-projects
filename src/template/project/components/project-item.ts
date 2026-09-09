@@ -9,6 +9,7 @@ import { getProjectId } from '../utils/project-id';
 import { getTablerIconSvg } from '../utils/tablerIcons';
 import { escHtml, escAttr, escOnclickArg, sanitizeCssColor, safeUrl } from '../../utils/escaping';
 import { TimeTrackingSession } from '../../../types/timeTracking';
+import { formatDuration } from '../../utils/formatDuration';
 
 async function findWorkspaceFile(projectPath: string): Promise<string | null> {
     try {
@@ -30,19 +31,6 @@ interface ProjectItemProps {
     isTimerActive?: boolean;
     sessions?: TimeTrackingSession[];
     activeSession?: TimeTrackingSession;
-}
-
-function formatDuration(totalSeconds: number): string {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    if (hours > 0) {
-        return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    if (minutes > 0) {
-        return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    return `${seconds}s`;
 }
 
 export async function getProjectItemHtml(context: vscode.ExtensionContext, props: ProjectItemProps): Promise<string> {

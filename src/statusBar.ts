@@ -2,19 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { Project } from './extension';
 import { TimeTrackingService } from './timeTrackingService';
-
-function formatDuration(totalSeconds: number): string {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    if (hours > 0) {
-        return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    if (minutes > 0) {
-        return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    return `${seconds}s`;
-}
+import { formatDuration } from './template/utils/formatDuration';
 
 /**
  * Manages the status bar item that shows the currently open project.
@@ -49,7 +37,8 @@ export class StatusBarManager implements vscode.Disposable {
 
         if (this._timeTrackingService) {
             this._disposables.push(
-                this._timeTrackingService.onDidChangeTimer(() => this.update())
+                this._timeTrackingService.onDidChangeTimer(() => this.update()),
+                this._timeTrackingService.onDidChangeUiTimer(() => this.update())
             );
         }
     }
@@ -87,7 +76,8 @@ export class StatusBarManager implements vscode.Disposable {
 
         if (isTimerActive && this._timeTrackingService) {
             const fullSession = this._timeTrackingService.getActiveSessionFull();
-            const elapsed = fullSession?.durationSeconds ?? activeSession.accumulatedSeconds;
+            const elapsedSinceLastTick = Math.max(0, Math.floor((Date.now() - activeSession.lastTickAt) / 1000));
+            const elapsed = (fullSession?.durationSeconds ?? activeSession.accumulatedSeconds) + elapsedSinceLastTick;
             this._statusBarItem.text = `$(watch) ${matchedProject.name} ${formatDuration(elapsed)}`;
             this._statusBarItem.tooltip = `Timer running: ${fullSession?.title || matchedProject.name}\nBranch: ${activeSession.lastBranch}`;
         } else {

@@ -2,19 +2,7 @@ import { Project } from '../../../../extension';
 import { getProjectId } from '../../utils/project-id';
 import { getGitRepositoriesHtml } from '../../utils/getGitRepositories';
 import { safeUrl, escAttr, escOnclickArg, escHtml, sanitizeCssColor } from '../../../utils/escaping';
-
-function formatDuration(totalSeconds: number): string {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    if (hours > 0) {
-        return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    if (minutes > 0) {
-        return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    return `${seconds}s`;
-}
+import { formatDuration } from '../../../utils/formatDuration';
 
 export async function getProjectInfoDropdownHtml(
     project: Project,

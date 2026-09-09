@@ -19,6 +19,7 @@ suite('TimeTrackingService Tests', () => {
             subscriptions: []
         } as unknown as vscode.ExtensionContext;
         service = new TimeTrackingService(context);
+        service.addTimeToProject = async () => {};
     });
 
     teardown(() => {
@@ -55,8 +56,6 @@ suite('TimeTrackingService Tests', () => {
     });
 
     test('deleteSession removes session and adjusts aggregated time', async () => {
-        service.addTimeToProject = async () => {};
-
         const session = await service.startSession('proj-1', '/workspace/a');
         await service.stopSession('proj-1');
 
@@ -74,9 +73,6 @@ suite('TimeTrackingService Tests', () => {
     });
 
     test('cleanupOldSessions removes old sessions', async () => {
-        // Mock project aggregation to avoid touching real VS Code: configuration
-        service.addTimeToProject = async () => {};
-
         const state: TimeTrackingState = {
             sessionsByProject: {
                 'proj-1': [
@@ -100,7 +96,6 @@ suite('TimeTrackingService Tests', () => {
     });
 
     test('startSession serializes concurrent calls so only one active session exists', async () => {
-        service.addTimeToProject = async () => {};
         const [first, second] = await Promise.all([
             service.startSession('proj-1', '/workspace/a'),
             service.startSession('proj-2', '/workspace/b')
@@ -112,7 +107,6 @@ suite('TimeTrackingService Tests', () => {
     });
 
     test('constructor resumes ticking for persisted active session', async () => {
-        service.addTimeToProject = async () => {};
         const session = await service.startSession('proj-1', '/workspace/a');
         await new Promise(r => setTimeout(r, 50));
 
@@ -130,7 +124,6 @@ suite('TimeTrackingService Tests', () => {
     });
 
     test('resume does not add stale duration twice', async () => {
-        service.addTimeToProject = async () => {};
         await service.startSession('proj-1', '/workspace/a');
         await new Promise(r => setTimeout(r, 80));
         const stopped = await service.stopSession();
@@ -151,7 +144,6 @@ suite('TimeTrackingService Tests', () => {
     });
 
     test('cleanupOldSessions never deletes active session', async () => {
-        service.addTimeToProject = async () => {};
         const session = await service.startSession('proj-1', '/workspace/a');
         session.startTime = new Date(Date.now() - 100 * 24 * 60 * 60 * 1000).toISOString();
         await context.globalState.update(TIME_TRACKING_STATE_KEY, service.getState());

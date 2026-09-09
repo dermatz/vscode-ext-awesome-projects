@@ -2,19 +2,7 @@ import { Project } from '../../../../extension';
 import { getProjectId } from '../../utils/project-id';
 import { escAttr, escOnclickArg, escHtml, sanitizeCssColor } from '../../../utils/escaping';
 import { TimeTrackingSession } from '../../../../types/timeTracking';
-
-function formatDuration(totalSeconds: number): string {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    if (hours > 0) {
-        return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    if (minutes > 0) {
-        return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    return `${seconds}s`;
-}
+import { formatDuration } from '../../../utils/formatDuration';
 
 export function getTimeTrackingDropdownHtml(
     project: Project,
@@ -58,25 +46,34 @@ export function getTimeTrackingDropdownHtml(
                         Open Report
                     </button>
                 </div>
-                ${sessions.length > 0 || (isTimerActive && activeSession) ? `
+                ${sessions.length > 0 || isTimerActive ? `
                     <div class="time-tracking-sessions">
+                        ${isTimerActive && activeSession ? `
+                            <div class="time-tracking-session time-tracking-session-active" style="border-color: ${safeBgColor};">
+                                <div class="session-row">
+                                    <div class="session-meta" data-active-session-meta="${escAttr(activeSession.id)}">${formatDuration(activeSession.durationSeconds)} · ${new Date(activeSession.startTime).toLocaleDateString()}</div>
+                                </div>
+                                <button type="button" class="session-title-edit" title="Edit session" onclick="editTimeTrackingSessionInline('${escAttr(activeSession.id)}')">
+                                    <span class="session-live-indicator" title="Running"><span class="session-live-dot"></span>Running</span>
+                                    <span class="session-title-text"><strong>${escHtml(activeSession.title)}</strong></span>
+                                    <span class="session-edit-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                    </span>
+                                </button>
+                            </div>
+                        ` : ''}
                         ${(() => {
                             const sortedSessions = [...sessions].sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
-                            const displaySessions = isTimerActive && activeSession
-                                ? [activeSession, ...sortedSessions.filter(s => s.id !== activeSession.id)]
-                                : sortedSessions;
-                            return displaySessions.slice(0, 10).map((session, index) => {
-                                const isRunning = isTimerActive && session.id === activeSession?.id;
+                            return sortedSessions.filter(s => !activeSession || s.id !== activeSession.id).slice(0, 10).map(session => {
                                 return `
-                                <div class="time-tracking-session ${isRunning ? 'time-tracking-session-active' : ''}" style="${isRunning ? `border-color: ${safeBgColor};` : ''}">
+                                <div class="time-tracking-session">
                                     <div class="session-row">
                                         <div class="session-meta">${formatDuration(session.durationSeconds)} · ${new Date(session.startTime).toLocaleDateString()}</div>
-                                        <button type="button" class="session-delete" title="Delete session" onclick="deleteTimeTrackingSession('${escAttr(session.id)}')">
+                                        <button type="button" class="session-delete" title="Delete session" onclick="confirmDeleteTimeTrackingSession('${escAttr(session.id)}')">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
                                         </button>
                                     </div>
                                     <button type="button" class="session-title-edit" title="Edit session" onclick="editTimeTrackingSessionInline('${escAttr(session.id)}')">
-                                        ${isRunning ? '<span class="session-live-indicator" title="Running"><span class="session-live-dot"></span>Running</span>' : ''}
                                         <span class="session-title-text"><strong>${escHtml(session.title)}</strong></span>
                                         <span class="session-edit-icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>

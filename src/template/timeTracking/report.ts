@@ -3,19 +3,7 @@ import { TimeTrackingService } from '../../timeTrackingService';
 import { TimeTrackingSession } from '../../types/timeTracking';
 import { loadResourceFile } from '../utils/resourceLoader';
 import { escHtml, escAttr } from '../utils/escaping';
-
-function formatDuration(totalSeconds: number): string {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    if (hours > 0) {
-        return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    if (minutes > 0) {
-        return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    return `${seconds}s`;
-}
+import { formatDuration } from '../utils/formatDuration';
 
 function isSameDay(a: Date, b: Date): boolean {
     return a.getFullYear() === b.getFullYear() &&
@@ -23,35 +11,95 @@ function isSameDay(a: Date, b: Date): boolean {
         a.getDate() === b.getDate();
 }
 
-export function getPeriodBounds(period: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom', customStart?: string, customEnd?: string): { start: Date; end: Date } {
+function getUtcStartOfDay(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
+}
+
+function getUtcEndOfDay(date: Date): Date {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
+}
+
+function isValidDateString(value: string): boolean {
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return false;
+    }
+    const date = new Date(value);
+    return !isNaN(date.getTime());
+}
+
+export function getLiveDurationSeconds(
+    session: TimeTrackingSession,
+    activeSession?: { sessionId: string; accumulatedSeconds: number; lastTickAt: number }
+): number {
+    if (!activeSession || session.id !== activeSession.sessionId) {
+        return session.durationSeconds;
+    }
+    const elapsedSinceLastTick = Math.max(0, Math.floor((Date.now() - activeSession.lastTickAt) / 1000));
+    return activeSession.accumulatedSeconds + elapsedSinceLastTick;
+}
+
+export function filterSessionsForPeriod(
+    sessions: TimeTrackingSession[],
+    start: Date,
+    end: Date,
+    activeSessionId?: string
+): TimeTrackingSession[] {
+    return sessions.filter(session => {
+        if (session.id === activeSessionId) {
+            return true;
+        }
+        const sessionDate = new Date(session.startTime);
+        return sessionDate >= start && sessionDate <= end;
+    });
+}
+
+function getWeekStartOffset(weekStartsOn: number): number {
+    // weekStartsOn: 0 = Sunday, 1 = Monday (matching locale conventions)
+    const dayOfWeek = new Date().getUTCDay();
+    return (dayOfWeek + 7 - weekStartsOn) % 7;
+}
+
+export function getPeriodBounds(
+    period: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom',
+    customStart?: string,
+    customEnd?: string,
+    weekStartsOn: number = 0
+): { start: Date; end: Date } {
     const now = new Date();
-    let end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    let start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    let end = getUtcEndOfDay(now);
+    let start = getUtcStartOfDay(now);
 
     switch (period) {
         case 'today':
             break;
-        case 'week':
-            start.setDate(start.getDate() - start.getDay());
+        case 'week': {
+            const offset = getWeekStartOffset(weekStartsOn);
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - offset, 0, 0, 0, 0));
             break;
+        }
         case 'month':
-            start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
             break;
         case 'lastMonth':
-            start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
-            end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+            start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1, 0, 0, 0, 0));
+            end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0, 23, 59, 59, 999));
             break;
         case 'all':
-            start = new Date(1970, 0, 1, 0, 0, 0, 0);
-            end = new Date(now.getFullYear() + 1, 11, 31, 23, 59, 59, 999);
+            start = new Date(Date.UTC(1970, 0, 1, 0, 0, 0, 0));
+            end = new Date(8640000000000000);
             break;
-        case 'custom':
-            start = customStart ? new Date(customStart) : start;
-            end.setTime(customEnd ? new Date(customEnd).getTime() : now.getTime());
-            if (customEnd) {
-                end.setHours(23, 59, 59, 999);
+        case 'custom': {
+            const customStartDate = customStart && isValidDateString(customStart) ? new Date(customStart) : undefined;
+            const customEndDate = customEnd && isValidDateString(customEnd) ? new Date(customEnd) : undefined;
+            start = customStartDate ? getUtcStartOfDay(customStartDate) : start;
+            end = customEndDate ? getUtcEndOfDay(customEndDate) : end;
+            if (start > end) {
+                const temp = start;
+                start = end;
+                end = temp;
             }
             break;
+        }
     }
 
     return { start, end };
@@ -95,17 +143,19 @@ export async function getTimeTrackingReportHtml(
         (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
     );
 
-    const { start, end } = getPeriodBounds(period, customStartDate, customEndDate);
-    const activeSession = state.activeSession ? timeTrackingService.getActiveSessionFull() : undefined;
-    const filteredSessions = allSessions.filter(session => {
-        if (activeSession && session.id === activeSession.id) {
-            return true;
-        }
-        const sessionDate = new Date(session.startTime);
-        return sessionDate >= start && sessionDate <= end;
-    });
+    const weekStartsOnSetting = config.get<string>('timeTracking.weekStartsOn', 'sunday');
+    const weekStartsOn = weekStartsOnSetting === 'monday' ? 1 : 0;
 
-    const totalSeconds = filteredSessions.reduce((sum, session) => sum + session.durationSeconds, 0);
+    const { start, end } = getPeriodBounds(period, customStartDate, customEndDate, weekStartsOn);
+    const activeSession = state.activeSession ? timeTrackingService.getActiveSessionFull() : undefined;
+    const activeSessionId = activeSession?.id;
+    const filteredSessions = filterSessionsForPeriod(allSessions, start, end, activeSessionId);
+
+    const maxRenderedSessions = Math.max(50, Math.min(5000, config.get<number>('timeTracking.maxReportSessions', 500)));
+    const displaySessions = filteredSessions.slice(0, maxRenderedSessions);
+    const hasMoreSessions = filteredSessions.length > displaySessions.length;
+
+    const totalSeconds = displaySessions.reduce((sum, session) => sum + getLiveDurationSeconds(session, state.activeSession), 0);
 
     const activeBanner = activeSession
         ? `
@@ -116,9 +166,13 @@ export async function getTimeTrackingReportHtml(
                     <span class="report-active-title">${escHtml(activeSession.title)}</span>
                 </div>
                 <span class="report-active-time" data-active-session-id="${escAttr(activeSession.id)}">${formatDuration(activeSession.durationSeconds)}</span>
-                <button class="button mini" data-action="stopActiveTimer">Stop</button>
+                <button class="button mini" data-action="stopActiveTimer" onclick="stopActiveTimer(event)">Stop</button>
             </div>
         `
+        : '';
+
+    const paginationNotice = hasMoreSessions
+        ? `<div class="report-pagination-notice">Showing ${displaySessions.length} of ${filteredSessions.length} sessions. Narrow the period to see older entries, or increase the limit in settings.</div>`
         : '';
 
     const sessionsHtml = filteredSessions.length === 0
@@ -137,18 +191,19 @@ export async function getTimeTrackingReportHtml(
                 </div>
                 <div class="report-summary-card">
                     <span class="report-summary-label">Sessions</span>
-                    <span class="report-summary-value" id="summary-session-count">${filteredSessions.length}</span>
+                    <span class="report-summary-value" id="summary-session-count">${displaySessions.length}</span>
                 </div>
                 <div class="report-summary-card">
                     <span class="report-summary-label">Projects</span>
-                    <span class="report-summary-value">${new Set(filteredSessions.map(s => s.projectId)).size}</span>
+                    <span class="report-summary-value">${new Set(displaySessions.map(s => s.projectId)).size}</span>
                 </div>
                 <div class="report-summary-card">
                     <span class="report-summary-label">Daily Avg</span>
-                    <span class="report-summary-value" id="summary-daily-avg">${formatDuration(Math.round(totalSeconds / Math.max(1, filteredSessions.length)))}</span>
+                    <span class="report-summary-value" id="summary-daily-avg">${formatDuration(Math.round(totalSeconds / Math.max(1, displaySessions.length)))}</span>
                 </div>
             </div>
             ${activeBanner}
+            ${paginationNotice}
             <div class="report-table-wrapper" style="display: ${groupBy === 'none' ? 'block' : 'none'};">
                 <table class="report-table" id="time-tracking-table">
                     <thead>
@@ -158,17 +213,17 @@ export async function getTimeTrackingReportHtml(
                             <th class="sortable-header" data-sort="title">Title</th>
                             <th class="sortable-header" data-sort="duration">Duration</th>
                             <th class="sortable-header" data-sort="branches">Branches</th>
-                            <th>Actions</th>
+                            <th class="actions-header">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${filteredSessions.map(session => renderSessionRow(session, projectNameById, getProjectColorHex(session.projectId), activeSession?.id === session.id)).join('')}
+                        ${displaySessions.map(session => renderSessionRow(session, projectNameById, getProjectColorHex(session.projectId), activeSession?.id === session.id, false, state.activeSession)).join('')}
                     </tbody>
                 </table>
             </div>
 
             <div id="branch-groups" class="report-branch-groups" style="display: ${groupBy === 'none' ? 'none' : 'block'};">
-                ${renderGroups(filteredSessions, projectNameById, getProjectColorHex, activeSession?.id, groupBy)}
+                ${renderGroups(displaySessions, projectNameById, getProjectColorHex, activeSession?.id, groupBy, state.activeSession)}
             </div>
         `;
 
@@ -204,6 +259,39 @@ export async function getTimeTrackingReportHtml(
                 font-size: 1.6rem;
                 font-weight: 700;
                 letter-spacing: -0.02em;
+            }
+
+            .report-header-actions {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-left: auto;
+            }
+
+            .report-header-stop {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 6px 12px;
+                background: var(--vscode-button-background);
+                color: var(--vscode-button-foreground);
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 0.85rem;
+                font-weight: 600;
+            }
+
+            .report-header-stop:hover {
+                background: var(--vscode-button-hoverBackground);
+            }
+
+            .report-header-stop .live-dot {
+                width: 8px;
+                height: 8px;
+                background: currentColor;
+                border-radius: 50%;
+                animation: pulse 1.5s infinite;
             }
 
             .report-period-tabs {
@@ -269,6 +357,17 @@ export async function getTimeTrackingReportHtml(
                 box-shadow: 0 0 0 3px color-mix(in srgb, var(--vscode-focusBorder) 25%, transparent), inset 0 2px 4px rgba(0, 0, 0, 0.2);
             }
 
+            .report-custom-range input.invalid {
+                border-color: var(--vscode-errorForeground);
+                box-shadow: 0 0 0 3px color-mix(in srgb, var(--vscode-errorForeground) 25%, transparent), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+
+            .report-custom-range .validation-message {
+                color: var(--vscode-errorForeground);
+                font-size: 0.85rem;
+                width: 100%;
+            }
+
             .report-active-banner {
                 display: flex;
                 align-items: center;
@@ -279,6 +378,16 @@ export async function getTimeTrackingReportHtml(
                 margin-bottom: 24px;
                 border: 1px solid color-mix(in srgb, var(--vscode-button-background) 25%, transparent);
                 border-left: 4px solid var(--vscode-button-background);
+            }
+
+            .report-pagination-notice {
+                padding: 12px 16px;
+                margin-bottom: 20px;
+                background: color-mix(in srgb, var(--vscode-editorWarning-background, var(--vscode-editorWarning-border)) 15%, var(--vscode-editor-inactiveSelectionBackground));
+                border: 1px solid var(--vscode-editorWarning-border, var(--vscode-foreground));
+                border-radius: 10px;
+                color: var(--vscode-editorWarning-foreground, var(--vscode-foreground));
+                font-size: 0.9rem;
             }
 
             .report-active-indicator {
@@ -625,19 +734,29 @@ export async function getTimeTrackingReportHtml(
 
             .report-table {
                 width: 100%;
-                border-collapse: separate;
-                border-spacing: 0;
+                border-collapse: collapse;
             }
 
             .report-table th,
             .report-table td {
                 text-align: left;
                 padding: 14px 16px;
+            }
+
+            .report-table tbody tr {
                 border-bottom: 1px solid var(--vscode-panel-border);
             }
 
-            .report-table tbody tr:last-child td {
+            .report-table tbody tr:last-child {
                 border-bottom: none;
+            }
+
+            .report-table th.actions-header,
+            .report-table td.session-actions {
+                width: 210px;
+                min-width: 210px;
+                max-width: 210px;
+                white-space: nowrap;
             }
 
             .report-table th {
@@ -697,7 +816,7 @@ export async function getTimeTrackingReportHtml(
             }
 
             .session-row-live-indicator {
-                display: inline-inline-flex;
+                display: inline-flex;
                 align-items: center;
                 gap: 5px;
                 margin-right: 6px;
@@ -758,7 +877,14 @@ export async function getTimeTrackingReportHtml(
 
             .session-actions {
                 display: flex;
-                gap: 8px;
+                justify-content: flex-end;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .session-actions .button.mini {
+                padding: 5px 10px;
+                font-size: 0.8rem;
             }
 
             .report-empty {
@@ -889,23 +1015,32 @@ export async function getTimeTrackingReportHtml(
         <div class="time-tracking-report">
             <div class="report-page-header">
                 <h1>Time Tracking Report</h1>
-                <div class="report-period-tabs">
-                    <button class="${period === 'today' ? 'active' : ''}" data-action="setPeriod" data-period="today">Today</button>
-                    <button class="${period === 'week' ? 'active' : ''}" data-action="setPeriod" data-period="week">This Week</button>
-                    <button class="${period === 'month' ? 'active' : ''}" data-action="setPeriod" data-period="month">This Month</button>
-                    <button class="${period === 'lastMonth' ? 'active' : ''}" data-action="setPeriod" data-period="lastMonth">Last Month</button>
-                    <button class="${period === 'all' ? 'active' : ''}" data-action="setPeriod" data-period="all">All</button>
-                    <button class="${period === 'custom' ? 'active' : ''}" data-action="setPeriod" data-period="custom">Custom</button>
+                <div class="report-header-actions">
+                    ${activeSession ? `
+                        <button class="report-header-stop" data-action="stopActiveTimer" title="Stop running timer: ${escAttr(activeSession.title)}">
+                            <span class="live-dot"></span>
+                            <span>Stop</span>
+                        </button>
+                    ` : ''}
+                    <div class="report-period-tabs">
+                        <button class="${period === 'today' ? 'active' : ''}" data-action="setPeriod" data-period="today">Today</button>
+                        <button class="${period === 'week' ? 'active' : ''}" data-action="setPeriod" data-period="week">This Week</button>
+                        <button class="${period === 'month' ? 'active' : ''}" data-action="setPeriod" data-period="month">This Month</button>
+                        <button class="${period === 'lastMonth' ? 'active' : ''}" data-action="setPeriod" data-period="lastMonth">Last Month</button>
+                        <button class="${period === 'all' ? 'active' : ''}" data-action="setPeriod" data-period="all">All</button>
+                        <button class="${period === 'custom' ? 'active' : ''}" data-action="setPeriod" data-period="custom">Custom</button>
+                    </div>
                 </div>
             </div>
 
             ${period === 'custom' ? `
                 <div class="report-custom-range">
-                    <label>From</label>
+                    <label for="custom-start">From</label>
                     <input type="date" id="custom-start" value="${escAttr(customStartDate || start.toISOString().split('T')[0])}">
-                    <label>To</label>
+                    <label for="custom-end">To</label>
                     <input type="date" id="custom-end" value="${escAttr(customEndDate || end.toISOString().split('T')[0])}">
                     <button class="button mini" data-action="applyCustomRange">Apply</button>
+                    <div class="validation-message" id="custom-range-error" style="display: none;"></div>
                 </div>
             ` : ''}
 
@@ -914,7 +1049,7 @@ export async function getTimeTrackingReportHtml(
                     <button class="button" data-action="addSession">+ Add Session</button>
                 </div>
                 <div class="report-toolbar-group">
-                    ${filteredSessions.length > 0 ? `
+                    ${displaySessions.length > 0 ? `
                         <button class="button mini secondary" data-action="exportCsv" data-period="${escAttr(period)}" data-start="${escAttr(customStartDate || '')}" data-end="${escAttr(customEndDate || '')}">Export CSV</button>
                         <button class="button mini danger" data-action="deleteAllSessions">Delete All</button>
                     ` : ''}
@@ -935,7 +1070,7 @@ export async function getTimeTrackingReportHtml(
             <div class="report-filter-bar">
                 <input type="text" id="session-filter" placeholder="Filter by project, title, branch...">
                 <div class="report-filter-pills" id="project-filter-pills">
-                    ${[...new Set(filteredSessions.map(s => projectNameById.get(s.projectId) || s.projectId))].sort().map(name => `<button class="report-filter-pill" data-filter-project="${escAttr(name)}">${escHtml(name)}</button>`).join('')}
+                    ${[...new Set(displaySessions.map(s => projectNameById.get(s.projectId) || s.projectId))].sort().map(name => `<button class="report-filter-pill" data-filter-project="${escAttr(name)}">${escHtml(name)}</button>`).join('')}
                 </div>
                 <button class="report-filter-clear" id="filter-clear" style="display: none;">Clear</button>
             </div>
@@ -985,16 +1120,52 @@ export async function getTimeTrackingReportHtml(
                 vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: period });
             }
 
-            function applyCustomRange() {
-                let start = document.getElementById('custom-start').value;
-                let end = document.getElementById('custom-end').value;
-                if (start && end && new Date(start) > new Date(end)) {
-                    const temp = start;
-                    start = end;
-                    end = temp;
-                    document.getElementById('custom-start').value = start;
-                    document.getElementById('custom-end').value = end;
+            function isValidDateInput(value) {
+                if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                    return false;
                 }
+                const date = new Date(value);
+                return !isNaN(date.getTime());
+            }
+
+            function showCustomRangeError(message) {
+                const startInput = document.getElementById('custom-start');
+                const endInput = document.getElementById('custom-end');
+                const errorEl = document.getElementById('custom-range-error');
+                if (startInput) { startInput.classList.add('invalid'); }
+                if (endInput) { endInput.classList.add('invalid'); }
+                if (errorEl) {
+                    errorEl.textContent = message;
+                    errorEl.style.display = 'block';
+                }
+            }
+
+            function clearCustomRangeError() {
+                const startInput = document.getElementById('custom-start');
+                const endInput = document.getElementById('custom-end');
+                const errorEl = document.getElementById('custom-range-error');
+                if (startInput) { startInput.classList.remove('invalid'); }
+                if (endInput) { endInput.classList.remove('invalid'); }
+                if (errorEl) {
+                    errorEl.textContent = '';
+                    errorEl.style.display = 'none';
+                }
+            }
+
+            function applyCustomRange() {
+                clearCustomRangeError();
+                const start = document.getElementById('custom-start').value;
+                const end = document.getElementById('custom-end').value;
+
+                if (!start || !end) {
+                    showCustomRangeError('Please select both a start and end date.');
+                    return;
+                }
+                if (!isValidDateInput(start) || !isValidDateInput(end)) {
+                    showCustomRangeError('Please enter valid dates.');
+                    return;
+                }
+
                 vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: 'custom', customStartDate: start, customEndDate: end });
             }
 
@@ -1007,11 +1178,15 @@ export async function getTimeTrackingReportHtml(
                 });
             }
 
-            function stopActiveTimer() {
+            function stopActiveTimer(event) {
+                if (event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
                 vscode.postMessage({ command: 'stopTimeTracking' });
             }
 
-            const sessionsMeta = ${JSON.stringify(filteredSessions.map(s => ({ id: s.id, startTime: s.startTime, endTime: s.endTime })))};
+            const sessionsMeta = ${JSON.stringify(displaySessions.map(s => ({ id: s.id, startTime: s.startTime, endTime: s.endTime })))};
 
             function editSession(sessionId) {
                 const row = document.getElementById('session-row-' + sessionId);
@@ -1060,26 +1235,77 @@ export async function getTimeTrackingReportHtml(
                 return new Date(localValue).toISOString();
             }
 
+            function showInlineError(inputId, message) {
+                const input = document.getElementById(inputId);
+                if (!input) { return false; }
+                input.classList.add('invalid');
+                input.title = message;
+                return false;
+            }
+
+            function clearInlineError(inputId) {
+                const input = document.getElementById(inputId);
+                if (!input) { return; }
+                input.classList.remove('invalid');
+                input.title = '';
+            }
+
+            function validateSessionForm(titleId, startId, endId, durationId) {
+                let valid = true;
+                const title = document.getElementById(titleId).value.trim();
+                if (!title) {
+                    showInlineError(titleId, 'Session title cannot be empty.');
+                    valid = false;
+                } else {
+                    clearInlineError(titleId);
+                }
+
+                const startValue = document.getElementById(startId).value;
+                const endValue = document.getElementById(endId).value;
+                const startTime = startValue ? localDateTimeToIso(startValue) : undefined;
+                const endTime = endValue ? localDateTimeToIso(endValue) : undefined;
+                if (startTime && endTime && new Date(endTime) < new Date(startTime)) {
+                    showInlineError(endId, 'End time cannot be before start time.');
+                    valid = false;
+                } else {
+                    clearInlineError(endId);
+                }
+
+                const durationSeconds = parseInt(document.getElementById(durationId).value, 10);
+                if (!isNaN(durationSeconds) && durationSeconds < 0) {
+                    showInlineError(durationId, 'Duration cannot be negative.');
+                    valid = false;
+                } else {
+                    clearInlineError(durationId);
+                }
+
+                return { valid, startTime, endTime, durationSeconds: isNaN(durationSeconds) ? 0 : durationSeconds };
+            }
+
             function saveSession(sessionId) {
                 const session = sessionsMeta.find(s => s.id === sessionId);
-                const startValue = document.getElementById('edit-start-' + sessionId).value;
-                const endValue = document.getElementById('edit-end-' + sessionId).value;
+                const validation = validateSessionForm(
+                    'edit-title-' + sessionId,
+                    'edit-start-' + sessionId,
+                    'edit-end-' + sessionId,
+                    'edit-duration-' + sessionId
+                );
+                if (!validation.valid) {
+                    return;
+                }
 
-                const startTime = startValue ? localDateTimeToIso(startValue) : (session ? session.startTime : undefined);
-                const endTime = endValue ? localDateTimeToIso(endValue) : (session ? session.endTime : undefined);
-
-                let durationSeconds = parseInt(document.getElementById('edit-duration-' + sessionId).value, 10) || 0;
-                if (startTime && endTime) {
-                    durationSeconds = Math.max(0, Math.floor((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000));
+                let durationSeconds = validation.durationSeconds;
+                if (validation.startTime && validation.endTime) {
+                    durationSeconds = Math.max(0, Math.floor((new Date(validation.endTime).getTime() - new Date(validation.startTime).getTime()) / 1000));
                 }
 
                 vscode.postMessage({
                     command: 'updateTimeTrackingSession',
                     sessionId: sessionId,
-                    sessionTitle: document.getElementById('edit-title-' + sessionId).value,
+                    sessionTitle: document.getElementById('edit-title-' + sessionId).value.trim(),
                     sessionDescription: document.getElementById('edit-desc-' + sessionId).value,
-                    sessionStartTime: startTime,
-                    sessionEndTime: endTime,
+                    sessionStartTime: validation.startTime,
+                    sessionEndTime: validation.endTime,
                     sessionDurationSeconds: durationSeconds
                 });
             }
@@ -1093,24 +1319,23 @@ export async function getTimeTrackingReportHtml(
             }
 
             function saveNewSession() {
-                const startValue = document.getElementById('add-start').value;
-                const endValue = document.getElementById('add-end').value;
-                let durationSeconds = parseInt(document.getElementById('add-duration').value, 10) || 0;
+                const validation = validateSessionForm('add-title', 'add-start', 'add-end', 'add-duration');
+                if (!validation.valid) {
+                    return;
+                }
 
-                const startTime = startValue ? localDateTimeToIso(startValue) : undefined;
-                const endTime = endValue ? localDateTimeToIso(endValue) : undefined;
-
-                if (startTime && endTime) {
-                    durationSeconds = Math.max(0, Math.floor((new Date(endTime).getTime() - new Date(startTime).getTime()) / 1000));
+                let durationSeconds = validation.durationSeconds;
+                if (validation.startTime && validation.endTime) {
+                    durationSeconds = Math.max(0, Math.floor((new Date(validation.endTime).getTime() - new Date(validation.startTime).getTime()) / 1000));
                 }
 
                 vscode.postMessage({
                     command: 'addTimeTrackingSession',
                     projectId: document.getElementById('add-project').value,
-                    sessionTitle: document.getElementById('add-title').value,
+                    sessionTitle: document.getElementById('add-title').value.trim(),
                     sessionDescription: document.getElementById('add-desc').value,
-                    sessionStartTime: startTime,
-                    sessionEndTime: endTime,
+                    sessionStartTime: validation.startTime,
+                    sessionEndTime: validation.endTime,
                     sessionDurationSeconds: durationSeconds
                 });
             }
@@ -1308,12 +1533,7 @@ export async function getTimeTrackingReportHtml(
                         vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: target.dataset.period });
                         break;
                     case 'applyCustomRange':
-                        vscode.postMessage({
-                            command: 'openTimeTrackingReport',
-                            reportPeriod: 'custom',
-                            customStartDate: document.getElementById('custom-start').value,
-                            customEndDate: document.getElementById('custom-end').value
-                        });
+                        applyCustomRange();
                         break;
                     case 'exportCsv':
                         vscode.postMessage({
@@ -1325,6 +1545,9 @@ export async function getTimeTrackingReportHtml(
                         break;
                     case 'stopActiveTimer':
                         vscode.postMessage({ command: 'stopTimeTracking' });
+                        break;
+                    case 'continueSession':
+                        vscode.postMessage({ command: 'continueTimeTracking', sessionId: target.dataset.sessionId });
                         break;
                     case 'deleteSession':
                         vscode.postMessage({ command: 'deleteTimeTrackingSession', sessionId: target.dataset.sessionId });
@@ -1424,7 +1647,8 @@ function renderGroups(
     projectNameById: Map<string, string>,
     getProjectColorHex: (projectId: string) => string,
     activeSessionId?: string,
-    groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate' = 'branch'
+    groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate' = 'branch',
+    activeSession?: { sessionId: string; accumulatedSeconds: number; lastTickAt: number }
 ): string {
     if (sessions.length === 0) {
         return '';
@@ -1495,11 +1719,11 @@ function renderGroups(
                                 <th>Title</th>
                                 <th>Duration</th>
                                 <th>Branches</th>
-                                <th>Actions</th>
+                                <th class="actions-header">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${sessions.map(session => renderSessionRow(session, projectNameById, projectColor, activeSessionId === session.id, true)).join('')}
+                            ${sessions.map(session => renderSessionRow(session, projectNameById, projectColor, activeSessionId === session.id, true, activeSession)).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -1515,12 +1739,24 @@ function sessionBranchDisplayName(session: TimeTrackingSession): string {
     return session.branchLog[session.branchLog.length - 1].branch;
 }
 
-function renderSessionRow(session: TimeTrackingSession, projectNameById: Map<string, string>, projectColor: string = '', isActive: boolean = false, compact: boolean = false): string {
+function renderSessionRow(session: TimeTrackingSession, projectNameById: Map<string, string>, projectColor: string = '', isActive: boolean = false, compact: boolean = false, activeSession?: { sessionId: string; accumulatedSeconds: number; lastTickAt: number }): string {
     const startDate = new Date(session.startTime);
     const date = startDate.toLocaleDateString();
     const time = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const projectName = projectNameById.get(session.projectId) || session.projectId;
-    const branchLogEntries = session.branchLog.slice(-5);
+    const UNKNOWN_BRANCH = 'Unknown, no GIT branch found';
+    // Collapse consecutive identical branches and prefer the last real branch.
+    const cleanedBranchLog = session.branchLog.reduce<{ branch: string; changedAt: string }[]>((acc, change) => {
+        if (change.branch === UNKNOWN_BRANCH && acc.some(c => c.branch !== UNKNOWN_BRANCH)) {
+            return acc;
+        }
+        if (acc.length > 0 && acc[acc.length - 1].branch === change.branch) {
+            return acc;
+        }
+        acc.push(change);
+        return acc;
+    }, []);
+    const branchLogEntries = (cleanedBranchLog.length > 0 ? cleanedBranchLog : session.branchLog).slice(-5);
     const branches = branchLogEntries.map((change, index) => `
         <div class="branch-entry">
             <span class="branch-name">${index > 0 ? '→ ' : ''}${escHtml(change.branch)}</span>
@@ -1530,8 +1766,9 @@ function renderSessionRow(session: TimeTrackingSession, projectNameById: Map<str
     const activeClass = isActive ? 'session-row-active' : '';
     const activeIndicator = isActive ? '<span class="session-row-live-indicator" title="Running"><span class="session-row-live-dot"></span>running</span>' : '';
 
-    const branchNames = session.branchLog.map(change => change.branch).join(' → ');
-    const dataAttrs = `data-start-time="${escAttr(session.startTime)}" data-duration="${session.durationSeconds}" data-project="${escAttr(projectName)}" data-title="${escAttr(session.title)}" data-branches="${escAttr(branchNames)}"`;
+    const liveDurationSeconds = getLiveDurationSeconds(session, activeSession);
+    const branchNames = (cleanedBranchLog.length > 0 ? cleanedBranchLog : session.branchLog).map(change => change.branch).join(' → ');
+    const dataAttrs = `data-start-time="${escAttr(session.startTime)}" data-duration="${liveDurationSeconds}" data-project="${escAttr(projectName)}" data-title="${escAttr(session.title)}" data-branches="${escAttr(branchNames)}"`;
 
     if (compact) {
         return `
@@ -1541,13 +1778,14 @@ function renderSessionRow(session: TimeTrackingSession, projectNameById: Map<str
                     <div id="session-title-${escAttr(session.id)}">${activeIndicator}${escHtml(session.title)}</div>
                     ${session.description ? `<small id="session-desc-${escAttr(session.id)}">${escHtml(session.description)}</small>` : ''}
                 </td>
-                <td id="session-duration-${escAttr(session.id)}" data-seconds="${session.durationSeconds}">${formatDuration(session.durationSeconds)}</td>
+                <td id="session-duration-${escAttr(session.id)}" data-seconds="${liveDurationSeconds}">${formatDuration(liveDurationSeconds)}</td>
                 <td>
                     <div class="branch-timeline">
                         ${branches || '<span class="branch-entry">–</span>'}
                     </div>
                 </td>
                 <td class="session-actions">
+                    ${isActive ? '' : `<button class="button mini" data-action="continueSession" data-session-id="${escAttr(session.id)}" title="Continue">Continue</button>`}
                     <button class="button mini" data-action="editSession" data-session-id="${escAttr(session.id)}" title="Edit">Edit</button>
                     <button class="button mini secondary" data-action="deleteSession" data-session-id="${escAttr(session.id)}" title="Delete">Delete</button>
                 </td>
@@ -1563,13 +1801,14 @@ function renderSessionRow(session: TimeTrackingSession, projectNameById: Map<str
                 <div id="session-title-${escAttr(session.id)}">${activeIndicator}${escHtml(session.title)}</div>
                 ${session.description ? `<small id="session-desc-${escAttr(session.id)}">${escHtml(session.description)}</small>` : ''}
             </td>
-            <td id="session-duration-${escAttr(session.id)}" data-seconds="${session.durationSeconds}">${formatDuration(session.durationSeconds)}</td>
+            <td id="session-duration-${escAttr(session.id)}" data-seconds="${liveDurationSeconds}">${formatDuration(liveDurationSeconds)}</td>
             <td>
                 <div class="branch-timeline">
                     ${branches || '<span class="branch-entry">–</span>'}
                 </div>
             </td>
             <td class="session-actions">
+                ${isActive ? '' : `<button class="button mini" data-action="continueSession" data-session-id="${escAttr(session.id)}" title="Continue">Continue</button>`}
                 <button class="button mini" data-action="editSession" data-session-id="${escAttr(session.id)}" title="Edit">Edit</button>
                 <button class="button mini secondary" data-action="deleteSession" data-session-id="${escAttr(session.id)}" title="Delete">Delete</button>
             </td>

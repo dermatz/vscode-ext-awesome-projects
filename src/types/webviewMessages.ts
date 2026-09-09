@@ -5,9 +5,9 @@ export interface WebviewMessage {
              'openWorkspace' | 'openUrl' | 'addProject' | 'addRemoteProject' | 'projectSelected' |
              'sortProjects' | 'scanProjects' | 'setLoading' | 'relocateProject' |
              'toggleGroupCollapse' | 'showInFileManager' | 'previewIcon' | 'openInTerminal' |
-             'startTimeTracking' | 'stopTimeTracking' | 'updateTimeTrackingSession' | 'deleteTimeTrackingSession' |
+             'startTimeTracking' | 'stopTimeTracking' | 'continueTimeTracking' | 'updateTimeTrackingSession' | 'deleteTimeTrackingSession' |
              'addTimeTrackingSession' | 'clearTimeTracking' | 'getTimeTrackingState' | 'exportTimeTrackingCsv' | 'openTimeTrackingReport' |
-             'confirmDeleteAllTimeTrackingSessions';
+             'confirmDeleteAllTimeTrackingSessions' | 'confirmDeleteTimeTrackingSession';
     projectId?: string;
     projectPath?: string;
     remoteUrl?: string;

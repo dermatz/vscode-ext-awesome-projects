@@ -48,21 +48,32 @@ interface GroupTreeNode {
     items: { project: Project; index: number }[];
 }
 
+function toUtcDate(date: Date): { year: number; month: number; day: number } {
+    return {
+        year: date.getUTCFullYear(),
+        month: date.getUTCMonth(),
+        day: date.getUTCDate()
+    };
+}
+
 function isSameDay(a: Date, b: Date): boolean {
-    return a.getFullYear() === b.getFullYear() &&
-        a.getMonth() === b.getMonth() &&
-        a.getDate() === b.getDate();
+    const ua = toUtcDate(a);
+    const ub = toUtcDate(b);
+    return ua.year === ub.year && ua.month === ub.month && ua.day === ub.day;
 }
 
 function getTodaySecondsForProject(
     projectId: string,
     sessions: TimeTrackingSession[],
-    activeSession?: { projectId: string; accumulatedSeconds: number }
+    activeSession?: { sessionId?: string; projectId: string; accumulatedSeconds: number; lastTickAt: number }
 ): number {
     const today = new Date();
     let seconds = 0;
     for (const session of sessions) {
         if (session.projectId !== projectId) {
+            continue;
+        }
+        if (activeSession?.sessionId === session.id) {
             continue;
         }
         if (!isSameDay(new Date(session.startTime), today)) {
@@ -71,7 +82,8 @@ function getTodaySecondsForProject(
         seconds += session.durationSeconds;
     }
     if (activeSession && activeSession.projectId === projectId) {
-        seconds += activeSession.accumulatedSeconds;
+        const elapsedSinceLastTick = Math.max(0, Math.floor((Date.now() - activeSession.lastTickAt) / 1000));
+        seconds += activeSession.accumulatedSeconds + elapsedSinceLastTick;
     }
     return seconds;
 }

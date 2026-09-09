@@ -33,6 +33,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
     private _cachedConfiguration?: vscode.WorkspaceConfiguration;
     private _configurationLoaded: boolean = false;
     private _suppressRefresh: boolean = false;
+    private _lastActiveSessionId?: string;
     public readonly timeTrackingService: TimeTrackingService;
 
     constructor(
@@ -308,6 +309,28 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                         }
                     }
                     break;
+                case 'confirmDeleteTimeTrackingSession':
+                    if (message.sessionId) {
+                        try {
+                            const state = this.timeTrackingService.getState();
+                            const sessionToDelete = Object.values(state.sessionsByProject)
+                                .flat()
+                                .find(s => s.id === message.sessionId);
+
+                            const title = sessionToDelete?.title || 'this session';
+                            const confirm = await vscode.window.showWarningMessage(
+                                `Delete session "${title}"? This cannot be undone.`,
+                                { modal: true },
+                                'Delete'
+                            );
+                            if (confirm === 'Delete') {
+                                this.handleMessage({ command: 'deleteTimeTrackingSession', sessionId: message.sessionId });
+                            }
+                        } catch (error) {
+                            vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
+                        }
+                    }
+                    break;
                 case 'deleteTimeTrackingSession':
                     if (message.sessionId) {
                         try {
@@ -356,7 +379,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
                     }
                     break;
                 case 'getTimeTrackingState':
-                    this._postTimeTrackingState();
+                    void this._postTimeTrackingState();
                     break;
                 case 'openTimeTrackingReport':
                     vscode.commands.executeCommand('awesome-projects.openTimeTrackingReport', {
@@ -368,8 +391,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             }
         });
 
-        this.timeTrackingService.onDidChangeTimer(() => {
-            this._postTimeTrackingState();
+        this.timeTrackingService.onDidChangeTimer(async () => {
+            await this._postTimeTrackingState();
+        });
+        this.timeTrackingService.onDidChangeUiTimer(async () => {
+            await this._postTimeTrackingState();
         });
     }
 
@@ -506,14 +532,25 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private _postTimeTrackingState(): void {
+    private async _postTimeTrackingState(): Promise<void> {
         if (!this._view) {
             return;
         }
         const active = this.timeTrackingService.getActiveSession();
-        const activeSession = active
+        const activeSessionFull = active
             ? this.timeTrackingService.getActiveSessionFull()
             : undefined;
+        const activeSession = active && activeSessionFull
+            ? { ...activeSessionFull, lastTickAt: active.lastTickAt, accumulatedSeconds: active.accumulatedSeconds }
+            : undefined;
+        const activeSessionId = activeSession?.id;
+
+        if (activeSessionId !== this._lastActiveSessionId) {
+            this._lastActiveSessionId = activeSessionId;
+            this._view.webview.html = await this._getHtmlForWebview(this._view.webview);
+            return;
+        }
+
         this._view.webview.postMessage({
             command: 'timeTrackingState',
             activeSession,

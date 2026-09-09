@@ -17,6 +17,7 @@ export const Commands = {
     SHOW_MISSING_PROJECTS: 'awesome-projects.showMissingProjects',
     START_TIME_TRACKING: 'awesome-projects.startTimeTracking',
     STOP_TIME_TRACKING: 'awesome-projects.stopTimeTracking',
+    CONTINUE_TIME_TRACKING: 'awesome-projects.continueTimeTracking',
     OPEN_TIME_TRACKING_REPORT: 'awesome-projects.openTimeTrackingReport',
     OPEN_TIME_TRACKING_MENU: 'awesome-projects.openTimeTrackingMenu'
 };
@@ -275,6 +276,20 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
                 }
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to stop timer: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand(Commands.CONTINUE_TIME_TRACKING, async (args?: { sessionId?: string }) => {
+            if (!args?.sessionId) {
+                return;
+            }
+            try {
+                const continued = await projectsProvider.timeTrackingService.continueSession({ sessionId: args.sessionId });
+                if (continued) {
+                    vscode.window.showInformationMessage(`Timer continued: ${continued.title}`);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to continue timer: ${error}`);
             }
         }),
 

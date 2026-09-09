@@ -107,7 +107,8 @@ suite('Time Tracking Report Template Tests', () => {
                 workspaceFolderPath: '/workspace/a',
                 lastBranch: 'main',
                 lastTickAt: Date.now(),
-                accumulatedSeconds: activeSession.durationSeconds
+                accumulatedSeconds: activeSession.durationSeconds,
+                accumulatedMs: activeSession.durationSeconds * 1000
             }
         });
 

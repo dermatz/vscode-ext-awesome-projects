@@ -23,6 +23,7 @@ export interface ActiveSession {
     lastBranch: string;
     lastTickAt: number;
     accumulatedSeconds: number;
+    accumulatedMs: number;
 }
 
 export interface TimeTrackingState {
@@ -36,6 +37,10 @@ export interface TimeTrackingSessionPatch {
     startTime?: string;
     endTime?: string;
     durationSeconds?: number;
+}
+
+export interface ContinueSessionOptions {
+    sessionId: string;
 }
 
 export interface TimeTrackingExportRow {
