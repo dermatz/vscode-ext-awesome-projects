@@ -1,5 +1,5 @@
-export function getReportCssHtml(baseCss: string): string {
-    return `<style>
+function getReportCssPart0(baseCss: string): string {
+    return `
         ${baseCss}
 
             * {
@@ -89,7 +89,11 @@ export function getReportCssHtml(baseCss: string): string {
                 color: var(--vscode-button-foreground);
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
             }
+    `;
+}
 
+function getReportCssPart1(): string {
+    return `
             .report-custom-range {
                 display: flex;
                 gap: 10px;
@@ -133,7 +137,11 @@ export function getReportCssHtml(baseCss: string): string {
                 font-size: 0.85rem;
                 width: 100%;
             }
+    `;
+}
 
+function getReportCssPart1b(): string {
+    return `
             .report-active-banner {
                 display: flex;
                 align-items: center;
@@ -228,7 +236,11 @@ export function getReportCssHtml(baseCss: string): string {
                 font-size: 1.6rem;
                 font-weight: 700;
             }
+    `;
+}
 
+function getReportCssPart2(): string {
+    return `
             .report-toolbar {
                 display: flex;
                 justify-content: space-between;
@@ -329,7 +341,11 @@ export function getReportCssHtml(baseCss: string): string {
                 outline: none;
                 border-color: var(--vscode-focusBorder);
             }
+    `;
+}
 
+function getReportCssPart3(): string {
+    return `
             .report-branch-groups {
                 display: flex;
                 flex-direction: column;
@@ -415,7 +431,11 @@ export function getReportCssHtml(baseCss: string): string {
             .report-branch-group .report-table tbody tr:last-child td {
                 border-bottom: none;
             }
+    `;
+}
 
+function getReportCssPart4(): string {
+    return `
             .report-filter-bar {
                 display: flex;
                 gap: 12px;
@@ -476,7 +496,11 @@ export function getReportCssHtml(baseCss: string): string {
                 color: var(--vscode-button-foreground);
                 border-color: var(--vscode-button-background);
             }
+    `;
+}
 
+function getReportCssPart5(): string {
+    return `
             .report-filter-clear {
                 background: transparent;
                 border: none;
@@ -490,7 +514,11 @@ export function getReportCssHtml(baseCss: string): string {
             .report-filter-clear:hover {
                 opacity: 1;
             }
+    `;
+}
 
+function getReportCssPart5b(): string {
+    return `
             .report-table-wrapper {
                 overflow-x: auto;
                 background: var(--vscode-editor-inactiveSelectionBackground);
@@ -580,7 +608,11 @@ export function getReportCssHtml(baseCss: string): string {
             .report-table tbody tr.session-row-active[style*="--project-color"] {
                 border-left-width: 4px;
             }
+    `;
+}
 
+function getReportCssPart5c(): string {
+    return `
             .session-row-live-indicator {
                 display: inline-flex;
                 align-items: center;
@@ -608,7 +640,11 @@ export function getReportCssHtml(baseCss: string): string {
                 0%, 100% { opacity: 1; transform: scale(1); }
                 50% { opacity: 0.5; transform: scale(0.85); }
             }
+    `;
+}
 
+function getReportCssPart6(): string {
+    return `
             .project-color-dot {
                 display: inline-block;
                 width: 8px;
@@ -694,7 +730,11 @@ export function getReportCssHtml(baseCss: string): string {
                 margin: 0 0 20px;
                 opacity: 0.75;
             }
+    `;
+}
 
+function getReportCssPart7(): string {
+    return `
             .inline-edit {
                 display: flex;
                 flex-direction: column;
@@ -796,5 +836,9 @@ export function getReportCssHtml(baseCss: string): string {
                     align-items: stretch;
                 }
             }
-        </style>`;
+    `;
+}
+
+export function getReportCssHtml(baseCss: string): string {
+    return `<style>${getReportCssPart0(baseCss)}${getReportCssPart1()}${getReportCssPart1b()}${getReportCssPart2()}${getReportCssPart3()}${getReportCssPart4()}${getReportCssPart5()}${getReportCssPart5b()}${getReportCssPart5c()}${getReportCssPart6()}${getReportCssPart7()}</style>`;
 }

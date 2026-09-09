@@ -56,8 +56,9 @@ suite('TimeTrackingService Tests', () => {
     });
 
     test('deleteSession removes session and adjusts aggregated time', async () => {
-        const session = await service.startSession('proj-1', '/workspace/a');
-        await service.stopSession('proj-1');
+        await service.startSession('proj-1', '/workspace/a');
+        const session = await service.stopSession('proj-1');
+        assert.ok(session);
 
         const deleted = await service.deleteSession(session.id);
         assert.strictEqual(deleted?.id, session.id);
