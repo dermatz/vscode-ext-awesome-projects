@@ -96,8 +96,8 @@ function getCustomBounds(
 ): { start: Date; end: Date } {
     const customStartDate = customStart && isValidDateString(customStart) ? new Date(customStart) : undefined;
     const customEndDate = customEnd && isValidDateString(customEnd) ? new Date(customEnd) : undefined;
-    let start = customStartDate ? getUtcStartOfDay(customStartDate) : getUtcStartOfDay(now);
-    let end = customEndDate ? getUtcEndOfDay(customEndDate) : getUtcEndOfDay(now);
+    const start = customStartDate ? getUtcStartOfDay(customStartDate) : getUtcStartOfDay(now);
+    const end = customEndDate ? getUtcEndOfDay(customEndDate) : getUtcEndOfDay(now);
     if (start > end) {
         return { start: end, end: start };
     }
@@ -432,41 +432,65 @@ function renderReportFilterBar(displaySessions: TimeTrackingSession[], projectNa
     `;
 }
 
+function renderAddSessionProjectField(projects: Project[]): string {
+    return `
+        <div class="field">
+            <label for="add-project">Project</label>
+            <select id="add-project">
+                ${projects.map(p => `<option value="${escAttr(p.id)}">${escHtml(p.name)}</option>`).join('')}
+            </select>
+        </div>
+    `;
+}
+
+function renderAddSessionTextFields(): string {
+    return `
+        <div class="field">
+            <label for="add-title">Title</label>
+            <input type="text" id="add-title" placeholder="Session title">
+        </div>
+        <div class="field">
+            <label for="add-desc">Description</label>
+            <textarea id="add-desc" rows="2" placeholder="Optional description"></textarea>
+        </div>
+    `;
+}
+
+function renderAddSessionDateFields(): string {
+    return `
+        <div class="inline-edit-row">
+            <div class="field">
+                <label for="add-start">Start</label>
+                <input type="datetime-local" id="add-start">
+            </div>
+            <div class="field">
+                <label for="add-end">End</label>
+                <input type="datetime-local" id="add-end">
+            </div>
+            <div class="field" style="max-width: 120px;">
+                <label for="add-duration">Duration (s)</label>
+                <input type="number" id="add-duration" placeholder="Ignored when start and end are set">
+            </div>
+        </div>
+    `;
+}
+
+function renderAddSessionActions(): string {
+    return `
+        <div class="inline-edit-actions">
+            <button class="button mini" data-action="saveNewSession">Save</button>
+            <button class="button mini secondary" data-action="cancelAddSession">Cancel</button>
+        </div>
+    `;
+}
+
 function renderAddSessionForm(projects: Project[]): string {
     return `
         <div id="add-session-form" class="inline-edit add-session-edit" style="display: none; margin-bottom: 24px;">
-            <div class="field">
-                <label for="add-project">Project</label>
-                <select id="add-project">
-                    ${projects.map(p => `<option value="${escAttr(p.id)}">${escHtml(p.name)}</option>`).join('')}
-                </select>
-            </div>
-            <div class="field">
-                <label for="add-title">Title</label>
-                <input type="text" id="add-title" placeholder="Session title">
-            </div>
-            <div class="field">
-                <label for="add-desc">Description</label>
-                <textarea id="add-desc" rows="2" placeholder="Optional description"></textarea>
-            </div>
-            <div class="inline-edit-row">
-                <div class="field">
-                    <label for="add-start">Start</label>
-                    <input type="datetime-local" id="add-start">
-                </div>
-                <div class="field">
-                    <label for="add-end">End</label>
-                    <input type="datetime-local" id="add-end">
-                </div>
-                <div class="field" style="max-width: 120px;">
-                    <label for="add-duration">Duration (s)</label>
-                    <input type="number" id="add-duration" placeholder="Ignored when start and end are set">
-                </div>
-            </div>
-            <div class="inline-edit-actions">
-                <button class="button mini" data-action="saveNewSession">Save</button>
-                <button class="button mini secondary" data-action="cancelAddSession">Cancel</button>
-            </div>
+            ${renderAddSessionProjectField(projects)}
+            ${renderAddSessionTextFields()}
+            ${renderAddSessionDateFields()}
+            ${renderAddSessionActions()}
         </div>
     `;
 }
@@ -680,7 +704,6 @@ function cleanBranchLog(branchLog: TimeTrackingSession['branchLog']): TimeTracki
 }
 
 function renderBranchTimeline(branchLog: TimeTrackingSession['branchLog']): string {
-    const UNKNOWN_BRANCH = 'Unknown, no GIT branch found';
     const cleanedBranchLog = cleanBranchLog(branchLog);
     const branchLogEntries = (cleanedBranchLog.length > 0 ? cleanedBranchLog : branchLog).slice(-5);
     const branches = branchLogEntries.map((change, index) => `

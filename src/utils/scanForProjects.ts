@@ -23,55 +23,62 @@ export interface ScannedProject {
     group: string;
 }
 
-export async function scanForGitProjects(startPath: string, maxDepth: number = 5, excludePatterns: string[] = []): Promise<ScannedProject[]> {
-    const gitProjects: ScannedProject[] = [];
+interface DirectoryEntry {
+    file: string;
+    filePath: string;
+    isValid: boolean;
+}
 
-    async function scan(dir: string, depth: number = 0) {
-        if (depth > maxDepth) {
-            return;
-        } // Limit recursion depth
-
+async function readDirectoryEntries(dir: string): Promise<DirectoryEntry[]> {
+    const files = await fs.promises.readdir(dir);
+    const statPromises = files.map(async (file) => {
+        const filePath = path.join(dir, file);
         try {
-            const files = await fs.promises.readdir(dir);
-
-            // Check if current directory is a git repo
-            if (files.includes('.git')) {
-                const parentRelative = path.relative(startPath, path.dirname(dir));
-                // Normalise to forward slashes for cross-platform consistency
-                const group = parentRelative.split(path.sep).join('/');
-                gitProjects.push({ path: dir, group });
-                return; // Don't scan deeper if we found a git repo
-            }
-
-            // Scan subdirectories with parallel stat operations
-            const statPromises = files.map(async (file) => {
-                const filePath = path.join(dir, file);
-                try {
-                    const stat = await fs.promises.stat(filePath);
-                    return { file, filePath, stat, isValid: stat.isDirectory() && !file.startsWith('.') };
-                } catch (err) {
-                    console.log(`Error accessing ${filePath}:`, err);
-                    return { file, filePath, stat: null, isValid: false };
-                }
-            });
-
-            const statResults = await Promise.all(statPromises);
-
-            // Process directories in parallel (but limit concurrency to avoid overwhelming the system)
-            const normalizedExcludePatterns = excludePatterns.map(p => p.toLowerCase());
-            const validDirectories = statResults.filter(result => result.isValid && !normalizedExcludePatterns.includes(result.file.toLowerCase()));
-            const batchSize = 10; // Process max 10 directories at once
-
-            for (let i = 0; i < validDirectories.length; i += batchSize) {
-                const batch = validDirectories.slice(i, i + batchSize);
-                await Promise.all(batch.map(result => scan(result.filePath, depth + 1)));
-            }
+            const stat = await fs.promises.stat(filePath);
+            return { file, filePath, isValid: stat.isDirectory() && !file.startsWith('.') };
         } catch (err) {
-            console.log(`Error scanning ${dir}:`, err);
+            console.log(`Error accessing ${filePath}:`, err);
+            return { file, filePath, isValid: false };
         }
+    });
+    return Promise.all(statPromises);
+}
+
+async function scanDirectory(
+    dir: string,
+    depth: number,
+    startPath: string,
+    maxDepth: number,
+    excludePatterns: string[],
+    gitProjects: ScannedProject[]
+): Promise<void> {
+    if (depth > maxDepth) {
+        return;
     }
 
-    await scan(startPath);
+    const files = await fs.promises.readdir(dir);
+
+    if (files.includes('.git')) {
+        const parentRelative = path.relative(startPath, path.dirname(dir));
+        const group = parentRelative.split(path.sep).join('/');
+        gitProjects.push({ path: dir, group });
+        return;
+    }
+
+    const entries = await readDirectoryEntries(dir);
+    const normalizedExcludePatterns = excludePatterns.map(p => p.toLowerCase());
+    const validDirectories = entries.filter(entry => entry.isValid && !normalizedExcludePatterns.includes(entry.file.toLowerCase()));
+    const batchSize = 10;
+
+    for (let i = 0; i < validDirectories.length; i += batchSize) {
+        const batch = validDirectories.slice(i, i + batchSize);
+        await Promise.all(batch.map(entry => scanDirectory(entry.filePath, depth + 1, startPath, maxDepth, excludePatterns, gitProjects)));
+    }
+}
+
+export async function scanForGitProjects(startPath: string, maxDepth: number = 5, excludePatterns: string[] = []): Promise<ScannedProject[]> {
+    const gitProjects: ScannedProject[] = [];
+    await scanDirectory(startPath, 0, startPath, maxDepth, excludePatterns, gitProjects);
     return gitProjects;
 }
 
