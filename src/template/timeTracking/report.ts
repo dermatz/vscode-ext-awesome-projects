@@ -7,10 +7,14 @@ import { escHtml, escAttr } from '../utils/escaping';
 function formatDuration(totalSeconds: number): string {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
     if (hours > 0) {
-        return `${hours}h ${minutes}m`;
+        return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
     }
-    return `${minutes}m`;
+    if (minutes > 0) {
+        return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+    }
+    return `${seconds}s`;
 }
 
 function isSameDay(a: Date, b: Date): boolean {
@@ -100,6 +104,20 @@ export async function getTimeTrackingReportHtml(
     const totalSeconds = filteredSessions.reduce((sum, session) => sum + session.durationSeconds, 0);
     const activeSession = state.activeSession ? timeTrackingService.getActiveSessionFull() : undefined;
 
+    const activeBanner = activeSession
+        ? `
+            <div class="report-active-banner">
+                <span class="report-active-indicator"></span>
+                <div class="report-active-info">
+                    <span class="report-active-label">Timer running</span>
+                    <span class="report-active-title">${escHtml(activeSession.title)}</span>
+                </div>
+                <span class="report-active-time" data-active-session-id="${escAttr(activeSession.id)}">${formatDuration(activeSession.durationSeconds)}</span>
+                <button class="button mini" data-action="stopActiveTimer">Stop</button>
+            </div>
+        `
+        : '';
+
     const sessionsHtml = filteredSessions.length === 0
         ? `
             <div class="report-empty">
@@ -127,6 +145,7 @@ export async function getTimeTrackingReportHtml(
                     <span class="report-summary-value">${formatDuration(Math.round(totalSeconds / Math.max(1, filteredSessions.length)))}</span>
                 </div>
             </div>
+            ${activeBanner}
             <div class="report-table-wrapper" style="display: ${groupBy === 'none' ? 'block' : 'none'};">
                 <table class="report-table" id="time-tracking-table">
                     <thead>
@@ -149,20 +168,6 @@ export async function getTimeTrackingReportHtml(
                 ${renderGroups(filteredSessions, projectNameById, getProjectColorHex, activeSession?.id, groupBy)}
             </div>
         `;
-
-    const activeBanner = activeSession
-        ? `
-            <div class="report-active-banner">
-                <span class="report-active-indicator"></span>
-                <div class="report-active-info">
-                    <span class="report-active-label">Timer running</span>
-                    <span class="report-active-title">${escHtml(activeSession.title)}</span>
-                </div>
-                <span class="report-active-time" data-active-session-id="${escAttr(activeSession.id)}">${formatDuration(activeSession.durationSeconds)}</span>
-                <button class="button mini" data-action="stopActiveTimer">Stop</button>
-            </div>
-        `
-        : '';
 
     return `<!DOCTYPE html>
     <html lang="en">
@@ -901,8 +906,6 @@ export async function getTimeTrackingReportHtml(
                 </div>
             ` : ''}
 
-            ${activeBanner}
-
             <div class="report-toolbar">
                 <div class="report-toolbar-group">
                     <button class="button" data-action="addSession">+ Add Session</button>
@@ -1335,9 +1338,7 @@ export async function getTimeTrackingReportHtml(
                         cancelAddSession();
                         break;
                     case 'deleteAllSessions':
-                        if (confirm('Are you sure you want to delete all sessions in this period? This cannot be undone.')) {
-                            vscode.postMessage({ command: 'deleteTimeTrackingSession', sessionId: 'ALL_FILTERED' });
-                        }
+                        vscode.postMessage({ command: 'confirmDeleteAllTimeTrackingSessions' });
                         break;
                 }
             });
@@ -1367,9 +1368,12 @@ export async function getTimeTrackingReportHtml(
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
                 if (hours > 0) {
-                    return hours + ':' + minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+                    return hours + 'h ' + minutes.toString().padStart(2, '0') + 'm ' + seconds.toString().padStart(2, '0') + 's';
                 }
-                return minutes + ':' + seconds.toString().padStart(2, '0');
+                if (minutes > 0) {
+                    return minutes + 'm ' + seconds.toString().padStart(2, '0') + 's';
+                }
+                return seconds + 's';
             }
         </script>
     </body>

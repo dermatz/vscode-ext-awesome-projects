@@ -6,7 +6,8 @@ export interface WebviewMessage {
              'sortProjects' | 'scanProjects' | 'setLoading' | 'relocateProject' |
              'toggleGroupCollapse' | 'showInFileManager' | 'previewIcon' | 'openInTerminal' |
              'startTimeTracking' | 'stopTimeTracking' | 'updateTimeTrackingSession' | 'deleteTimeTrackingSession' |
-             'addTimeTrackingSession' | 'clearTimeTracking' | 'getTimeTrackingState' | 'exportTimeTrackingCsv' | 'openTimeTrackingReport';
+             'addTimeTrackingSession' | 'clearTimeTracking' | 'getTimeTrackingState' | 'exportTimeTrackingCsv' | 'openTimeTrackingReport' |
+             'confirmDeleteAllTimeTrackingSessions';
     projectId?: string;
     projectPath?: string;
     remoteUrl?: string;

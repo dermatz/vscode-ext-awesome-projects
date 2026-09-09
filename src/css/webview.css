@@ -1893,6 +1893,14 @@ ul.submodules li + li {
     font-size: 0.8rem;
 }
 
+.time-tracking-session .session-branch-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    line-height: 1.3;
+    word-break: break-word;
+    min-width: 0;
+}
+
 .time-tracking-session .session-title-edit {
     display: inline-flex;
     align-items: center;
@@ -1900,12 +1908,14 @@ ul.submodules li + li {
     background: transparent;
     border: none;
     color: var(--vscode-foreground);
-    font-weight: 600;
-    font-size: inherit;
+    font-weight: 500;
+    font-size: 0.8rem;
     font-family: inherit;
     padding: 0;
+    margin-top: 0.25rem;
     cursor: pointer;
     text-align: left;
+    opacity: 0.85;
 }
 
 .time-tracking-session .session-title-edit:hover .session-edit-icon {
@@ -1924,8 +1934,9 @@ ul.submodules li + li {
 }
 
 .time-tracking-session .session-meta {
-    opacity: 0.7;
+    opacity: 0.65;
     font-size: 0.75rem;
+    margin-top: 0.2rem;
 }
 
 .time-tracking-session .session-branches {
@@ -1939,7 +1950,7 @@ ul.submodules li + li {
 
 .time-tracking-session .session-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 0.5rem;
 }

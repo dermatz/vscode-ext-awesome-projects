@@ -6,10 +6,14 @@ import { TimeTrackingSession } from '../../../../types/timeTracking';
 function formatDuration(totalSeconds: number): string {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
     if (hours > 0) {
-        return `${hours}h ${minutes}m`;
+        return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
     }
-    return `${minutes}m`;
+    if (minutes > 0) {
+        return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+    }
+    return `${seconds}s`;
 }
 
 export function getTimeTrackingDropdownHtml(
@@ -60,23 +64,18 @@ export function getTimeTrackingDropdownHtml(
                             return `
                             <div class="time-tracking-session ${isRunning ? 'time-tracking-session-active' : ''}" style="${isRunning ? `border-color: ${safeBgColor};` : ''}">
                                 <div class="session-row">
-                                    <button type="button" class="session-title-edit" title="Edit session" onclick="editTimeTrackingSessionInline('${escAttr(session.id)}')">
-                                        ${isRunning ? '<span class="session-live-indicator" title="Running"><span class="session-live-dot"></span>Live</span>' : ''}
-                                        <span class="session-title-text">${escHtml(session.title)}</span>
-                                        <span class="session-edit-icon">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                                        </span>
-                                    </button>
+                                    <div class="session-meta">${formatDuration(session.durationSeconds)} · ${new Date(session.startTime).toLocaleDateString()}</div>
                                     <button type="button" class="session-delete" title="Delete session" onclick="deleteTimeTrackingSession('${escAttr(session.id)}')">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
                                     </button>
                                 </div>
-                                <div class="session-meta">${formatDuration(session.durationSeconds)} · ${new Date(session.startTime).toLocaleDateString()}</div>
-                                <div class="session-branches">
-                                    ${session.branchLog.map((change, index) => `
-                                        <span>${index > 0 ? '→ ' : ''}${escHtml(change.branch)}</span>
-                                    `).join('')}
-                                </div>
+                                <button type="button" class="session-title-edit" title="Edit session" onclick="editTimeTrackingSessionInline('${escAttr(session.id)}')">
+                                    ${isRunning ? '<span class="session-live-indicator" title="Running"><span class="session-live-dot"></span>Live</span>' : ''}
+                                    <span class="session-title-text"><strong>${escHtml(session.title)}</strong></span>
+                                    <span class="session-edit-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                    </span>
+                                </button>
                             </div>
                         `;}).join('')}
                     </div>

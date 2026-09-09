@@ -60,11 +60,24 @@ export class TimeTrackingPanel {
         );
 
         const disposables: vscode.Disposable[] = [];
+        let lastActiveSessionId = timeTrackingService.getActiveSessionFull()?.id;
 
         disposables.push(
             timeTrackingService.onDidChangeTimer(async () => {
-                if (panel.visible) {
-                    const activeSession = timeTrackingService.getActiveSessionFull();
+                if (!panel.visible) {
+                    return;
+                }
+                const activeSession = timeTrackingService.getActiveSessionFull();
+                const currentActiveSessionId = activeSession?.id;
+                if (currentActiveSessionId !== lastActiveSessionId) {
+                    lastActiveSessionId = currentActiveSessionId;
+                    panel.webview.html = await TimeTrackingPanel._getHtml(
+                        panel.webview,
+                        extensionUri,
+                        context,
+                        timeTrackingService
+                    );
+                } else {
                     panel.webview.postMessage({
                         command: 'timeTrackingTick',
                         activeSession: activeSession ? {
@@ -118,33 +131,8 @@ export class TimeTrackingPanel {
                         if (message.sessionId) {
                             try {
                                 if (message.sessionId === 'ALL_FILTERED') {
-                                    const state = timeTrackingService.getState();
-                                    const allSessions = Object.values(state.sessionsByProject).flat();
-                                    const { start, end } = getPeriodBounds(
-                                        TimeTrackingPanel._currentPeriod,
-                                        TimeTrackingPanel._customStartDate,
-                                        TimeTrackingPanel._customEndDate
-                                    );
-                                    const sessionsToDelete = allSessions.filter(session => {
-                                        const sessionDate = new Date(session.startTime);
-                                        return sessionDate >= start && sessionDate <= end;
-                                    });
-
-                                    if (sessionsToDelete.length === 0) {
-                                        return;
-                                    }
-
-                                    for (const session of sessionsToDelete) {
-                                        await timeTrackingService.deleteSession(session.id);
-                                    }
-
-                                    panel.webview.html = await TimeTrackingPanel._getHtml(
-                                        panel.webview,
-                                        extensionUri,
-                                        context,
-                                        timeTrackingService
-                                    );
-                                    vscode.window.showInformationMessage(`Deleted ${sessionsToDelete.length} sessions`);
+                                    // Handled via confirmDeleteAllTimeTrackingSessions to avoid sandboxed confirm().
+                                    break;
                                 } else {
                                     const deleted = await timeTrackingService.deleteSession(message.sessionId);
                                     if (deleted) {
@@ -224,6 +212,51 @@ export class TimeTrackingPanel {
                     case 'exportTimeTrackingCsv':
                         await TimeTrackingPanel._exportCsv(timeTrackingService, message.reportPeriod, message.customStartDate, message.customEndDate);
                         break;
+                    case 'confirmDeleteAllTimeTrackingSessions':
+                        {
+                            const confirm = await vscode.window.showWarningMessage(
+                                'Are you sure you want to delete all sessions in this period? This cannot be undone.',
+                                { modal: true },
+                                'Delete'
+                            );
+                            if (confirm === 'Delete') {
+                                const state = timeTrackingService.getState();
+                                const allSessions = Object.values(state.sessionsByProject).flat();
+                                const { start, end } = getPeriodBounds(
+                                    TimeTrackingPanel._currentPeriod,
+                                    TimeTrackingPanel._customStartDate,
+                                    TimeTrackingPanel._customEndDate
+                                );
+                                const activeSessionId = state.activeSession?.sessionId;
+                                const sessionsToDelete = allSessions.filter(session => {
+                                    const sessionDate = new Date(session.startTime);
+                                    return sessionDate >= start && sessionDate <= end && session.id !== activeSessionId;
+                                });
+
+                                if (sessionsToDelete.length === 0) {
+                                    vscode.window.showInformationMessage(activeSessionId
+                                        ? 'Only the active session is in this period. Stop the timer first to delete it.'
+                                        : 'No sessions to delete for this period.');
+                                    break;
+                                }
+
+                                for (const session of sessionsToDelete) {
+                                    await timeTrackingService.deleteSession(session.id);
+                                }
+
+                                panel.webview.html = await TimeTrackingPanel._getHtml(
+                                    panel.webview,
+                                    extensionUri,
+                                    context,
+                                    timeTrackingService
+                                );
+                                const infoMessage = activeSessionId
+                                    ? `Deleted ${sessionsToDelete.length} sessions. Active session was skipped.`
+                                    : `Deleted ${sessionsToDelete.length} sessions`;
+                                vscode.window.showInformationMessage(infoMessage);
+                            }
+                        }
+                        break;
                 }
             })
         );
@@ -285,14 +318,19 @@ export class TimeTrackingPanel {
             return;
         }
 
+        const config = vscode.workspace.getConfiguration('awesomeProjects');
+        const projects = config.get<{ id: string; name: string }[]>('projects') || [];
+        const projectNameById = new Map(projects.map(p => [p.id, p.name]));
+
         const rows = filtered.map(session => {
             const start = new Date(session.startTime);
             const end = session.endTime ? new Date(session.endTime) : start;
             const branches = session.branchLog.map(b => b.branch).join(' → ');
             const durationFormatted = TimeTrackingPanel._formatDuration(session.durationSeconds);
+            const projectName = projectNameById.get(session.projectId) || session.projectId;
             return [
                 start.toISOString().split('T')[0],
-                session.projectId,
+                TimeTrackingPanel._escapeCsv(projectName),
                 TimeTrackingPanel._escapeCsv(session.title),
                 TimeTrackingPanel._escapeCsv(session.description || ''),
                 session.durationSeconds,
