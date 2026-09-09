@@ -140,7 +140,7 @@ export class TimeTrackingService implements vscode.Disposable {
             await this._doStopSession();
         }
 
-        const branch = await this.getCurrentBranch(workspaceFolderPath) ?? 'Unknown, no GIT branch found';
+        const branch = await this._resolveBranchWithRetry(workspaceFolderPath) ?? 'Unknown, no GIT branch found';
         const nowIso = new Date().toISOString();
         const sessionId = this._generateId();
         const sessionTitle = title?.trim() || this._buildDefaultSessionTitle(branch);
@@ -552,6 +552,19 @@ export class TimeTrackingService implements vscode.Disposable {
 
             await this._setState(state);
         });
+    }
+
+    private async _resolveBranchWithRetry(workspaceFolderPath: string, attempts = 3, delayMs = 200): Promise<string | undefined> {
+        for (let i = 0; i < attempts; i++) {
+            const branch = await this.getCurrentBranch(workspaceFolderPath);
+            if (branch) {
+                return branch;
+            }
+            if (i < attempts - 1) {
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+        return undefined;
     }
 
     private _getWorkspaceFolderPathForProject(projectId: string): string {
