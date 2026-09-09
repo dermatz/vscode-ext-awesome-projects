@@ -103,40 +103,61 @@ export function getPeriodBounds(
     return { start, end };
 }
 
-export async function getTimeTrackingReportHtml(
-    context: vscode.ExtensionContext,
-    webview: vscode.Webview,
+interface ReportViewModel {
+    projects: Project[];
+    projectById: Map<string, Project>;
+    projectNameById: Map<string, string>;
+    projectColorById: Map<string, string>;
+    useFavicons: boolean;
+    period: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom';
+    customStartDate?: string;
+    customEndDate?: string;
+    groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate';
+    start: Date;
+    end: Date;
+    activeSession?: TimeTrackingSession;
+    activeSessionId?: string;
+    activeTimer?: { sessionId: string; accumulatedSeconds: number; lastTickAt: number };
+    allSessions: TimeTrackingSession[];
+    filteredSessions: TimeTrackingSession[];
+    displaySessions: TimeTrackingSession[];
+    hasMoreSessions: boolean;
+    totalSeconds: number;
+}
+
+async function loadBaseCss(context: vscode.ExtensionContext): Promise<string> {
+    try {
+        return await loadResourceFile(context, 'dist/css/webview.css');
+    } catch {
+        return await loadResourceFile(context, 'src/css/webview.css').catch(() => '');
+    }
+}
+
+function getProjectColorHex(projectColorById: Map<string, string>, projectId: string): string {
+    const color = projectColorById.get(projectId);
+    if (!color) {
+        return '';
+    }
+    const hex = color.replace('#', '');
+    if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
+        return '';
+    }
+    return `#${hex}`;
+}
+
+function buildReportViewModel(
     timeTrackingService: TimeTrackingService,
-    period: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom' = 'week',
+    config: vscode.WorkspaceConfiguration,
+    period: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom',
     customStartDate?: string,
     customEndDate?: string,
     groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate' = 'none'
-): Promise<string> {
-    let baseCss = '';
-    try {
-        baseCss = await loadResourceFile(context, 'dist/css/webview.css');
-    } catch {
-        baseCss = await loadResourceFile(context, 'src/css/webview.css').catch(() => '');
-    }
-
-    const config = vscode.workspace.getConfiguration('awesomeProjects');
+): ReportViewModel {
     const projects = config.get<Project[]>('projects') || [];
     const projectById = new Map(projects.map(p => [p.id, p]));
     const projectNameById = new Map(projects.map(p => [p.id, p.name]));
     const projectColorById = new Map(projects.map(p => [p.id, p.color || '']));
     const useFavicons = config.get<boolean>('useFavicons', true);
-
-    function getProjectColorHex(projectId: string): string {
-        const color = projectColorById.get(projectId);
-        if (!color) {
-            return '';
-        }
-        const hex = color.replace('#', '');
-        if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
-            return '';
-        }
-        return `#${hex}`;
-    }
 
     const state = timeTrackingService.getState();
     const allSessions = Object.values(state.sessionsByProject).flat().sort(
@@ -157,75 +178,234 @@ export async function getTimeTrackingReportHtml(
 
     const totalSeconds = displaySessions.reduce((sum, session) => sum + getLiveDurationSeconds(session, state.activeSession), 0);
 
-    const activeBanner = activeSession
-        ? `
-            <div class="report-active-banner">
-                <span class="report-active-indicator"></span>
-                <div class="report-active-info">
-                    <span class="report-active-label">Timer running</span>
-                    <span class="report-active-title">${escHtml(activeSession.title)}</span>
-                </div>
-                <span class="report-active-time" data-active-session-id="${escAttr(activeSession.id)}">${formatDuration(activeSession.durationSeconds)}</span>
-                <button class="button mini" data-action="stopActiveTimer" onclick="stopActiveTimer(event)">Stop</button>
+    return {
+        projects,
+        projectById,
+        projectNameById,
+        projectColorById,
+        useFavicons,
+        period,
+        customStartDate,
+        customEndDate,
+        groupBy,
+        start,
+        end,
+        activeSession,
+        activeSessionId,
+        activeTimer: state.activeSession,
+        allSessions,
+        filteredSessions,
+        displaySessions,
+        hasMoreSessions,
+        totalSeconds
+    };
+}
+
+function renderActiveBanner(activeSession: TimeTrackingSession): string {
+    return `
+        <div class="report-active-banner">
+            <span class="report-active-indicator"></span>
+            <div class="report-active-info">
+                <span class="report-active-label">Timer running</span>
+                <span class="report-active-title">${escHtml(activeSession.title)}</span>
             </div>
-        `
-        : '';
+            <span class="report-active-time" data-active-session-id="${escAttr(activeSession.id)}">${formatDuration(activeSession.durationSeconds)}</span>
+            <button class="button mini" data-action="stopActiveTimer" onclick="stopActiveTimer(event)">Stop</button>
+        </div>
+    `;
+}
 
-    const paginationNotice = hasMoreSessions
-        ? `<div class="report-pagination-notice">Showing ${displaySessions.length} of ${filteredSessions.length} sessions. Narrow the period to see older entries, or increase the limit in settings.</div>`
+function renderPaginationNotice(displayCount: number, totalCount: number): string {
+    return totalCount > displayCount
+        ? `<div class="report-pagination-notice">Showing ${displayCount} of ${totalCount} sessions. Narrow the period to see older entries, or increase the limit in settings.</div>`
         : '';
+}
 
-    const sessionsHtml = filteredSessions.length === 0
-        ? `
+function renderSessionsSection(vm: ReportViewModel, context: vscode.ExtensionContext): string {
+    if (vm.filteredSessions.length === 0) {
+        return `
             <div class="report-empty">
                 <div class="report-empty-icon">⏱</div>
                 <h3>No sessions for this period</h3>
                 <p>Start tracking time from a project in the sidebar to see it here.</p>
             </div>
-        `
-        : `
-            <div class="report-summary-grid">
-                <div class="report-summary-card">
-                    <span class="report-summary-label">Total Time</span>
-                    <span class="report-summary-value" id="summary-total-time" data-total-seconds="${totalSeconds}">${formatDuration(totalSeconds)}</span>
-                </div>
-                <div class="report-summary-card">
-                    <span class="report-summary-label">Sessions</span>
-                    <span class="report-summary-value" id="summary-session-count">${displaySessions.length}</span>
-                </div>
-                <div class="report-summary-card">
-                    <span class="report-summary-label">Projects</span>
-                    <span class="report-summary-value">${new Set(displaySessions.map(s => s.projectId)).size}</span>
-                </div>
-                <div class="report-summary-card">
-                    <span class="report-summary-label">Daily Avg</span>
-                    <span class="report-summary-value" id="summary-daily-avg">${formatDuration(Math.round(totalSeconds / Math.max(1, displaySessions.length)))}</span>
-                </div>
-            </div>
-            ${activeBanner}
-            ${paginationNotice}
-            <div class="report-table-wrapper" style="display: ${groupBy === 'none' ? 'block' : 'none'};">
-                <table class="report-table" id="time-tracking-table">
-                    <thead>
-                        <tr>
-                            <th class="sortable-header sort-desc" data-sort="date">Date and Time</th>
-                            <th class="sortable-header" data-sort="project">Project</th>
-                            <th class="sortable-header" data-sort="title">Title</th>
-                            <th class="sortable-header" data-sort="duration">Duration</th>
-                            <th class="sortable-header" data-sort="branches">Branches</th>
-                            <th class="actions-header">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${displaySessions.map(session => renderSessionRow(session, projectById.get(session.projectId), projectNameById, getProjectColorHex(session.projectId), activeSession?.id === session.id, false, state.activeSession, context, useFavicons)).join('')}
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="branch-groups" class="report-branch-groups" style="display: ${groupBy === 'none' ? 'none' : 'block'};">
-                ${renderGroups(displaySessions, projectById, projectNameById, getProjectColorHex, activeSession?.id, groupBy, state.activeSession, context, useFavicons)}
-            </div>
         `;
+    }
+
+    const activeBanner = vm.activeSession ? renderActiveBanner(vm.activeSession) : '';
+    const paginationNotice = renderPaginationNotice(vm.displaySessions.length, vm.filteredSessions.length);
+
+    return `
+        <div class="report-summary-grid">
+            <div class="report-summary-card">
+                <span class="report-summary-label">Total Time</span>
+                <span class="report-summary-value" id="summary-total-time" data-total-seconds="${vm.totalSeconds}">${formatDuration(vm.totalSeconds)}</span>
+            </div>
+            <div class="report-summary-card">
+                <span class="report-summary-label">Sessions</span>
+                <span class="report-summary-value" id="summary-session-count">${vm.displaySessions.length}</span>
+            </div>
+            <div class="report-summary-card">
+                <span class="report-summary-label">Projects</span>
+                <span class="report-summary-value">${new Set(vm.displaySessions.map(s => s.projectId)).size}</span>
+            </div>
+            <div class="report-summary-card">
+                <span class="report-summary-label">Daily Avg</span>
+                <span class="report-summary-value" id="summary-daily-avg">${formatDuration(Math.round(vm.totalSeconds / Math.max(1, vm.displaySessions.length)))}</span>
+            </div>
+        </div>
+        ${activeBanner}
+        ${paginationNotice}
+        <div class="report-table-wrapper" style="display: ${vm.groupBy === 'none' ? 'block' : 'none'};">
+            <table class="report-table" id="time-tracking-table">
+                <thead>
+                    <tr>
+                        <th class="sortable-header sort-desc" data-sort="date">Date and Time</th>
+                        <th class="sortable-header" data-sort="project">Project</th>
+                        <th class="sortable-header" data-sort="title">Title</th>
+                        <th class="sortable-header" data-sort="duration">Duration</th>
+                        <th class="sortable-header" data-sort="branches">Branches</th>
+                        <th class="actions-header">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${vm.displaySessions.map(session => renderSessionRow(session, vm.projectById.get(session.projectId), vm.projectNameById, getProjectColorHex(vm.projectColorById, session.projectId), vm.activeSession?.id === session.id, false, vm.activeTimer, context, vm.useFavicons)).join('')}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="branch-groups" class="report-branch-groups" style="display: ${vm.groupBy === 'none' ? 'none' : 'block'};">
+            ${renderGroups(vm.displaySessions, vm.projectById, vm.projectNameById, (projectId) => getProjectColorHex(vm.projectColorById, projectId), vm.activeSession?.id, vm.groupBy, vm.activeTimer, context, vm.useFavicons)}
+        </div>
+    `;
+}
+
+function renderReportHeader(vm: ReportViewModel): string {
+    const stopButton = vm.activeSession ? `
+        <button class="report-header-stop" data-action="stopActiveTimer" title="Stop running timer: ${escAttr(vm.activeSession.title)}">
+            <span class="live-dot"></span>
+            <span>Stop</span>
+        </button>
+    ` : '';
+
+    const customRange = vm.period === 'custom' ? `
+        <div class="report-custom-range">
+            <label for="custom-start">From</label>
+            <input type="date" id="custom-start" value="${escAttr(vm.customStartDate || vm.start.toISOString().split('T')[0])}">
+            <label for="custom-end">To</label>
+            <input type="date" id="custom-end" value="${escAttr(vm.customEndDate || vm.end.toISOString().split('T')[0])}">
+            <button class="button mini" data-action="applyCustomRange">Apply</button>
+            <div class="validation-message" id="custom-range-error" style="display: none;"></div>
+        </div>
+    ` : '';
+
+    return `
+        <div class="report-page-header">
+            <h1>Time Tracking Report</h1>
+            <div class="report-header-actions">
+                ${stopButton}
+                <div class="report-period-tabs">
+                    <button class="${vm.period === 'today' ? 'active' : ''}" data-action="setPeriod" data-period="today">Today</button>
+                    <button class="${vm.period === 'week' ? 'active' : ''}" data-action="setPeriod" data-period="week">This Week</button>
+                    <button class="${vm.period === 'month' ? 'active' : ''}" data-action="setPeriod" data-period="month">This Month</button>
+                    <button class="${vm.period === 'lastMonth' ? 'active' : ''}" data-action="setPeriod" data-period="lastMonth">Last Month</button>
+                    <button class="${vm.period === 'all' ? 'active' : ''}" data-action="setPeriod" data-period="all">All</button>
+                    <button class="${vm.period === 'custom' ? 'active' : ''}" data-action="setPeriod" data-period="custom">Custom</button>
+                </div>
+            </div>
+        </div>
+
+        ${customRange}
+    `;
+}
+
+function renderReportToolbarAndFilters(vm: ReportViewModel): string {
+    const exportButtons = vm.displaySessions.length > 0 ? `
+        <button class="button mini secondary" data-action="exportCsv" data-period="${escAttr(vm.period)}" data-start="${escAttr(vm.customStartDate || '')}" data-end="${escAttr(vm.customEndDate || '')}">Export CSV</button>
+        <button class="button mini danger" data-action="deleteAllSessions">Delete All</button>
+    ` : '';
+
+    const projectPills = [...new Set(vm.displaySessions.map(s => vm.projectNameById.get(s.projectId) || s.projectId))].sort()
+        .map(name => `<button class="report-filter-pill" data-filter-project="${escAttr(name)}">${escHtml(name)}</button>`).join('');
+
+    return `
+        <div class="report-toolbar">
+            <div class="report-toolbar-group">
+                <button class="button" data-action="addSession">+ Add Session</button>
+            </div>
+            <div class="report-toolbar-group">
+                ${exportButtons}
+            </div>
+        </div>
+
+        <div class="report-grouping-bar">
+            <label for="group-by">Group by</label>
+            <select id="group-by" data-action="setGroupBy">
+                <option value="none" ${vm.groupBy === 'none' ? 'selected' : ''}>None</option>
+                <option value="project" ${vm.groupBy === 'project' ? 'selected' : ''}>Project</option>
+                <option value="title" ${vm.groupBy === 'title' ? 'selected' : ''}>Title</option>
+                <option value="branch" ${vm.groupBy === 'branch' ? 'selected' : ''}>Branch</option>
+                <option value="branchAndDate" ${vm.groupBy === 'branchAndDate' ? 'selected' : ''}>Branch and Date</option>
+            </select>
+        </div>
+
+        <div class="report-filter-bar">
+            <input type="text" id="session-filter" placeholder="Filter by project, title, branch...">
+            <div class="report-filter-pills" id="project-filter-pills">
+                ${projectPills}
+            </div>
+            <button class="report-filter-clear" id="filter-clear" style="display: none;">Clear</button>
+        </div>
+
+        <div id="add-session-form" class="inline-edit add-session-edit" style="display: none; margin-bottom: 24px;">
+            <div class="field">
+                <label for="add-project">Project</label>
+                <select id="add-project">
+                    ${vm.projects.map(p => `<option value="${escAttr(p.id)}">${escHtml(p.name)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="field">
+                <label for="add-title">Title</label>
+                <input type="text" id="add-title" placeholder="Session title">
+            </div>
+            <div class="field">
+                <label for="add-desc">Description</label>
+                <textarea id="add-desc" rows="2" placeholder="Optional description"></textarea>
+            </div>
+            <div class="inline-edit-row">
+                <div class="field">
+                    <label for="add-start">Start</label>
+                    <input type="datetime-local" id="add-start">
+                </div>
+                <div class="field">
+                    <label for="add-end">End</label>
+                    <input type="datetime-local" id="add-end">
+                </div>
+                <div class="field" style="max-width: 120px;">
+                    <label for="add-duration">Duration (s)</label>
+                    <input type="number" id="add-duration" placeholder="Ignored when start and end are set">
+                </div>
+            </div>
+            <div class="inline-edit-actions">
+                <button class="button mini" data-action="saveNewSession">Save</button>
+                <button class="button mini secondary" data-action="cancelAddSession">Cancel</button>
+            </div>
+        </div>
+    `;
+}
+
+export async function getTimeTrackingReportHtml(
+    context: vscode.ExtensionContext,
+    webview: vscode.Webview,
+    timeTrackingService: TimeTrackingService,
+    period: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom' = 'week',
+    customStartDate?: string,
+    customEndDate?: string,
+    groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate' = 'none'
+): Promise<string> {
+    const baseCss = await loadBaseCss(context);
+    const config = vscode.workspace.getConfiguration('awesomeProjects');
+    const vm = buildReportViewModel(timeTrackingService, config, period, customStartDate, customEndDate, groupBy);
 
     return `<!DOCTYPE html>
     <html lang="en">
@@ -237,108 +417,13 @@ export async function getTimeTrackingReportHtml(
     </head>
     <body>
         <div class="time-tracking-report">
-            <div class="report-page-header">
-                <h1>Time Tracking Report</h1>
-                <div class="report-header-actions">
-                    ${activeSession ? `
-                        <button class="report-header-stop" data-action="stopActiveTimer" title="Stop running timer: ${escAttr(activeSession.title)}">
-                            <span class="live-dot"></span>
-                            <span>Stop</span>
-                        </button>
-                    ` : ''}
-                    <div class="report-period-tabs">
-                        <button class="${period === 'today' ? 'active' : ''}" data-action="setPeriod" data-period="today">Today</button>
-                        <button class="${period === 'week' ? 'active' : ''}" data-action="setPeriod" data-period="week">This Week</button>
-                        <button class="${period === 'month' ? 'active' : ''}" data-action="setPeriod" data-period="month">This Month</button>
-                        <button class="${period === 'lastMonth' ? 'active' : ''}" data-action="setPeriod" data-period="lastMonth">Last Month</button>
-                        <button class="${period === 'all' ? 'active' : ''}" data-action="setPeriod" data-period="all">All</button>
-                        <button class="${period === 'custom' ? 'active' : ''}" data-action="setPeriod" data-period="custom">Custom</button>
-                    </div>
-                </div>
-            </div>
-
-            ${period === 'custom' ? `
-                <div class="report-custom-range">
-                    <label for="custom-start">From</label>
-                    <input type="date" id="custom-start" value="${escAttr(customStartDate || start.toISOString().split('T')[0])}">
-                    <label for="custom-end">To</label>
-                    <input type="date" id="custom-end" value="${escAttr(customEndDate || end.toISOString().split('T')[0])}">
-                    <button class="button mini" data-action="applyCustomRange">Apply</button>
-                    <div class="validation-message" id="custom-range-error" style="display: none;"></div>
-                </div>
-            ` : ''}
-
-            <div class="report-toolbar">
-                <div class="report-toolbar-group">
-                    <button class="button" data-action="addSession">+ Add Session</button>
-                </div>
-                <div class="report-toolbar-group">
-                    ${displaySessions.length > 0 ? `
-                        <button class="button mini secondary" data-action="exportCsv" data-period="${escAttr(period)}" data-start="${escAttr(customStartDate || '')}" data-end="${escAttr(customEndDate || '')}">Export CSV</button>
-                        <button class="button mini danger" data-action="deleteAllSessions">Delete All</button>
-                    ` : ''}
-                </div>
-            </div>
-
-            <div class="report-grouping-bar">
-                <label for="group-by">Group by</label>
-                <select id="group-by" data-action="setGroupBy">
-                    <option value="none" ${groupBy === 'none' ? 'selected' : ''}>None</option>
-                    <option value="project" ${groupBy === 'project' ? 'selected' : ''}>Project</option>
-                    <option value="title" ${groupBy === 'title' ? 'selected' : ''}>Title</option>
-                    <option value="branch" ${groupBy === 'branch' ? 'selected' : ''}>Branch</option>
-                    <option value="branchAndDate" ${groupBy === 'branchAndDate' ? 'selected' : ''}>Branch and Date</option>
-                </select>
-            </div>
-
-            <div class="report-filter-bar">
-                <input type="text" id="session-filter" placeholder="Filter by project, title, branch...">
-                <div class="report-filter-pills" id="project-filter-pills">
-                    ${[...new Set(displaySessions.map(s => projectNameById.get(s.projectId) || s.projectId))].sort().map(name => `<button class="report-filter-pill" data-filter-project="${escAttr(name)}">${escHtml(name)}</button>`).join('')}
-                </div>
-                <button class="report-filter-clear" id="filter-clear" style="display: none;">Clear</button>
-            </div>
-
-            <div id="add-session-form" class="inline-edit add-session-edit" style="display: none; margin-bottom: 24px;">
-                <div class="field">
-                    <label for="add-project">Project</label>
-                    <select id="add-project">
-                        ${projects.map(p => `<option value="${escAttr(p.id)}">${escHtml(p.name)}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="add-title">Title</label>
-                    <input type="text" id="add-title" placeholder="Session title">
-                </div>
-                <div class="field">
-                    <label for="add-desc">Description</label>
-                    <textarea id="add-desc" rows="2" placeholder="Optional description"></textarea>
-                </div>
-                <div class="inline-edit-row">
-                    <div class="field">
-                        <label for="add-start">Start</label>
-                        <input type="datetime-local" id="add-start">
-                    </div>
-                    <div class="field">
-                        <label for="add-end">End</label>
-                        <input type="datetime-local" id="add-end">
-                    </div>
-                    <div class="field" style="max-width: 120px;">
-                        <label for="add-duration">Duration (s)</label>
-                        <input type="number" id="add-duration" placeholder="Ignored when start and end are set">
-                    </div>
-                </div>
-                <div class="inline-edit-actions">
-                    <button class="button mini" data-action="saveNewSession">Save</button>
-                    <button class="button mini secondary" data-action="cancelAddSession">Cancel</button>
-                </div>
-            </div>
-
-            ${sessionsHtml}
+            ${renderReportHeader(vm)}
+            ${renderReportToolbarAndFilters(vm)}
+            ${renderSessionsSection(vm, context)}
         </div>
 
         ${getReportScriptHtml(
-            JSON.stringify(displaySessions.map(s => ({ id: s.id, startTime: s.startTime, endTime: s.endTime }))),
+            JSON.stringify(vm.displaySessions.map(s => ({ id: s.id, startTime: s.startTime, endTime: s.endTime }))),
             escAttr(period),
             groupBy
         )}
