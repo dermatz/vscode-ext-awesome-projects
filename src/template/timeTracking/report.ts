@@ -7,7 +7,6 @@ import { escHtml, escAttr } from '../utils/escaping';
 import { formatDuration } from '../utils/formatDuration';
 import { getProjectIconHtml } from '../project/utils/projectIcon';
 import { getReportScriptHtml } from './reportScript';
-import { getReportCssHtml } from './reportCss';
 
 function getUtcStartOfDay(date: Date): Date {
     return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
@@ -165,6 +164,14 @@ async function loadBaseCss(context: vscode.ExtensionContext): Promise<string> {
         return await loadResourceFile(context, 'dist/css/webview.css');
     } catch {
         return await loadResourceFile(context, 'src/css/webview.css').catch(() => '');
+    }
+}
+
+async function loadReportCss(context: vscode.ExtensionContext): Promise<string> {
+    try {
+        return await loadResourceFile(context, 'dist/css/timeTrackingReport.css');
+    } catch {
+        return await loadResourceFile(context, 'src/css/timeTrackingReport.css').catch(() => '');
     }
 }
 
@@ -491,6 +498,7 @@ export async function getTimeTrackingReportHtml(
     groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate' = 'none'
 ): Promise<string> {
     const baseCss = await loadBaseCss(context);
+    const reportCss = await loadReportCss(context);
     const config = vscode.workspace.getConfiguration('awesomeProjects');
     const vm = buildReportViewModel(timeTrackingService, config, period, customStartDate, customEndDate, groupBy);
 
@@ -500,7 +508,8 @@ export async function getTimeTrackingReportHtml(
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Time Tracking Report</title>
-        ${getReportCssHtml(baseCss)}
+        <style>${baseCss}</style>
+        <style>${reportCss}</style>
     </head>
     <body>
         ${renderReportBody(vm, context)}
@@ -724,7 +733,7 @@ function renderSessionRow(options: SessionRowContext): string {
                     ${session.description ? `<small id="session-desc-${escAttr(session.id)}">${escHtml(session.description)}</small>` : ''}
                 </td>
                 <td id="session-duration-${escAttr(session.id)}" data-seconds="${liveDurationSeconds}">${formatDuration(liveDurationSeconds)}</td>
-                ${branchTimeline}
+                <td>${branchTimeline}</td>
                 ${actions}
             </tr>
         `;
@@ -739,7 +748,7 @@ function renderSessionRow(options: SessionRowContext): string {
                 ${session.description ? `<small id="session-desc-${escAttr(session.id)}">${escHtml(session.description)}</small>` : ''}
             </td>
             <td id="session-duration-${escAttr(session.id)}" data-seconds="${liveDurationSeconds}">${formatDuration(liveDurationSeconds)}</td>
-            ${branchTimeline}
+            <td>${branchTimeline}</td>
             ${actions}
         </tr>
     `;

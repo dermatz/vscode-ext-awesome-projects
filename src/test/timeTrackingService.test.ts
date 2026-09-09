@@ -67,7 +67,7 @@ suite('TimeTrackingService Tests', () => {
     });
 
     test('recoverActiveSession discard removes orphan session', async () => {
-        const session = await service.startSession('proj-1', '/workspace/a');
+        await service.startSession('proj-1', '/workspace/a');
         await service.recoverActiveSession('discard');
         assert.strictEqual(service.getActiveSession(), undefined);
         assert.strictEqual(service.getSessionsByProject('proj-1').length, 0);
