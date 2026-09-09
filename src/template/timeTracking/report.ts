@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 import { TimeTrackingService } from '../../timeTrackingService';
 import { TimeTrackingSession } from '../../types/timeTracking';
+import { Project } from '../../extension';
 import { loadResourceFile } from '../utils/resourceLoader';
 import { escHtml, escAttr } from '../utils/escaping';
 import { formatDuration } from '../utils/formatDuration';
+import { getProjectIconHtml } from '../project/utils/projectIcon';
 
 function isSameDay(a: Date, b: Date): boolean {
     return a.getFullYear() === b.getFullYear() &&
@@ -122,9 +124,11 @@ export async function getTimeTrackingReportHtml(
     }
 
     const config = vscode.workspace.getConfiguration('awesomeProjects');
-    const projects = config.get<{ id: string; name: string; color?: string }[]>('projects') || [];
+    const projects = config.get<Project[]>('projects') || [];
+    const projectById = new Map(projects.map(p => [p.id, p]));
     const projectNameById = new Map(projects.map(p => [p.id, p.name]));
     const projectColorById = new Map(projects.map(p => [p.id, p.color || '']));
+    const useFavicons = config.get<boolean>('useFavicons', true);
 
     function getProjectColorHex(projectId: string): string {
         const color = projectColorById.get(projectId);
@@ -217,13 +221,13 @@ export async function getTimeTrackingReportHtml(
                         </tr>
                     </thead>
                     <tbody>
-                        ${displaySessions.map(session => renderSessionRow(session, projectNameById, getProjectColorHex(session.projectId), activeSession?.id === session.id, false, state.activeSession)).join('')}
+                        ${displaySessions.map(session => renderSessionRow(session, projectById.get(session.projectId), projectNameById, getProjectColorHex(session.projectId), activeSession?.id === session.id, false, state.activeSession, context, useFavicons)).join('')}
                     </tbody>
                 </table>
             </div>
 
             <div id="branch-groups" class="report-branch-groups" style="display: ${groupBy === 'none' ? 'none' : 'block'};">
-                ${renderGroups(displaySessions, projectNameById, getProjectColorHex, activeSession?.id, groupBy, state.activeSession)}
+                ${renderGroups(displaySessions, projectById, projectNameById, getProjectColorHex, activeSession?.id, groupBy, state.activeSession, context, useFavicons)}
             </div>
         `;
 
@@ -885,6 +889,27 @@ export async function getTimeTrackingReportHtml(
             .session-actions .button.mini {
                 padding: 5px 10px;
                 font-size: 0.8rem;
+            }
+
+            .report-project-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 18px;
+                height: 18px;
+                margin-right: 8px;
+                vertical-align: middle;
+            }
+
+            .report-project-icon img {
+                width: 16px;
+                height: 16px;
+                object-fit: contain;
+            }
+
+            .report-project-icon svg {
+                width: 16px;
+                height: 16px;
             }
 
             .report-empty {
@@ -1644,11 +1669,14 @@ export async function getTimeTrackingReportHtml(
 
 function renderGroups(
     sessions: TimeTrackingSession[],
+    projectById: Map<string, Project>,
     projectNameById: Map<string, string>,
     getProjectColorHex: (projectId: string) => string,
     activeSessionId?: string,
     groupBy: 'none' | 'project' | 'title' | 'branch' | 'branchAndDate' = 'branch',
-    activeSession?: { sessionId: string; accumulatedSeconds: number; lastTickAt: number }
+    activeSession?: { sessionId: string; accumulatedSeconds: number; lastTickAt: number },
+    context?: vscode.ExtensionContext,
+    useFavicons?: boolean
 ): string {
     if (sessions.length === 0) {
         return '';
@@ -1723,7 +1751,7 @@ function renderGroups(
                             </tr>
                         </thead>
                         <tbody>
-                            ${sessions.map(session => renderSessionRow(session, projectNameById, projectColor, activeSessionId === session.id, true, activeSession)).join('')}
+                            ${sessions.map(session => renderSessionRow(session, projectById.get(session.projectId), projectNameById, projectColor, activeSessionId === session.id, true, activeSession, context, useFavicons)).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -1739,11 +1767,12 @@ function sessionBranchDisplayName(session: TimeTrackingSession): string {
     return session.branchLog[session.branchLog.length - 1].branch;
 }
 
-function renderSessionRow(session: TimeTrackingSession, projectNameById: Map<string, string>, projectColor: string = '', isActive: boolean = false, compact: boolean = false, activeSession?: { sessionId: string; accumulatedSeconds: number; lastTickAt: number }): string {
+function renderSessionRow(session: TimeTrackingSession, project: Project | undefined, projectNameById: Map<string, string>, projectColor: string = '', isActive: boolean = false, compact: boolean = false, activeSession?: { sessionId: string; accumulatedSeconds: number; lastTickAt: number }, context?: vscode.ExtensionContext, useFavicons?: boolean): string {
     const startDate = new Date(session.startTime);
     const date = startDate.toLocaleDateString();
     const time = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const projectName = projectNameById.get(session.projectId) || session.projectId;
+    const iconHtml = project && context ? `<span class="report-project-icon">${getProjectIconHtml(context, project, useFavicons ?? true)}</span>` : '';
     const UNKNOWN_BRANCH = 'Unknown, no GIT branch found';
     // Collapse consecutive identical branches and prefer the last real branch.
     const cleanedBranchLog = session.branchLog.reduce<{ branch: string; changedAt: string }[]>((acc, change) => {
@@ -1796,7 +1825,7 @@ function renderSessionRow(session: TimeTrackingSession, projectNameById: Map<str
     return `
         <tr id="session-row-${escAttr(session.id)}" class="${activeClass}" ${dataAttrs} ${colorStyle}>
             <td><span class="project-color-dot" ${colorStyle}></span><span class="session-date">${escHtml(date)}</span><span class="session-time">${escHtml(time)}</span></td>
-            <td>${escHtml(projectName)}</td>
+            <td>${iconHtml}${escHtml(projectName)}</td>
             <td>
                 <div id="session-title-${escAttr(session.id)}">${activeIndicator}${escHtml(session.title)}</div>
                 ${session.description ? `<small id="session-desc-${escAttr(session.id)}">${escHtml(session.description)}</small>` : ''}

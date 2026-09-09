@@ -6,8 +6,8 @@ import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
 import { getTimeTrackingDropdownHtml } from './dropdowns/dropdownTimeTracking';
 import { getProjectId } from '../utils/project-id';
-import { getTablerIconSvg } from '../utils/tablerIcons';
-import { escHtml, escAttr, escOnclickArg, sanitizeCssColor, safeUrl } from '../../utils/escaping';
+import { getProjectIconHtml } from '../utils/projectIcon';
+import { escHtml, escAttr, escOnclickArg, sanitizeCssColor } from '../../utils/escaping';
 import { TimeTrackingSession } from '../../../types/timeTracking';
 import { formatDuration } from '../../utils/formatDuration';
 
@@ -71,52 +71,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     `;
     }
 
-    const isAllowedIconProtocol = (protocol: string): boolean => protocol === 'http:' || protocol === 'https:';
-
-    const getBaseUrl = (url?: string) => {
-        if (!url) { return null; }
-        try {
-            const urlObj = new URL(url);
-            if (!isAllowedIconProtocol(urlObj.protocol)) {
-                return null;
-            }
-            return urlObj.protocol + "//" + urlObj.hostname;
-        } catch (e) {
-            return null;
-        }
-    };
-
-    const isDirectIconUrl = (url?: string): boolean => {
-        if (!url) { return false; }
-        try {
-            const parsed = new URL(url);
-            if (!isAllowedIconProtocol(parsed.protocol)) {
-                return false;
-            }
-            return /\.(ico|png|jpg|jpeg|svg|webp|gif|bmp)(\?.*)?$/i.test(parsed.pathname);
-        } catch {
-            return false;
-        }
-    };
-
-    let iconHtml: string;
-    if (project.icon) {
-        const tablerIcon = getTablerIconSvg(context, project.icon);
-        iconHtml = tablerIcon || escHtml(project.icon);
-    } else {
-        const iconUrl = useFavicons ? project.iconUrl : undefined;
-        const baseUrl = useFavicons && !iconUrl
-            ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
-            : null;
-        const faviconUrl = iconUrl
-            ? (isDirectIconUrl(iconUrl) ? safeUrl(iconUrl) : `https://www.google.com/s2/favicons?domain=${escAttr(getBaseUrl(iconUrl) || iconUrl)}`)
-            : baseUrl && useFavicons
-                ? `https://www.google.com/s2/favicons?domain=${escAttr(baseUrl)}`
-                : null;
-        iconHtml = faviconUrl
-            ? `<img loading="lazy" src="${faviconUrl}" onerror="this.parentElement.textContent='${isRemote ? '\u{1F310}' : '\u{1F4C1}'}'">`
-            : (isRemote ? "🌐" : "📁");
-    }
+    const iconHtml = getProjectIconHtml(context, project, useFavicons);
 
     const workspaceFile = isRemote ? undefined : (await findWorkspaceFile(project.path) ?? undefined);
     const projectId = getProjectId(project);
