@@ -347,54 +347,45 @@ export class TimeTrackingService implements vscode.Disposable {
      */
     public async updateSession(sessionId: string, patch: TimeTrackingSessionPatch): Promise<TimeTrackingSession | undefined> {
         return this._enqueueStateMutation(async () => {
-        const state = this.getState();
-        const session = this._findSession(state, sessionId);
-        if (!session) {
-            return undefined;
-        }
+            const state = this.getState();
+            const session = this._findSession(state, sessionId);
+            if (!session) {
+                return undefined;
+            }
 
-        if (state.activeSession?.sessionId === sessionId) {
-            if (patch.durationSeconds !== undefined || patch.startTime !== undefined || patch.endTime !== undefined) {
-                throw new Error('Cannot edit duration or times of an active session. Stop it first.');
-            }
-        }
+            this._ensureCanEditActiveSession(state, sessionId, patch);
+            const oldDuration = session.durationSeconds;
+            this._applySessionPatch(session, patch);
+            this._validateSessionTimes(session);
+            session.updatedAt = new Date().toISOString();
 
-        const oldDuration = session.durationSeconds;
-        if (patch.title !== undefined) {
-            const trimmedTitle = patch.title.trim();
-            if (!trimmedTitle) {
-                throw new Error('Session title cannot be empty.');
+            const durationDelta = session.durationSeconds - oldDuration;
+            if (durationDelta !== 0 && session.projectId) {
+                await this.addTimeToProject(session.projectId, durationDelta);
             }
-            session.title = trimmedTitle;
+
+            await this._setState(state);
+            return session;
+        });
+    }
+
+    private _ensureCanEditActiveSession(
+        state: TimeTrackingState,
+        sessionId: string,
+        patch: TimeTrackingSessionPatch
+    ): void {
+        if (state.activeSession?.sessionId !== sessionId) {
+            return;
         }
-        if (patch.description !== undefined) {
-            session.description = patch.description;
+        if (patch.durationSeconds !== undefined || patch.startTime !== undefined || patch.endTime !== undefined) {
+            throw new Error('Cannot edit duration or times of an active session. Stop it first.');
         }
-        if (patch.startTime !== undefined) {
-            session.startTime = patch.startTime;
-        }
-        if (patch.endTime !== undefined) {
-            session.endTime = patch.endTime;
-        }
-        if (patch.durationSeconds !== undefined) {
-            if (patch.durationSeconds < 0) {
-                throw new Error('Duration cannot be negative.');
-            }
-            session.durationSeconds = patch.durationSeconds;
-        }
+    }
+
+    private _validateSessionTimes(session: TimeTrackingSession): void {
         if (session.endTime && new Date(session.endTime) < new Date(session.startTime)) {
             throw new Error('End time cannot be before start time.');
         }
-        session.updatedAt = new Date().toISOString();
-
-        const durationDelta = session.durationSeconds - oldDuration;
-        if (durationDelta !== 0 && session.projectId) {
-            await this.addTimeToProject(session.projectId, durationDelta);
-        }
-
-        await this._setState(state);
-        return session;
-        });
     }
 
     /**
@@ -565,6 +556,31 @@ export class TimeTrackingService implements vscode.Disposable {
             }
         }
         return undefined;
+    }
+
+    private _applySessionPatch(session: TimeTrackingSession, patch: TimeTrackingSessionPatch): void {
+        if (patch.title !== undefined) {
+            const trimmedTitle = patch.title.trim();
+            if (!trimmedTitle) {
+                throw new Error('Session title cannot be empty.');
+            }
+            session.title = trimmedTitle;
+        }
+        if (patch.description !== undefined) {
+            session.description = patch.description;
+        }
+        if (patch.startTime !== undefined) {
+            session.startTime = patch.startTime;
+        }
+        if (patch.endTime !== undefined) {
+            session.endTime = patch.endTime;
+        }
+        if (patch.durationSeconds !== undefined) {
+            if (patch.durationSeconds < 0) {
+                throw new Error('Duration cannot be negative.');
+            }
+            session.durationSeconds = patch.durationSeconds;
+        }
     }
 
     private _getWorkspaceFolderPathForProject(projectId: string): string {

@@ -103,9 +103,6 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                     ${timeSpentHtml}
                 </div>
                 <div class="project-settings">
-                    <button type="button" class="button mini quick-action-button time-tracking-toggle${isTimerActive ? ' active' : ''}" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'timeTracking')" title="Time tracking">
-                        ${timerIcon}
-                    </button>
                     ${isRemote ? `
                     <button type="button" class="button mini quick-action-button" onclick="openRemoteProject('${escOnclickArg(project.remoteUrl!)}')" title="Open remote repository">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
@@ -122,6 +119,9 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                             <path d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                         </svg>
                     </button>`}
+                    <button type="button" class="button mini quick-action-button time-tracking-toggle${isTimerActive ? ' active' : ''}" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'timeTracking')" title="Time tracking">
+                        ${timerIcon}
+                    </button>
                     <div class="quick-menu-wrapper">
                         <button type="button" class="button mini quick-menu-toggle" onclick="toggleQuickMenu(event, '${escOnclickArg(projectId)}')" title="Project actions">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">

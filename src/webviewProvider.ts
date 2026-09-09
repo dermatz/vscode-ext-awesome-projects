@@ -11,7 +11,7 @@ import { getProjectId } from './template/project/utils/project-id';
 import { getTablerIconSvg } from './template/project/utils/tablerIcons';
 import { escHtml } from './template/utils/escaping';
 import { TimeTrackingService } from './timeTrackingService';
-import { TimeTrackingSession } from './types/timeTracking';
+
 import * as path from 'path';
 
 /**

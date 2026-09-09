@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { StatusBarManager } from '../../statusBar';
-import { TimeTrackingService, TIME_TRACKING_STATE_KEY } from '../../timeTrackingService';
+import { TimeTrackingService } from '../../timeTrackingService';
 
 suite('StatusBar Time Tracking Tests', () => {
     let context: vscode.ExtensionContext;
@@ -50,7 +50,7 @@ suite('StatusBar Time Tracking Tests', () => {
         try {
             statusBar.update();
             // Status bar text should contain the watch icon and project name
-            const statusBarItem = (statusBar as any)._statusBarItem;
+            const statusBarItem = (statusBar as unknown as { _statusBarItem: { text: string } })._statusBarItem;
             assert.ok(statusBarItem.text.includes('$(watch)'));
             assert.ok(statusBarItem.text.includes('Test Project'));
         } finally {

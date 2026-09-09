@@ -96,7 +96,7 @@ suite('TimeTrackingService Tests', () => {
     });
 
     test('startSession serializes concurrent calls so only one active session exists', async () => {
-        const [first, second] = await Promise.all([
+        const [, second] = await Promise.all([
             service.startSession('proj-1', '/workspace/a'),
             service.startSession('proj-2', '/workspace/b')
         ]);
@@ -110,7 +110,6 @@ suite('TimeTrackingService Tests', () => {
         const session = await service.startSession('proj-1', '/workspace/a');
         await new Promise(r => setTimeout(r, 50));
 
-        const persisted = service.getState();
         service.dispose();
 
         const resumedService = new TimeTrackingService(context);

@@ -112,199 +112,13 @@ export class TimeTrackingPanel {
                 if (isDisposed) {
                     return;
                 }
-                switch (message.command) {
-                    case 'openTimeTrackingReport':
-                        if (message.reportPeriod) {
-                            TimeTrackingPanel._currentPeriod = message.reportPeriod;
-                            TimeTrackingPanel._customStartDate = message.customStartDate;
-                            TimeTrackingPanel._customEndDate = message.customEndDate;
-                        }
-                        if (message.groupBy) {
-                            TimeTrackingPanel._groupBy = message.groupBy;
-                        }
-                        panel.webview.html = await TimeTrackingPanel._getHtml(
-                            panel.webview,
-                            extensionUri,
-                            context,
-                            timeTrackingService
-                        );
-                        break;
-                    case 'stopTimeTracking':
-                        try {
-                            const stopped = await timeTrackingService.stopSession();
-                            if (stopped) {
-                                const minutes = Math.ceil(stopped.durationSeconds / 60);
-                                vscode.window.showInformationMessage(
-                                    `Timer stopped: ${minutes} min on ${stopped.title}`
-                                );
-                            }
-                            panel.webview.html = await TimeTrackingPanel._getHtml(
-                                panel.webview,
-                                extensionUri,
-                                context,
-                                timeTrackingService
-                            );
-                        } catch (error) {
-                            vscode.window.showErrorMessage(`Failed to stop timer: ${error}`);
-                        }
-                        break;
-                    case 'continueTimeTracking':
-                        if (message.sessionId) {
-                            try {
-                                const continued = await timeTrackingService.continueSession({ sessionId: message.sessionId });
-                                if (continued) {
-                                    vscode.window.showInformationMessage(`Timer continued: ${continued.title}`);
-                                    panel.webview.html = await TimeTrackingPanel._getHtml(
-                                        panel.webview,
-                                        extensionUri,
-                                        context,
-                                        timeTrackingService
-                                    );
-                                }
-                            } catch (error) {
-                                vscode.window.showErrorMessage(`Failed to continue timer: ${error}`);
-                            }
-                        }
-                        break;
-                    case 'deleteTimeTrackingSession':
-                        if (message.sessionId) {
-                            try {
-                                if (message.sessionId === 'ALL_FILTERED') {
-                                    // Handled via confirmDeleteAllTimeTrackingSessions to avoid sandboxed confirm().
-                                    break;
-                                } else {
-                                    const deleted = await timeTrackingService.deleteSession(message.sessionId);
-                                    if (deleted) {
-                                        panel.webview.html = await TimeTrackingPanel._getHtml(
-                                            panel.webview,
-                                            extensionUri,
-                                            context,
-                                            timeTrackingService
-                                        );
-                                        const undo = 'Undo';
-                                        const selection = await vscode.window.showInformationMessage(
-                                            `Deleted session: ${deleted.title}`,
-                                            undo
-                                        );
-                                        if (selection === undo) {
-                                            await timeTrackingService.addSession(deleted.projectId, {
-                                                title: deleted.title,
-                                                description: deleted.description,
-                                                startTime: deleted.startTime,
-                                                endTime: deleted.endTime,
-                                                durationSeconds: deleted.durationSeconds,
-                                                branch: deleted.branchLog.map(b => b.branch).join(' → ')
-                                            });
-                                            panel.webview.html = await TimeTrackingPanel._getHtml(
-                                                panel.webview,
-                                                extensionUri,
-                                                context,
-                                                timeTrackingService
-                                            );
-                                        }
-                                    }
-                                }
-                            } catch (error) {
-                                vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
-                            }
-                        }
-                        break;
-                    case 'updateTimeTrackingSession':
-                        if (message.sessionId) {
-                            try {
-                                await timeTrackingService.updateSession(message.sessionId, {
-                                    title: message.sessionTitle,
-                                    description: message.sessionDescription,
-                                    startTime: message.sessionStartTime,
-                                    endTime: message.sessionEndTime,
-                                    durationSeconds: message.sessionDurationSeconds
-                                });
-                                panel.webview.html = await TimeTrackingPanel._getHtml(
-                                    panel.webview,
-                                    extensionUri,
-                                    context,
-                                    timeTrackingService
-                                );
-                            } catch (error) {
-                                vscode.window.showErrorMessage(`Failed to update session: ${error}`);
-                            }
-                        }
-                        break;
-                    case 'addTimeTrackingSession':
-                        if (message.projectId) {
-                            try {
-                                await timeTrackingService.addSession(message.projectId, {
-                                    title: message.sessionTitle || 'Manual entry',
-                                    description: message.sessionDescription,
-                                    startTime: message.sessionStartTime,
-                                    endTime: message.sessionEndTime,
-                                    durationSeconds: message.sessionDurationSeconds || 0
-                                });
-                                panel.webview.html = await TimeTrackingPanel._getHtml(
-                                    panel.webview,
-                                    extensionUri,
-                                    context,
-                                    timeTrackingService
-                                );
-                            } catch (error) {
-                                vscode.window.showErrorMessage(`Failed to add session: ${error}`);
-                            }
-                        }
-                        break;
-                    case 'exportTimeTrackingCsv':
-                        await TimeTrackingPanel._exportCsv(timeTrackingService, message.reportPeriod, message.customStartDate, message.customEndDate);
-                        break;
-                    case 'confirmDeleteAllTimeTrackingSessions':
-                        {
-                            const confirm = await vscode.window.showWarningMessage(
-                                'Are you sure you want to delete all sessions in this period? This cannot be undone.',
-                                { modal: true },
-                                'Delete'
-                            );
-                            if (confirm === 'Delete') {
-                                const state = timeTrackingService.getState();
-                                const allSessions = Object.values(state.sessionsByProject).flat();
-                                const weekStartsOnSetting = vscode.workspace.getConfiguration('awesomeProjects').get<string>('timeTracking.weekStartsOn', 'sunday');
-                                const weekStartsOn = weekStartsOnSetting === 'monday' ? 1 : 0;
-                                const { start, end } = getPeriodBounds(
-                                    TimeTrackingPanel._currentPeriod,
-                                    TimeTrackingPanel._customStartDate,
-                                    TimeTrackingPanel._customEndDate,
-                                    weekStartsOn
-                                );
-                                const activeSessionId = state.activeSession?.sessionId;
-                                const sessionsToDelete = allSessions.filter(session => {
-                                    const sessionDate = new Date(session.startTime);
-                                    return sessionDate >= start && sessionDate <= end && session.id !== activeSessionId;
-                                });
-
-                                if (sessionsToDelete.length === 0) {
-                                    vscode.window.showInformationMessage(activeSessionId
-                                        ? 'Only the active session is in this period. Stop the timer first to delete it.'
-                                        : 'No sessions to delete for this period.');
-                                    break;
-                                }
-
-                                for (const session of sessionsToDelete) {
-                                    await timeTrackingService.deleteSession(session.id);
-                                }
-
-                                if (TimeTrackingPanel._panel) {
-                                    TimeTrackingPanel._panel.webview.html = await TimeTrackingPanel._getHtml(
-                                        TimeTrackingPanel._panel.webview,
-                                        extensionUri,
-                                        context,
-                                        timeTrackingService
-                                    );
-                                }
-                                const infoMessage = activeSessionId
-                                    ? `Deleted ${sessionsToDelete.length} sessions. Active session was skipped.`
-                                    : `Deleted ${sessionsToDelete.length} sessions`;
-                                vscode.window.showInformationMessage(infoMessage);
-                            }
-                        }
-                        break;
-                }
+                await TimeTrackingPanel._handleWebviewMessage(
+                    message,
+                    panel,
+                    extensionUri,
+                    context,
+                    timeTrackingService
+                );
             })
         );
 
@@ -410,6 +224,245 @@ export class TimeTrackingPanel {
 
         await fs.promises.writeFile(uri.fsPath, csvContent, 'utf8');
         vscode.window.showInformationMessage(`Exported ${filtered.length} sessions to ${uri.fsPath}`);
+    }
+
+    private static async _handleWebviewMessage(
+        message: WebviewMessage,
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        context: vscode.ExtensionContext,
+        timeTrackingService: TimeTrackingService
+    ): Promise<void> {
+        switch (message.command) {
+            case 'openTimeTrackingReport':
+                await TimeTrackingPanel._handleOpenReport(message, panel, extensionUri, context, timeTrackingService);
+                break;
+            case 'stopTimeTracking':
+                await TimeTrackingPanel._handleStopTimer(panel, extensionUri, context, timeTrackingService);
+                break;
+            case 'continueTimeTracking':
+                await TimeTrackingPanel._handleContinueTimer(message, panel, extensionUri, context, timeTrackingService);
+                break;
+            case 'deleteTimeTrackingSession':
+                await TimeTrackingPanel._handleDeleteSession(message, panel, extensionUri, context, timeTrackingService);
+                break;
+            case 'updateTimeTrackingSession':
+                await TimeTrackingPanel._handleUpdateSession(message, panel, extensionUri, context, timeTrackingService);
+                break;
+            case 'addTimeTrackingSession':
+                await TimeTrackingPanel._handleAddSession(message, panel, extensionUri, context, timeTrackingService);
+                break;
+            case 'exportTimeTrackingCsv':
+                await TimeTrackingPanel._exportCsv(timeTrackingService, message.reportPeriod, message.customStartDate, message.customEndDate);
+                break;
+            case 'confirmDeleteAllTimeTrackingSessions':
+                await TimeTrackingPanel._handleDeleteAllSessions(panel, extensionUri, context, timeTrackingService);
+                break;
+        }
+    }
+
+    private static async _refreshPanel(
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        context: vscode.ExtensionContext,
+        timeTrackingService: TimeTrackingService
+    ): Promise<void> {
+        panel.webview.html = await TimeTrackingPanel._getHtml(
+            panel.webview,
+            extensionUri,
+            context,
+            timeTrackingService
+        );
+    }
+
+    private static async _handleOpenReport(
+        message: WebviewMessage,
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        context: vscode.ExtensionContext,
+        timeTrackingService: TimeTrackingService
+    ): Promise<void> {
+        if (message.reportPeriod) {
+            TimeTrackingPanel._currentPeriod = message.reportPeriod;
+            TimeTrackingPanel._customStartDate = message.customStartDate;
+            TimeTrackingPanel._customEndDate = message.customEndDate;
+        }
+        if (message.groupBy) {
+            TimeTrackingPanel._groupBy = message.groupBy;
+        }
+        await TimeTrackingPanel._refreshPanel(panel, extensionUri, context, timeTrackingService);
+    }
+
+    private static async _handleStopTimer(
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        context: vscode.ExtensionContext,
+        timeTrackingService: TimeTrackingService
+    ): Promise<void> {
+        try {
+            const stopped = await timeTrackingService.stopSession();
+            if (stopped) {
+                const minutes = Math.ceil(stopped.durationSeconds / 60);
+                vscode.window.showInformationMessage(`Timer stopped: ${minutes} min on ${stopped.title}`);
+            }
+            await TimeTrackingPanel._refreshPanel(panel, extensionUri, context, timeTrackingService);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to stop timer: ${error}`);
+        }
+    }
+
+    private static async _handleContinueTimer(
+        message: WebviewMessage,
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        context: vscode.ExtensionContext,
+        timeTrackingService: TimeTrackingService
+    ): Promise<void> {
+        if (!message.sessionId) {
+            return;
+        }
+        try {
+            const continued = await timeTrackingService.continueSession({ sessionId: message.sessionId });
+            if (continued) {
+                vscode.window.showInformationMessage(`Timer continued: ${continued.title}`);
+                await TimeTrackingPanel._refreshPanel(panel, extensionUri, context, timeTrackingService);
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to continue timer: ${error}`);
+        }
+    }
+
+    private static async _handleDeleteSession(
+        message: WebviewMessage,
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        context: vscode.ExtensionContext,
+        timeTrackingService: TimeTrackingService
+    ): Promise<void> {
+        if (!message.sessionId || message.sessionId === 'ALL_FILTERED') {
+            return;
+        }
+        try {
+            const deleted = await timeTrackingService.deleteSession(message.sessionId);
+            if (!deleted) {
+                return;
+            }
+            await TimeTrackingPanel._refreshPanel(panel, extensionUri, context, timeTrackingService);
+            const selection = await vscode.window.showInformationMessage(
+                `Deleted session: ${deleted.title}`,
+                'Undo'
+            );
+            if (selection === 'Undo') {
+                await timeTrackingService.addSession(deleted.projectId, {
+                    title: deleted.title,
+                    description: deleted.description,
+                    startTime: deleted.startTime,
+                    endTime: deleted.endTime,
+                    durationSeconds: deleted.durationSeconds,
+                    branch: deleted.branchLog.map(b => b.branch).join(' → ')
+                });
+                await TimeTrackingPanel._refreshPanel(panel, extensionUri, context, timeTrackingService);
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
+        }
+    }
+
+    private static async _handleUpdateSession(
+        message: WebviewMessage,
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        context: vscode.ExtensionContext,
+        timeTrackingService: TimeTrackingService
+    ): Promise<void> {
+        if (!message.sessionId) {
+            return;
+        }
+        try {
+            await timeTrackingService.updateSession(message.sessionId, {
+                title: message.sessionTitle,
+                description: message.sessionDescription,
+                startTime: message.sessionStartTime,
+                endTime: message.sessionEndTime,
+                durationSeconds: message.sessionDurationSeconds
+            });
+            await TimeTrackingPanel._refreshPanel(panel, extensionUri, context, timeTrackingService);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to update session: ${error}`);
+        }
+    }
+
+    private static async _handleAddSession(
+        message: WebviewMessage,
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        context: vscode.ExtensionContext,
+        timeTrackingService: TimeTrackingService
+    ): Promise<void> {
+        if (!message.projectId) {
+            return;
+        }
+        try {
+            await timeTrackingService.addSession(message.projectId, {
+                title: message.sessionTitle || 'Manual entry',
+                description: message.sessionDescription,
+                startTime: message.sessionStartTime,
+                endTime: message.sessionEndTime,
+                durationSeconds: message.sessionDurationSeconds || 0
+            });
+            await TimeTrackingPanel._refreshPanel(panel, extensionUri, context, timeTrackingService);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to add session: ${error}`);
+        }
+    }
+
+    private static async _handleDeleteAllSessions(
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        context: vscode.ExtensionContext,
+        timeTrackingService: TimeTrackingService
+    ): Promise<void> {
+        const confirm = await vscode.window.showWarningMessage(
+            'Are you sure you want to delete all sessions in this period? This cannot be undone.',
+            { modal: true },
+            'Delete'
+        );
+        if (confirm !== 'Delete') {
+            return;
+        }
+
+        const state = timeTrackingService.getState();
+        const allSessions = Object.values(state.sessionsByProject).flat();
+        const weekStartsOnSetting = vscode.workspace.getConfiguration('awesomeProjects').get<string>('timeTracking.weekStartsOn', 'sunday');
+        const weekStartsOn = weekStartsOnSetting === 'monday' ? 1 : 0;
+        const { start, end } = getPeriodBounds(
+            TimeTrackingPanel._currentPeriod,
+            TimeTrackingPanel._customStartDate,
+            TimeTrackingPanel._customEndDate,
+            weekStartsOn
+        );
+        const activeSessionId = state.activeSession?.sessionId;
+        const sessionsToDelete = allSessions.filter(session => {
+            const sessionDate = new Date(session.startTime);
+            return sessionDate >= start && sessionDate <= end && session.id !== activeSessionId;
+        });
+
+        if (sessionsToDelete.length === 0) {
+            vscode.window.showInformationMessage(activeSessionId
+                ? 'Only the active session is in this period. Stop the timer first to delete it.'
+                : 'No sessions to delete for this period.');
+            return;
+        }
+
+        for (const session of sessionsToDelete) {
+            await timeTrackingService.deleteSession(session.id);
+        }
+
+        await TimeTrackingPanel._refreshPanel(panel, extensionUri, context, timeTrackingService);
+        const infoMessage = activeSessionId
+            ? `Deleted ${sessionsToDelete.length} sessions. Active session was skipped.`
+            : `Deleted ${sessionsToDelete.length} sessions`;
+        vscode.window.showInformationMessage(infoMessage);
     }
 
     private static _escapeCsv(value: string): string {

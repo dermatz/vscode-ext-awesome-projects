@@ -33,39 +33,11 @@ export async function getProjectInfoDropdownHtml(
                 </button>
             </div>
 
-            ${ project.productionUrl || project.devUrl || project.stagingUrl || project.managementUrl
-                    ? `
-            <div class="info-section">
-                <div class="info-label">URLs</div>
-                <div class="info-value">
-                    ${project.productionUrl ? `<a class="project-url" href="${safeUrl(project.productionUrl)}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9-3-9m-9 9a9 9 0 019-9"/></svg>Production</a>` : ""}
-                    ${project.stagingUrl ? `<a class="project-url" href="${safeUrl(project.stagingUrl)}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>Staging</a>` : ""}
-                    ${project.devUrl ? `<a class="project-url" href="${safeUrl(project.devUrl)}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Development</a>` : ""}
-                    ${project.managementUrl ? `<a class="project-url" href="${safeUrl(project.managementUrl)}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>Management (Jira, Trello, etc.)</a>` : ""}
-                </div>
-            </div>`
-            : ""
-            }
+            ${getProjectUrlsHtml(project)}
 
             ${await getGitRepositoriesHtml(project)}
 
-            <div class="info-section time-tracking-info-section">
-                <div class="info-label">Time Tracking</div>
-                <div class="info-value time-tracking-info-value">
-                    <div class="time-tracking-info-meta">
-                        <span>Today: <strong>${formatDuration(todaySeconds)}</strong></span>
-                        <span>Total: <strong>${formatDuration(project.timeSpentSeconds || 0)}</strong></span>
-                    </div>
-                    <div class="time-tracking-info-actions">
-                        <button type="button" class="button small time-tracking-action-button ${isTimerActive ? 'secondary active' : ''}" data-project-id="${escapedId}" onclick="toggleTimeTracking('${escapedId}', '${escOnclickArg(project.path)}')">
-                            ${isTimerActive ? 'Stop Timer' : 'Start Timer'}
-                        </button>
-                        <button type="button" class="button small secondary" onclick="window.vscodeApi.postMessage({ command: 'openTimeTrackingReport' })">
-                            Open Report
-                        </button>
-                    </div>
-                </div>
-            </div>
+            ${getProjectTimeTrackingInfoHtml(project, escapedId, todaySeconds, isTimerActive)}
 
             <div class="action-grid">
                 ${isRemote ? `
@@ -117,6 +89,51 @@ export async function getProjectInfoDropdownHtml(
                     </svg>
                     <span>Settings</span>
                 </button>
+            </div>
+        </div>
+    `;
+}
+
+function getProjectUrlsHtml(project: Project): string {
+    if (!project.productionUrl && !project.devUrl && !project.stagingUrl && !project.managementUrl) {
+        return '';
+    }
+
+    return `
+        <div class="info-section">
+            <div class="info-label">URLs</div>
+            <div class="info-value">
+                ${project.productionUrl ? `<a class="project-url" href="${safeUrl(project.productionUrl)}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9-3-9m-9 9a9 9 0 019-9"/></svg>Production</a>` : ""}
+                ${project.stagingUrl ? `<a class="project-url" href="${safeUrl(project.stagingUrl)}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>Staging</a>` : ""}
+                ${project.devUrl ? `<a class="project-url" href="${safeUrl(project.devUrl)}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>Development</a>` : ""}
+                ${project.managementUrl ? `<a class="project-url" href="${safeUrl(project.managementUrl)}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>Management (Jira, Trello, etc.)</a>` : ""}
+            </div>
+        </div>
+    `;
+}
+
+function getProjectTimeTrackingInfoHtml(
+    project: Project,
+    escapedId: string,
+    todaySeconds: number,
+    isTimerActive: boolean
+): string {
+    return `
+        <div class="info-section time-tracking-info-section">
+            <div class="info-label">Time Tracking</div>
+            <div class="info-value time-tracking-info-value">
+                <div class="time-tracking-info-meta">
+                    <span>Today: <strong>${formatDuration(todaySeconds)}</strong></span>
+                    <span>Total: <strong>${formatDuration(project.timeSpentSeconds || 0)}</strong></span>
+                </div>
+                <div class="time-tracking-info-actions">
+                    <button type="button" class="button small time-tracking-action-button ${isTimerActive ? 'secondary active' : ''}" data-project-id="${escapedId}" onclick="toggleTimeTracking('${escapedId}', '${escOnclickArg(project.path)}')">
+                        ${isTimerActive ? 'Stop Timer' : 'Start Timer'}
+                    </button>
+                    <button type="button" class="button small secondary" onclick="window.vscodeApi.postMessage({ command: 'openTimeTrackingReport' })">
+                        Open Report
+                    </button>
+                </div>
             </div>
         </div>
     `;
