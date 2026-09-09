@@ -68,7 +68,7 @@ export async function getProjectInfoDropdownHtml(
                         <button type="button" class="button small time-tracking-action-button ${isTimerActive ? 'secondary active' : ''}" data-project-id="${escapedId}" onclick="toggleTimeTracking('${escapedId}', '${escOnclickArg(project.path)}')">
                             ${isTimerActive ? 'Stop Timer' : 'Start Timer'}
                         </button>
-                        <button type="button" class="button small" onclick="window.vscodeApi.postMessage({ command: 'openTimeTrackingReport' })">
+                        <button type="button" class="button small secondary" onclick="window.vscodeApi.postMessage({ command: 'openTimeTrackingReport' })">
                             Open Report
                         </button>
                     </div>

@@ -918,6 +918,7 @@ body.hover-quick-action-buttons .project-settings:has(.quick-menu.show) .quick-m
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 /* Action Grid */
@@ -1967,6 +1968,7 @@ ul.submodules li + li {
     display: flex;
     gap: 0.5rem;
     align-items: center;
+    justify-content: space-between;
 }
 
 .button.text-button {
@@ -2027,8 +2029,42 @@ ul.submodules li + li {
     margin-bottom: 8px;
 }
 
+.time-tracking-section .time-tracking-session.time-tracking-session-active {
+    background: color-mix(in srgb, var(--vscode-button-background) 8%, var(--vscode-editor-background));
+    border-left-width: 3px;
+    padding-left: 6px;
+}
+
 .time-tracking-section .time-tracking-session:last-child {
     margin-bottom: 0;
+}
+
+.session-live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--vscode-button-background);
+    background: color-mix(in srgb, var(--vscode-button-background) 12%, transparent);
+    padding: 1px 5px;
+    border-radius: 10px;
+    line-height: 1;
+}
+
+.session-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--vscode-button-background);
+    animation: session-live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes session-live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
 }
 
 .time-tracking-section .time-tracking-sessions {

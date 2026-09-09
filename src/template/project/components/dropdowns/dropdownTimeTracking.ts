@@ -49,16 +49,19 @@ export function getTimeTrackingDropdownHtml(
                     <button type="button" class="button small time-tracking-action-button ${timerButtonClass}" data-project-id="${escapedId}" onclick="toggleTimeTracking('${escapedId}', '${escOnclickArg(project.path)}')">
                         ${timerLabel}
                     </button>
-                    <button type="button" class="button small" onclick="window.vscodeApi.postMessage({ command: 'openTimeTrackingReport' })">
+                    <button type="button" class="button small secondary" onclick="window.vscodeApi.postMessage({ command: 'openTimeTrackingReport' })">
                         Open Report
                     </button>
                 </div>
                 ${sessions.length > 0 ? `
                     <div class="time-tracking-sessions">
-                        ${sessions.slice(0, 10).map(session => `
-                            <div class="time-tracking-session">
+                        ${[...sessions].sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()).slice(0, 10).map(session => {
+                            const isRunning = !session.endTime;
+                            return `
+                            <div class="time-tracking-session ${isRunning ? 'time-tracking-session-active' : ''}" style="${isRunning ? `border-color: ${safeBgColor};` : ''}">
                                 <div class="session-row">
                                     <button type="button" class="session-title-edit" title="Edit session" onclick="editTimeTrackingSessionInline('${escAttr(session.id)}')">
+                                        ${isRunning ? '<span class="session-live-indicator" title="Running"><span class="session-live-dot"></span>Live</span>' : ''}
                                         <span class="session-title-text">${escHtml(session.title)}</span>
                                         <span class="session-edit-icon">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
@@ -75,7 +78,7 @@ export function getTimeTrackingDropdownHtml(
                                     `).join('')}
                                 </div>
                             </div>
-                        `).join('')}
+                        `;}).join('')}
                     </div>
                 ` : ''}
             </div>
