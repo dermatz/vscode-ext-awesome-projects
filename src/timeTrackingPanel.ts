@@ -60,15 +60,21 @@ export class TimeTrackingPanel {
             timeTrackingService
         );
 
+        TimeTrackingPanel._setupPanelListeners(panel, extensionUri, context, timeTrackingService);
+    }
+
+    private static _setupPanelListeners(
+        panel: vscode.WebviewPanel,
+        extensionUri: vscode.Uri,
+        context: vscode.ExtensionContext,
+        timeTrackingService: TimeTrackingService
+    ): void {
         const disposables: vscode.Disposable[] = [];
         let lastActiveSessionId = timeTrackingService.getActiveSessionFull()?.id;
         let isDisposed = false;
 
         const handleTimerEvent = async (isUiTick: boolean) => {
-            if (isDisposed || panel !== TimeTrackingPanel._panel) {
-                return;
-            }
-            if (!panel.visible) {
+            if (isDisposed || panel !== TimeTrackingPanel._panel || !panel.visible) {
                 return;
             }
             const activeSession = timeTrackingService.getActiveSessionFull();
@@ -101,24 +107,18 @@ export class TimeTrackingPanel {
         };
 
         disposables.push(
-            timeTrackingService.onDidChangeTimer(async () => { await handleTimerEvent(false); })
-        );
-        disposables.push(
-            timeTrackingService.onDidChangeUiTimer(async () => { await handleTimerEvent(true); })
-        );
-
-        disposables.push(
+            timeTrackingService.onDidChangeTimer(async () => { await handleTimerEvent(false); }),
+            timeTrackingService.onDidChangeUiTimer(async () => { await handleTimerEvent(true); }),
             panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
                 if (isDisposed) {
                     return;
                 }
-                await TimeTrackingPanel._handleWebviewMessage(
-                    message,
-                    panel,
-                    extensionUri,
-                    context,
-                    timeTrackingService
-                );
+                await TimeTrackingPanel._handleWebviewMessage(message, panel, extensionUri, context, timeTrackingService);
+            }),
+            vscode.workspace.onDidChangeConfiguration(async event => {
+                if (event.affectsConfiguration('awesomeProjects') && panel.visible) {
+                    panel.webview.html = await TimeTrackingPanel._getHtml(panel.webview, extensionUri, context, timeTrackingService);
+                }
             })
         );
 
@@ -130,21 +130,6 @@ export class TimeTrackingPanel {
             },
             null,
             disposables
-        );
-
-        disposables.push(
-            vscode.workspace.onDidChangeConfiguration(async event => {
-                if (event.affectsConfiguration('awesomeProjects')) {
-                    if (panel.visible) {
-                        panel.webview.html = await TimeTrackingPanel._getHtml(
-                            panel.webview,
-                            extensionUri,
-                            context,
-                            timeTrackingService
-                        );
-                    }
-                }
-            })
         );
     }
 

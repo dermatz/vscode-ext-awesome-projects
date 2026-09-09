@@ -432,13 +432,15 @@ function renderReportFilterBar(displaySessions: TimeTrackingSession[], projectNa
     `;
 }
 
+function renderAddSessionProjectOptions(projects: Project[]): string {
+    return projects.map(p => `<option value="${escAttr(p.id)}">${escHtml(p.name)}</option>`).join('');
+}
+
 function renderAddSessionProjectField(projects: Project[]): string {
     return `
         <div class="field">
             <label for="add-project">Project</label>
-            <select id="add-project">
-                ${projects.map(p => `<option value="${escAttr(p.id)}">${escHtml(p.name)}</option>`).join('')}
-            </select>
+            <select id="add-project">${renderAddSessionProjectOptions(projects)}</select>
         </div>
     `;
 }
@@ -537,7 +539,8 @@ export async function getTimeTrackingReportHtml(
     </head>
     <body>
         ${renderReportBody(vm, context)}
-        ${getReportScriptHtml(
+        ${await getReportScriptHtml(
+            context,
             JSON.stringify(vm.displaySessions.map(s => ({ id: s.id, startTime: s.startTime, endTime: s.endTime }))),
             escAttr(period),
             groupBy
