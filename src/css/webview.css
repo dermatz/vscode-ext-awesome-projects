@@ -672,7 +672,7 @@ button:hover {
     display: none;
     background: color-mix(in srgb, var(--vscode-editor-background) 92%, transparent);
     border-radius: 0 0 var(--border-radius-large) var(--border-radius-large);
-    padding: 20px;
+    padding: 10px;
     margin-top: -1px;
     margin-bottom: 12px;
     box-shadow:
@@ -1329,6 +1329,12 @@ a.info-item-value:hover {
     50% { opacity: 0.75; transform: scale(1.15); }
 }
 
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+
 /* Loading View */
 .loading-view {
     display: flex;
@@ -1852,23 +1858,36 @@ ul.submodules li + li {
 
 /* Time Tracking Styles */
 .project-time-spent {
-    font-size: 0.75rem;
-    opacity: 0.7;
-    margin-top: 0.15rem;
+    font-size: 0.7rem;
+    opacity: 0.75;
+    margin-top: 0.2rem;
     font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--vscode-foreground) 8%, transparent);
+    width: fit-content;
 }
 
 .project-time-spent.active {
     color: var(--vscode-testing-iconPassed);
     opacity: 1;
     font-weight: 600;
+    background: color-mix(in srgb, var(--vscode-testing-iconPassed) 15%, transparent);
+}
+
+.project-time-spent.active::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--vscode-testing-iconPassed);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
 }
 
 .time-tracking-toggle.active {
-    color: var(--vscode-testing-iconPassed);
-}
-
-.time-tracking-menu.active {
     color: var(--vscode-testing-iconPassed);
     background: color-mix(in srgb, var(--vscode-testing-iconPassed) 15%, transparent);
 }
@@ -2053,23 +2072,24 @@ ul.submodules li + li {
 .session-live-indicator {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.65rem;
+    gap: 5px;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--vscode-button-background);
-    background: color-mix(in srgb, var(--vscode-button-background) 12%, transparent);
-    padding: 1px 5px;
+    letter-spacing: 0.04em;
+    color: var(--vscode-button-foreground);
+    background: var(--vscode-button-background);
+    padding: 2px 7px;
     border-radius: 10px;
     line-height: 1;
+    flex-shrink: 0;
 }
 
 .session-live-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background-color: var(--vscode-button-background);
+    background-color: var(--vscode-button-foreground);
     animation: session-live-pulse 1.5s ease-in-out infinite;
 }
 

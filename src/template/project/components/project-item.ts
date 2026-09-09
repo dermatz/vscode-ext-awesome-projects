@@ -127,10 +127,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const timeTrackingHtml = getTimeTrackingDropdownHtml(project, todaySeconds, sessions, isTimerActive);
 
     const activeBadge = isCurrentProject ? '<span class="current-project-badge" title="Current workspace"></span>' : '';
-    const timerLabel = isTimerActive ? 'Stop' : 'Start';
-    const timerIcon = isTimerActive
-        ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
-        : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>';
+    const timerIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="M11 7v4l2 2"/><path d="M15 21h6v-6"/><path d="M15 17l2-2 1 1 2-2"/></svg>';
     const timeSpentHtml = todaySeconds > 0 || isTimerActive
         ? `<span class="project-time-spent${isTimerActive ? ' active' : ''}" data-project-id="${escAttr(projectId)}">${formatDuration(todaySeconds)}</span>`
         : '';
@@ -153,16 +150,8 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                     ${timeSpentHtml}
                 </div>
                 <div class="project-settings">
-                    <button type="button" class="button mini quick-action-button time-tracking-toggle" data-project-id="${escAttr(projectId)}" data-project-path="${escAttr(project.path)}" onclick="toggleTimeTracking('${escOnclickArg(projectId)}', '${escOnclickArg(project.path)}')" title="${timerLabel} timer">
+                    <button type="button" class="button mini quick-action-button time-tracking-toggle${isTimerActive ? ' active' : ''}" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'timeTracking')" title="Time tracking">
                         ${timerIcon}
-                    </button>
-                    <button type="button" class="button mini quick-action-button time-tracking-menu" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'timeTracking')" title="Time tracking details">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                            <path d="M3 3v18h18"/>
-                            <path d="M18 17V9"/>
-                            <path d="M13 17V5"/>
-                            <path d="M8 17v-3"/>
-                        </svg>
                     </button>
                     ${isRemote ? `
                     <button type="button" class="button mini quick-action-button" onclick="openRemoteProject('${escOnclickArg(project.remoteUrl!)}')" title="Open remote repository">
