@@ -393,6 +393,79 @@ document.getElementById('project-filter-pills').addEventListener('click', event 
     filterRows();
 });
 
+function handleClickSetPeriod(target) {
+vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: target.dataset.period });
+}
+
+function handleClickApplyCustomRange(target) {
+applyCustomRange();
+}
+
+function handleClickExportCsv(target) {
+vscode.postMessage({
+                command: 'exportTimeTrackingCsv',
+                reportPeriod: target.dataset.period,
+                customStartDate: target.dataset.start || undefined,
+                customEndDate: target.dataset.end || undefined
+            });
+}
+
+function handleClickStopActiveTimer(target) {
+vscode.postMessage({ command: 'stopTimeTracking' });
+}
+
+function handleClickContinueSession(target) {
+vscode.postMessage({ command: 'continueTimeTracking', sessionId: target.dataset.sessionId });
+}
+
+function handleClickDeleteSession(target) {
+vscode.postMessage({ command: 'deleteTimeTrackingSession', sessionId: target.dataset.sessionId });
+}
+
+function handleClickEditSession(target) {
+editSession(target.dataset.sessionId);
+}
+
+function handleClickSaveSession(target) {
+saveSession(target.dataset.sessionId);
+}
+
+function handleClickCancelEdit(target) {
+vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: target.dataset.period });
+}
+
+function handleClickAddSession(target) {
+addSession();
+}
+
+function handleClickSaveNewSession(target) {
+saveNewSession();
+}
+
+function handleClickCancelAddSession(target) {
+cancelAddSession();
+}
+
+function handleClickDeleteAllSessions(target) {
+vscode.postMessage({ command: 'confirmDeleteAllTimeTrackingSessions' });
+}
+
+const clickHandlers = {
+    'setPeriod': handleClickSetPeriod,
+    'applyCustomRange': handleClickApplyCustomRange,
+    'exportCsv': handleClickExportCsv,
+    'stopActiveTimer': handleClickStopActiveTimer,
+    'continueSession': handleClickContinueSession,
+    'deleteSession': handleClickDeleteSession,
+    'editSession': handleClickEditSession,
+    'saveSession': handleClickSaveSession,
+    'cancelEdit': handleClickCancelEdit,
+    'addSession': handleClickAddSession,
+    'saveNewSession': handleClickSaveNewSession,
+    'cancelAddSession': handleClickCancelAddSession,
+    'deleteAllSessions': handleClickDeleteAllSessions
+};
+
 document.getElementById('filter-clear').addEventListener('click', () => {
     document.getElementById('session-filter').value = '';
     document.querySelectorAll('.report-filter-pill').forEach(pill => pill.classList.remove('active'));
@@ -459,105 +532,93 @@ document.addEventListener('click', event => {
         return;
     }
     const action = target.dataset.action;
-    if (!action) {
+    if (!action || !clickHandlers[action]) {
         return;
     }
-    switch (action) {
-        case 'setPeriod':
-            vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: target.dataset.period });
-            break;
-        case 'applyCustomRange':
-            applyCustomRange();
-            break;
-        case 'exportCsv':
-            vscode.postMessage({
-                command: 'exportTimeTrackingCsv',
-                reportPeriod: target.dataset.period,
-                customStartDate: target.dataset.start || undefined,
-                customEndDate: target.dataset.end || undefined
-            });
-            break;
-        case 'stopActiveTimer':
-            vscode.postMessage({ command: 'stopTimeTracking' });
-            break;
-        case 'continueSession':
-            vscode.postMessage({ command: 'continueTimeTracking', sessionId: target.dataset.sessionId });
-            break;
-        case 'deleteSession':
-            vscode.postMessage({ command: 'deleteTimeTrackingSession', sessionId: target.dataset.sessionId });
-            break;
-        case 'editSession':
-            editSession(target.dataset.sessionId);
-            break;
-        case 'saveSession':
-            saveSession(target.dataset.sessionId);
-            break;
-        case 'cancelEdit':
-            vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: target.dataset.period });
-            break;
-        case 'addSession':
-            addSession();
-            break;
-        case 'saveNewSession':
-            saveNewSession();
-            break;
-        case 'cancelAddSession':
-            cancelAddSession();
-            break;
-        case 'deleteAllSessions':
-            vscode.postMessage({ command: 'confirmDeleteAllTimeTrackingSessions' });
-            break;
-    }
+    clickHandlers[action](target);
 });
 
 window.addEventListener('message', event => {
-    const message = event.data;
-    if ((message.command === 'timeTrackingState' || message.command === 'timeTrackingTick') && message.activeSession) {
-        const durationSeconds = message.activeSession.durationSeconds || 0;
-
-        const banner = document.querySelector('.report-active-banner .report-active-time');
-        if (banner && banner.dataset.activeSessionId === message.activeSession.id) {
-            banner.textContent = formatDuration(durationSeconds);
-        }
-
-        const activeRowDuration = document.getElementById('session-duration-' + message.activeSession.id);
-        if (activeRowDuration) {
-            const delta = durationSeconds - Number(activeRowDuration.dataset.seconds || 0);
-            activeRowDuration.textContent = formatDuration(durationSeconds);
-            activeRowDuration.dataset.seconds = String(durationSeconds);
-            const row = activeRowDuration.closest('tr');
-            if (row) {
-                row.dataset.duration = String(durationSeconds);
-            }
-
-            const group = activeRowDuration.closest('.report-branch-group');
-            if (group) {
-                const groupDurationEl = group.querySelector('.branch-group-duration');
-                if (groupDurationEl) {
-                    const currentTotal = Number(groupDurationEl.dataset.groupDuration || 0);
-                    groupDurationEl.dataset.groupDuration = String(currentTotal + delta);
-                    groupDurationEl.textContent = formatDuration(currentTotal + delta);
-                }
-            }
-
-            const summaryTotalEl = document.getElementById('summary-total-time');
-            if (summaryTotalEl) {
-                const currentTotal = Number(summaryTotalEl.dataset.totalSeconds || 0);
-                const newTotal = currentTotal + delta;
-                summaryTotalEl.dataset.totalSeconds = String(newTotal);
-                summaryTotalEl.textContent = formatDuration(newTotal);
-            }
-
-            const summaryAvgEl = document.getElementById('summary-daily-avg');
-            const summaryCountEl = document.getElementById('summary-session-count');
-            if (summaryAvgEl && summaryCountEl) {
-                const count = Number(summaryCountEl.textContent || 1);
-                const currentTotal = Number(summaryTotalEl?.dataset.totalSeconds || 0);
-                summaryAvgEl.textContent = formatDuration(Math.round(currentTotal / Math.max(1, count)));
-            }
-        }
-    }
+    handleTimeTrackingMessage(event.data);
 });
+
+function updateActiveBanner(activeSession, durationSeconds) {
+    const banner = document.querySelector('.report-active-banner .report-active-time');
+    if (banner && banner.dataset.activeSessionId === activeSession.id) {
+        banner.textContent = formatDuration(durationSeconds);
+    }
+}
+
+function updateActiveRow(activeSession, durationSeconds) {
+    const activeRowDuration = document.getElementById('session-duration-' + activeSession.id);
+    if (!activeRowDuration) {
+        return null;
+    }
+
+    const delta = durationSeconds - Number(activeRowDuration.dataset.seconds || 0);
+    activeRowDuration.textContent = formatDuration(durationSeconds);
+    activeRowDuration.dataset.seconds = String(durationSeconds);
+    const row = activeRowDuration.closest('tr');
+    if (row) {
+        row.dataset.duration = String(durationSeconds);
+    }
+    return { activeRowDuration, delta };
+}
+
+function updateGroupDuration(activeRowDuration, delta) {
+    const group = activeRowDuration.closest('.report-branch-group');
+    if (!group) {
+        return;
+    }
+    const groupDurationEl = group.querySelector('.branch-group-duration');
+    if (!groupDurationEl) {
+        return;
+    }
+    const currentTotal = Number(groupDurationEl.dataset.groupDuration || 0);
+    groupDurationEl.dataset.groupDuration = String(currentTotal + delta);
+    groupDurationEl.textContent = formatDuration(currentTotal + delta);
+}
+
+function updateSummaryTotal(delta) {
+    const summaryTotalEl = document.getElementById('summary-total-time');
+    if (!summaryTotalEl) {
+        return;
+    }
+    const currentTotal = Number(summaryTotalEl.dataset.totalSeconds || 0);
+    const newTotal = currentTotal + delta;
+    summaryTotalEl.dataset.totalSeconds = String(newTotal);
+    summaryTotalEl.textContent = formatDuration(newTotal);
+}
+
+function updateSummaryAverage() {
+    const summaryAvgEl = document.getElementById('summary-daily-avg');
+    const summaryCountEl = document.getElementById('summary-session-count');
+    const summaryTotalEl = document.getElementById('summary-total-time');
+    if (!summaryAvgEl || !summaryCountEl || !summaryTotalEl) {
+        return;
+    }
+    const count = Number(summaryCountEl.textContent || 1);
+    const currentTotal = Number(summaryTotalEl.dataset.totalSeconds || 0);
+    summaryAvgEl.textContent = formatDuration(Math.round(currentTotal / Math.max(1, count)));
+}
+
+function updateActiveSessionDisplay(activeSession) {
+    const durationSeconds = activeSession.durationSeconds || 0;
+    updateActiveBanner(activeSession, durationSeconds);
+    const rowResult = updateActiveRow(activeSession, durationSeconds);
+    if (!rowResult) {
+        return;
+    }
+    updateGroupDuration(rowResult.activeRowDuration, rowResult.delta);
+    updateSummaryTotal(rowResult.delta);
+    updateSummaryAverage();
+}
+
+function handleTimeTrackingMessage(message) {
+    if ((message.command === 'timeTrackingState' || message.command === 'timeTrackingTick') && message.activeSession) {
+        updateActiveSessionDisplay(message.activeSession);
+    }
+}
 
 function formatDuration(totalSeconds) {
     const hours = Math.floor(totalSeconds / 3600);
