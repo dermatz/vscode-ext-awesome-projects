@@ -179,22 +179,44 @@ export async function getProjectListHtml(
     collapsedGroups: Record<string, boolean> = {},
     timeTrackingService?: TimeTrackingService
 ): Promise<string> {
-    const state = timeTrackingService?.getState();
-    const sessionsByProject = state?.sessionsByProject || {};
-    const activeSession = state?.activeSession;
-    const config = configuration || vscode.workspace.getConfiguration('awesomeProjects');
-    const rawProjects = config.get<Project[]>('projects') || [];
-    const useFavicons = config.get<boolean>('appearance.useFavicons')
-        ?? config.get<boolean>('useFavicons')
-        ?? true;
-    const groupSortOrder = config.get<string>('groups.sortOrder')
-        ?? config.get<string>('groupSortOrder')
-        ?? 'alphabetical';
-    const groupBy = config.get<string>('groups.groupBy') ?? 'auto';
-    const hideMissing = config.get<boolean>('projects.hideMissing') ?? false;
+    const config = loadProjectListConfig(configuration);
+    const projects = deduplicateProjects(config.rawProjects);
+    const existsMap = await buildExistsMap(projects);
+    const visibleProjects = filterVisibleProjects(projects, existsMap, config.hideMissing);
+    const rootNode = buildGroupTree(visibleProjects, config.groupBy);
 
-    // Deduplicate by path: if the same path appears multiple times, keep the
-    // entry that has an explicit group set (it contains more information).
+    const [ungroupedHtml, groupedHtml] = await Promise.all([
+        renderUngroupedItems(rootNode, context, config, currentWorkspace, existsMap, timeTrackingService),
+        renderGroupedItems(rootNode, context, config, currentWorkspace, existsMap, collapsedGroups, timeTrackingService)
+    ]);
+
+    return renderProjectListShell(ungroupedHtml, groupedHtml);
+}
+
+interface ProjectListConfig {
+    rawProjects: Project[];
+    useFavicons: boolean;
+    groupSortOrder: string;
+    groupBy: string;
+    hideMissing: boolean;
+}
+
+function loadProjectListConfig(configuration?: vscode.WorkspaceConfiguration): ProjectListConfig {
+    const config = configuration || vscode.workspace.getConfiguration('awesomeProjects');
+    return {
+        rawProjects: config.get<Project[]>('projects') || [],
+        useFavicons: config.get<boolean>('appearance.useFavicons')
+            ?? config.get<boolean>('useFavicons')
+            ?? true,
+        groupSortOrder: config.get<string>('groups.sortOrder')
+            ?? config.get<string>('groupSortOrder')
+            ?? 'alphabetical',
+        groupBy: config.get<string>('groups.groupBy') ?? 'auto',
+        hideMissing: config.get<boolean>('projects.hideMissing') ?? false
+    };
+}
+
+function deduplicateProjects(rawProjects: Project[]): Project[] {
     const seen = new Map<string, Project>();
     for (const project of rawProjects) {
         const existing = seen.get(project.path);
@@ -202,10 +224,10 @@ export async function getProjectListHtml(
             seen.set(project.path, project);
         }
     }
-    const projects = Array.from(seen.values());
+    return Array.from(seen.values());
+}
 
-    // Check which paths still exist on disk (parallel). Remote projects are
-    // always treated as available since they are opened via a remote workflow.
+async function buildExistsMap(projects: Project[]): Promise<Map<string, boolean>> {
     const existsMap = new Map<string, boolean>();
     await Promise.all(
         projects.map(async p => {
@@ -221,22 +243,19 @@ export async function getProjectListHtml(
             }
         })
     );
+    return existsMap;
+}
 
-    // Filter out missing local projects when the user chose to hide them.
-    const visibleProjects = hideMissing
+function filterVisibleProjects(projects: Project[], existsMap: Map<string, boolean>, hideMissing: boolean): Project[] {
+    return hideMissing
         ? projects.filter(p => p.isRemote || (existsMap.get(p.path) ?? false))
         : projects;
+}
 
-    // Only local project paths participate in common-root grouping. Remote
-    // repositories use their explicit group or appear ungrouped.
+function buildGroupTree(visibleProjects: Project[], groupBy: string): GroupTreeNode {
     const localPaths = visibleProjects.filter(p => !p.isRemote).map(p => p.path);
     const commonRoot = findCommonRoot(localPaths);
 
-    // Build a nested group tree based on the selected grouping mode.
-    // auto: explicit group field → single flat level; path-based inference → multi-level;
-    //       remote projects without an explicit group are collected under "Remote".
-    // group-field: only projects with an explicit group field are grouped.
-    // flat: no grouping at all.
     const rootNode: GroupTreeNode = { children: new Map(), items: [] };
     visibleProjects.forEach((project, index) => {
         const explicitGroup = project.group?.trim();
@@ -261,14 +280,27 @@ export async function getProjectListHtml(
         }
         node.items.push({ project, index });
     });
+    return rootNode;
+}
 
-    // Render ungrouped items (items at the root of the tree)
-    const ungroupedHtml = (await Promise.all(
+async function renderUngroupedItems(
+    rootNode: GroupTreeNode,
+    context: vscode.ExtensionContext,
+    config: ProjectListConfig,
+    currentWorkspace: string,
+    existsMap: Map<string, boolean>,
+    timeTrackingService?: TimeTrackingService
+): Promise<string> {
+    const state = timeTrackingService?.getState();
+    const sessionsByProject = state?.sessionsByProject || {};
+    const activeSession = state?.activeSession;
+
+    return (await Promise.all(
         rootNode.items.map(({ project, index }) =>
             getProjectItemHtml(context, {
                 project,
                 index,
-                useFavicons,
+                useFavicons: config.useFavicons,
                 currentWorkspace,
                 pathExists: existsMap.get(project.path) ?? true,
                 todaySeconds: getTodaySecondsForProject(project.id ?? project.path, sessionsByProject[project.id ?? project.path] || [], activeSession),
@@ -277,14 +309,25 @@ export async function getProjectListHtml(
             })
         )
     )).join('');
+}
 
-    // Render top-level groups (and their nested children) recursively
-    const groupedHtml = (await Promise.all(
-        getSortedGroupChildren(rootNode, groupSortOrder).map(([name, node]) =>
-            renderGroupNode(name, name, node, context, useFavicons, currentWorkspace, existsMap, groupSortOrder, collapsedGroups, timeTrackingService)
+async function renderGroupedItems(
+    rootNode: GroupTreeNode,
+    context: vscode.ExtensionContext,
+    config: ProjectListConfig,
+    currentWorkspace: string,
+    existsMap: Map<string, boolean>,
+    collapsedGroups: Record<string, boolean>,
+    timeTrackingService?: TimeTrackingService
+): Promise<string> {
+    return (await Promise.all(
+        getSortedGroupChildren(rootNode, config.groupSortOrder).map(([name, node]) =>
+            renderGroupNode(name, name, node, context, config.useFavicons, currentWorkspace, existsMap, config.groupSortOrder, collapsedGroups, timeTrackingService)
         )
     )).join('');
+}
 
+async function renderProjectListShell(ungroupedHtml: string, groupedHtml: string): Promise<string> {
     return `
         <section id="a">
             <div id="projects-list" class="draggable-list">

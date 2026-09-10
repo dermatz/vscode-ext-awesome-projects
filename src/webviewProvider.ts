@@ -119,276 +119,8 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
         }
 
-        webviewView.webview.onDidReceiveMessage(async message => {
-            // Forward all messages to message handlers first
-            this.handleMessage(message);
-
-            // Then handle local commands
-            switch (message.command) {
-                case 'addProject':
-                    vscode.window.showOpenDialog({
-                        canSelectFolders: true,
-                        canSelectMany: false
-                    }).then(async folderUri => {
-                        if (folderUri && folderUri[0]) {
-                            try {
-                                const projectPath = folderUri[0].fsPath;
-                                const configuration = this.getCachedConfiguration();
-                                const projects: Project[] = configuration.get('projects') || [];
-
-                                const name = await vscode.window.showInputBox({
-                                    prompt: 'Enter project name',
-                                    value: path.basename(projectPath)
-                                }) || path.basename(projectPath) || '';
-
-                                const newProject: Project = {
-                                    id: getProjectId({ path: projectPath, name, color: null } as Project),
-                                    path: projectPath,
-                                    name,
-                                    color: null
-                                };
-
-                                await configuration.update(
-                                    'projects',
-                                    [...projects, newProject],
-                                    vscode.ConfigurationTarget.Global
-                                );
-
-                                // Invalidate cache after update
-                                this._configurationLoaded = false;
-                                this._cachedConfiguration = undefined;
-                                const updatedProjects = this.getCachedConfiguration().get<Project[]>('projects');
-                                if (updatedProjects?.some(p => p.path === newProject.path)) {
-                                    this.refresh();
-                                } else {
-                                    throw new Error('Failed to save project to settings');
-                                }
-                            } catch (error) {
-                                vscode.window.showErrorMessage(`Failed to add project: ${error}`);
-                            }
-                        }
-                    });
-                    break;
-                case 'addRemoteProject':
-                    vscode.commands.executeCommand('awesome-projects.addRemoteProject');
-                    break;
-                case 'openProject':
-                    if (message.projectPath !== undefined) {
-                        openProjectInNewWindow(message.projectPath);
-                    }
-                    break;
-                case 'openProjectNewWindow':
-                    if (message.projectPath !== undefined) {
-                        openProjectInNewWindow(message.projectPath, true);
-                    }
-                    break;
-                case 'openRemoteProject':
-                    if (message.remoteUrl !== undefined) {
-                        openRemoteProject(message.remoteUrl, message.forceNewWindow ?? false);
-                    }
-                    break;
-                case 'openWorkspace':
-                    if (message.projectPath !== undefined) {
-                        openProjectInNewWindow(message.projectPath);
-                    }
-                    break;
-                case 'projectSelected':
-                    vscode.window.showInformationMessage(`Project selected: ${message.path}`);
-                    break;
-                case 'updateProject':
-                    if (message.projectId !== undefined && message.updates !== undefined) {
-                        this._updateProject(message.projectId, message.updates);
-                    }
-                    break;
-                case 'previewIcon':
-                    if (message.projectId !== undefined && message.iconName !== undefined) {
-                        this._previewIcon(message.projectId, message.iconName);
-                    }
-                    break;
-                case 'openUrl':
-                    if (message.url !== undefined) {
-                        openUrl(message.url);
-                    }
-                    break;
-                case 'sortProjects':
-                    if (message.sortedProjectIds !== undefined) {
-                        this._sortProjectsByIds(message.sortedProjectIds);
-                    }
-                    break;
-                case 'scanProjects':
-                    vscode.window.showOpenDialog({
-                        canSelectFolders: true,
-                        canSelectMany: false,
-                        title: 'Select folder to scan for Git projects'
-                    }).then(async folderUri => {
-                        if (folderUri && folderUri[0]) {
-                            try {
-                                this._setLoading(true);
-                                const config = this.getCachedConfiguration();
-                                const scanDepth = config.get<number>('scan.depth', 5);
-                                const excludePatterns = config.get<string[]>('scan.excludePatterns', ['node_modules', 'vendor', 'dist', 'build']);
-                                const projects = await scanForGitProjects(folderUri[0].fsPath, scanDepth, excludePatterns);
-                                await addScannedProjects(projects);
-                                this.refresh();
-                            } catch (error) {
-                                vscode.window.showErrorMessage(`Failed to scan for projects: ${error}`);
-                            } finally {
-                                this._setLoading(false);
-                            }
-                        }
-                    });
-                    break;
-                case 'relocateProject':
-                    this._relocateProject(message.projectId!);
-                    break;
-                case 'showInFileManager':
-                    if (message.project?.path) {
-                        vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.project.path));
-                    }
-                    break;
-                case 'openInTerminal':
-                    if (message.projectPath !== undefined) {
-                        const terminal = vscode.window.createTerminal({
-                            cwd: message.projectPath,
-                            name: path.basename(message.projectPath)
-                        });
-                        terminal.show();
-                    }
-                    break;
-                case 'toggleGroupCollapse':
-                    if (message.groupName !== undefined && message.isCollapsed !== undefined) {
-                        const collapsedGroups = this._context.globalState.get<Record<string, boolean>>('collapsedGroups', {});
-                        if (message.isCollapsed) {
-                            collapsedGroups[message.groupName] = true;
-                        } else {
-                            delete collapsedGroups[message.groupName];
-                        }
-                        await this._context.globalState.update('collapsedGroups', collapsedGroups);
-                    }
-                    break;
-                case 'startTimeTracking':
-                    if (message.projectId && message.projectPath) {
-                        try {
-                            await this.timeTrackingService.startSession(
-                                message.projectId,
-                                message.projectPath,
-                                message.sessionTitle
-                            );
-                            vscode.window.showInformationMessage('Timer started');
-                        } catch (error) {
-                            vscode.window.showErrorMessage(`Failed to start timer: ${error}`);
-                        }
-                    }
-                    break;
-                case 'stopTimeTracking':
-                    try {
-                        const stopped = await this.timeTrackingService.stopSession();
-                        if (stopped) {
-                            const minutes = Math.ceil(stopped.durationSeconds / 60);
-                            vscode.window.showInformationMessage(
-                                `Timer stopped: ${minutes} min on ${stopped.title}`
-                            );
-                        }
-                    } catch (error) {
-                        vscode.window.showErrorMessage(`Failed to stop timer: ${error}`);
-                    }
-                    break;
-                case 'updateTimeTrackingSession':
-                    if (message.sessionId) {
-                        try {
-                            await this.timeTrackingService.updateSession(message.sessionId, {
-                                title: message.sessionTitle,
-                                description: message.sessionDescription,
-                                startTime: message.sessionStartTime,
-                                endTime: message.sessionEndTime,
-                                durationSeconds: message.sessionDurationSeconds
-                            });
-                            this.refresh();
-                        } catch (error) {
-                            vscode.window.showErrorMessage(`Failed to update session: ${error}`);
-                        }
-                    }
-                    break;
-                case 'confirmDeleteTimeTrackingSession':
-                    if (message.sessionId) {
-                        try {
-                            const state = this.timeTrackingService.getState();
-                            const sessionToDelete = Object.values(state.sessionsByProject)
-                                .flat()
-                                .find(s => s.id === message.sessionId);
-
-                            const title = sessionToDelete?.title || 'this session';
-                            const confirm = await vscode.window.showWarningMessage(
-                                `Delete session "${title}"? This cannot be undone.`,
-                                { modal: true },
-                                'Delete'
-                            );
-                            if (confirm === 'Delete') {
-                                this.handleMessage({ command: 'deleteTimeTrackingSession', sessionId: message.sessionId });
-                            }
-                        } catch (error) {
-                            vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
-                        }
-                    }
-                    break;
-                case 'deleteTimeTrackingSession':
-                    if (message.sessionId) {
-                        try {
-                            const deleted = await this.timeTrackingService.deleteSession(message.sessionId);
-                            if (deleted) {
-                                this.refresh();
-                                const undo = 'Undo';
-                                const selection = await vscode.window.showInformationMessage(
-                                    `Deleted session: ${deleted.title}`,
-                                    undo
-                                );
-                                if (selection === undo) {
-                                    await this.timeTrackingService.addSession(deleted.projectId, {
-                                        title: deleted.title,
-                                        description: deleted.description,
-                                        startTime: deleted.startTime,
-                                        endTime: deleted.endTime,
-                                        durationSeconds: deleted.durationSeconds,
-                                        branch: deleted.branchLog.map(b => b.branch).join(' → ')
-                                    });
-                                    this.refresh();
-                                }
-                            }
-                        } catch (error) {
-                            vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
-                        }
-                    }
-                    break;
-                case 'clearTimeTracking':
-                    if (message.projectId) {
-                        try {
-                            const confirm = 'Delete all';
-                            const selection = await vscode.window.showWarningMessage(
-                                `Delete all time tracking sessions for this project? This cannot be undone.`,
-                                { modal: true },
-                                confirm
-                            );
-                            if (selection === confirm) {
-                                const clearedCount = await this.timeTrackingService.clearAllSessions(message.projectId);
-                                vscode.window.showInformationMessage(`Cleared ${clearedCount} time tracking sessions.`);
-                                this.refresh();
-                            }
-                        } catch (error) {
-                            vscode.window.showErrorMessage(`Failed to clear sessions: ${error}`);
-                        }
-                    }
-                    break;
-                case 'getTimeTrackingState':
-                    void this._postTimeTrackingState();
-                    break;
-                case 'openTimeTrackingReport':
-                    vscode.commands.executeCommand('awesome-projects.openTimeTrackingReport', {
-                        reportPeriod: message.reportPeriod,
-                        customStartDate: message.customStartDate,
-                        customEndDate: message.customEndDate
-                    });
-                    break;
-            }
+        webviewView.webview.onDidReceiveMessage(message => {
+            this._handleWebviewMessage(message);
         });
 
         this.timeTrackingService.onDidChangeTimer(async () => {
@@ -397,6 +129,375 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         this.timeTrackingService.onDidChangeUiTimer(async () => {
             await this._postTimeTrackingState();
         });
+    }
+
+
+    private _handleWebviewMessage(message: WebviewMessage): void {
+        // Forward all messages to message handlers first
+        this.handleMessage(message);
+
+        switch (message.command) {
+            case 'addProject':
+                this._handleProjectLifecycleMessage(message);
+                break;
+            case 'addRemoteProject':
+                this._handleProjectLifecycleMessage(message);
+                break;
+            case 'updateProject':
+                this._handleProjectLifecycleMessage(message);
+                break;
+            case 'previewIcon':
+                this._handleProjectLifecycleMessage(message);
+                break;
+            case 'relocateProject':
+                this._handleProjectLifecycleMessage(message);
+                break;
+            case 'sortProjects':
+                this._handleProjectLifecycleMessage(message);
+                break;
+            case 'scanProjects':
+                this._handleProjectLifecycleMessage(message);
+                break;
+            case 'openProject':
+                this._handleProjectOpenMessage(message);
+                break;
+            case 'openProjectNewWindow':
+                this._handleProjectOpenMessage(message);
+                break;
+            case 'openRemoteProject':
+                this._handleProjectOpenMessage(message);
+                break;
+            case 'openWorkspace':
+                this._handleProjectOpenMessage(message);
+                break;
+            case 'projectSelected':
+                this._handleProjectOpenMessage(message);
+                break;
+            case 'showInFileManager':
+                this._handleProjectOpenMessage(message);
+                break;
+            case 'openInTerminal':
+                this._handleProjectOpenMessage(message);
+                break;
+            case 'openUrl':
+                this._handleProjectOpenMessage(message);
+                break;
+            case 'startTimeTracking':
+                this._handleTimeTrackingSessionMessage(message);
+                break;
+            case 'stopTimeTracking':
+                this._handleTimeTrackingSessionMessage(message);
+                break;
+            case 'getTimeTrackingState':
+                this._handleTimeTrackingSessionMessage(message);
+                break;
+            case 'openTimeTrackingReport':
+                this._handleTimeTrackingSessionMessage(message);
+                break;
+            case 'updateTimeTrackingSession':
+                this._handleTimeTrackingEditMessage(message);
+                break;
+            case 'confirmDeleteTimeTrackingSession':
+                this._handleTimeTrackingEditMessage(message);
+                break;
+            case 'deleteTimeTrackingSession':
+                this._handleTimeTrackingEditMessage(message);
+                break;
+            case 'clearTimeTracking':
+                this._handleTimeTrackingEditMessage(message);
+                break;
+            case 'toggleGroupCollapse':
+                this._handleGroupMessage(message);
+                break;
+        }
+    }
+
+    private async _handleProjectLifecycleMessage(message: WebviewMessage): Promise<void> {
+        switch (message.command) {
+                        case 'addProject':
+                                vscode.window.showOpenDialog({
+                                    canSelectFolders: true,
+                                    canSelectMany: false
+                                }).then(async folderUri => {
+                                    if (folderUri && folderUri[0]) {
+                                        try {
+                                            const projectPath = folderUri[0].fsPath;
+                                            const configuration = this.getCachedConfiguration();
+                                            const projects: Project[] = configuration.get('projects') || [];
+
+                                            const name = await vscode.window.showInputBox({
+                                                prompt: 'Enter project name',
+                                                value: path.basename(projectPath)
+                                            }) || path.basename(projectPath) || '';
+
+                                            const newProject: Project = {
+                                                id: getProjectId({ path: projectPath, name, color: null } as Project),
+                                                path: projectPath,
+                                                name,
+                                                color: null
+                                            };
+
+                                            await configuration.update(
+                                                'projects',
+                                                [...projects, newProject],
+                                                vscode.ConfigurationTarget.Global
+                                            );
+
+                                            // Invalidate cache after update
+                                            this._configurationLoaded = false;
+                                            this._cachedConfiguration = undefined;
+                                            const updatedProjects = this.getCachedConfiguration().get<Project[]>('projects');
+                                            if (updatedProjects?.some(p => p.path === newProject.path)) {
+                                                this.refresh();
+                                            } else {
+                                                throw new Error('Failed to save project to settings');
+                                            }
+                                        } catch (error) {
+                                            vscode.window.showErrorMessage(`Failed to add project: ${error}`);
+                                        }
+                                    }
+                                });
+                                break;
+                            case 'addRemoteProject':
+                                vscode.commands.executeCommand('awesome-projects.addRemoteProject');
+                                break;
+                            case 'updateProject':
+                                if (message.projectId !== undefined && message.updates !== undefined) {
+                                    this._updateProject(message.projectId, message.updates);
+                                }
+                                break;
+                            case 'previewIcon':
+                                if (message.projectId !== undefined && message.iconName !== undefined) {
+                                    this._previewIcon(message.projectId, message.iconName);
+                                }
+                                break;
+                            case 'relocateProject':
+                                this._relocateProject(message.projectId!);
+                                break;
+                            case 'sortProjects':
+                                if (message.sortedProjectIds !== undefined) {
+                                    this._sortProjectsByIds(message.sortedProjectIds);
+                                }
+                                break;
+                            case 'scanProjects':
+                                vscode.window.showOpenDialog({
+                                    canSelectFolders: true,
+                                    canSelectMany: false,
+                                    title: 'Select folder to scan for Git projects'
+                                }).then(async folderUri => {
+                                    if (folderUri && folderUri[0]) {
+                                        try {
+                                            this._setLoading(true);
+                                            const config = this.getCachedConfiguration();
+                                            const scanDepth = config.get<number>('scan.depth', 5);
+                                            const excludePatterns = config.get<string[]>('scan.excludePatterns', ['node_modules', 'vendor', 'dist', 'build']);
+                                            const projects = await scanForGitProjects(folderUri[0].fsPath, scanDepth, excludePatterns);
+                                            await addScannedProjects(projects);
+                                            this.refresh();
+                                        } catch (error) {
+                                            vscode.window.showErrorMessage(`Failed to scan for projects: ${error}`);
+                                        } finally {
+                                            this._setLoading(false);
+                                        }
+                                    }
+                                });
+                                break;
+        }
+    }
+
+    private _handleProjectOpenMessage(message: WebviewMessage): void {
+        switch (message.command) {
+                        case 'openProject':
+                                if (message.projectPath !== undefined) {
+                                    openProjectInNewWindow(message.projectPath);
+                                }
+                                break;
+                            case 'openProjectNewWindow':
+                                if (message.projectPath !== undefined) {
+                                    openProjectInNewWindow(message.projectPath, true);
+                                }
+                                break;
+                            case 'openRemoteProject':
+                                if (message.remoteUrl !== undefined) {
+                                    openRemoteProject(message.remoteUrl, message.forceNewWindow ?? false);
+                                }
+                                break;
+                            case 'openWorkspace':
+                                if (message.projectPath !== undefined) {
+                                    openProjectInNewWindow(message.projectPath);
+                                }
+                                break;
+                            case 'projectSelected':
+                                vscode.window.showInformationMessage(`Project selected: ${message.path}`);
+                                break;
+                            case 'showInFileManager':
+                                if (message.project?.path) {
+                                    vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.project.path));
+                                }
+                                break;
+                            case 'openInTerminal':
+                                if (message.projectPath !== undefined) {
+                                    const terminal = vscode.window.createTerminal({
+                                        cwd: message.projectPath,
+                                        name: path.basename(message.projectPath)
+                                    });
+                                    terminal.show();
+                                }
+                                break;
+                            case 'openUrl':
+                                if (message.url !== undefined) {
+                                    openUrl(message.url);
+                                }
+                                break;
+        }
+    }
+
+    private async _handleTimeTrackingSessionMessage(message: WebviewMessage): Promise<void> {
+        switch (message.command) {
+                        case 'startTimeTracking':
+                                if (message.projectId && message.projectPath) {
+                                    try {
+                                        await this.timeTrackingService.startSession(
+                                            message.projectId,
+                                            message.projectPath,
+                                            message.sessionTitle
+                                        );
+                                        vscode.window.showInformationMessage('Timer started');
+                                    } catch (error) {
+                                        vscode.window.showErrorMessage(`Failed to start timer: ${error}`);
+                                    }
+                                }
+                                break;
+                            case 'stopTimeTracking':
+                                try {
+                                    const stopped = await this.timeTrackingService.stopSession();
+                                    if (stopped) {
+                                        const minutes = Math.ceil(stopped.durationSeconds / 60);
+                                        vscode.window.showInformationMessage(
+                                            `Timer stopped: ${minutes} min on ${stopped.title}`
+                                        );
+                                    }
+                                } catch (error) {
+                                    vscode.window.showErrorMessage(`Failed to stop timer: ${error}`);
+                                }
+                                break;
+                            case 'getTimeTrackingState':
+                                void this._postTimeTrackingState();
+                                break;
+                            case 'openTimeTrackingReport':
+                                vscode.commands.executeCommand('awesome-projects.openTimeTrackingReport', {
+                                    reportPeriod: message.reportPeriod,
+                                    customStartDate: message.customStartDate,
+                                    customEndDate: message.customEndDate
+                                });
+                                break;
+        }
+    }
+
+    private async _handleTimeTrackingEditMessage(message: WebviewMessage): Promise<void> {
+        switch (message.command) {
+                        case 'updateTimeTrackingSession':
+                                if (message.sessionId) {
+                                    try {
+                                        await this.timeTrackingService.updateSession(message.sessionId, {
+                                            title: message.sessionTitle,
+                                            description: message.sessionDescription,
+                                            startTime: message.sessionStartTime,
+                                            endTime: message.sessionEndTime,
+                                            durationSeconds: message.sessionDurationSeconds
+                                        });
+                                        this.refresh();
+                                    } catch (error) {
+                                        vscode.window.showErrorMessage(`Failed to update session: ${error}`);
+                                    }
+                                }
+                                break;
+                            case 'confirmDeleteTimeTrackingSession':
+                                if (message.sessionId) {
+                                    try {
+                                        const state = this.timeTrackingService.getState();
+                                        const sessionToDelete = Object.values(state.sessionsByProject)
+                                            .flat()
+                                            .find(s => s.id === message.sessionId);
+
+                                        const title = sessionToDelete?.title || 'this session';
+                                        const confirm = await vscode.window.showWarningMessage(
+                                            `Delete session "${title}"? This cannot be undone.`,
+                                            { modal: true },
+                                            'Delete'
+                                        );
+                                        if (confirm === 'Delete') {
+                                            this.handleMessage({ command: 'deleteTimeTrackingSession', sessionId: message.sessionId });
+                                        }
+                                    } catch (error) {
+                                        vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
+                                    }
+                                }
+                                break;
+                            case 'deleteTimeTrackingSession':
+                                if (message.sessionId) {
+                                    try {
+                                        const deleted = await this.timeTrackingService.deleteSession(message.sessionId);
+                                        if (deleted) {
+                                            this.refresh();
+                                            const undo = 'Undo';
+                                            const selection = await vscode.window.showInformationMessage(
+                                                `Deleted session: ${deleted.title}`,
+                                                undo
+                                            );
+                                            if (selection === undo) {
+                                                await this.timeTrackingService.addSession(deleted.projectId, {
+                                                    title: deleted.title,
+                                                    description: deleted.description,
+                                                    startTime: deleted.startTime,
+                                                    endTime: deleted.endTime,
+                                                    durationSeconds: deleted.durationSeconds,
+                                                    branch: deleted.branchLog.map(b => b.branch).join(' → ')
+                                                });
+                                                this.refresh();
+                                            }
+                                        }
+                                    } catch (error) {
+                                        vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
+                                    }
+                                }
+                                break;
+                            case 'clearTimeTracking':
+                                if (message.projectId) {
+                                    try {
+                                        const confirm = 'Delete all';
+                                        const selection = await vscode.window.showWarningMessage(
+                                            `Delete all time tracking sessions for this project? This cannot be undone.`,
+                                            { modal: true },
+                                            confirm
+                                        );
+                                        if (selection === confirm) {
+                                            const clearedCount = await this.timeTrackingService.clearAllSessions(message.projectId);
+                                            vscode.window.showInformationMessage(`Cleared ${clearedCount} time tracking sessions.`);
+                                            this.refresh();
+                                        }
+                                    } catch (error) {
+                                        vscode.window.showErrorMessage(`Failed to clear sessions: ${error}`);
+                                    }
+                                }
+                                break;
+        }
+    }
+
+    private async _handleGroupMessage(message: WebviewMessage): Promise<void> {
+        switch (message.command) {
+                        case 'toggleGroupCollapse':
+                                if (message.groupName !== undefined && message.isCollapsed !== undefined) {
+                                    const collapsedGroups = this._context.globalState.get<Record<string, boolean>>('collapsedGroups', {});
+                                    if (message.isCollapsed) {
+                                        collapsedGroups[message.groupName] = true;
+                                    } else {
+                                        delete collapsedGroups[message.groupName];
+                                    }
+                                    await this._context.globalState.update('collapsedGroups', collapsedGroups);
+                                }
+                                break;
+        }
     }
 
     public onDidReceiveMessage(handler: (message: WebviewMessage) => void): vscode.Disposable {

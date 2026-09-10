@@ -170,19 +170,19 @@ async function getHtmlForPanel(context: vscode.ExtensionContext, webview: vscode
                 <h1 class="whats-new-title">What's new in ${packageJson.displayName}</h1>
                 <p class="whats-new-subtitle">This update is for the VS Code: extension.</p>
                 <div class="whats-new-actions">
-                    <a class="button" href="${marketplaceUrl}" target="_blank">
+                    <a class="button" href="${marketplaceUrl}" target="_blank" rel="noopener noreferrer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 17.75l-6.172 -3.245l1.179 -6.873l5.993 -2.573l5.993 2.573l1.179 6.873z"/></svg>
                         Rate on Marketplace
                     </a>
-                    <a class="button sponsor" href="https://github.com/sponsors/dermatz" target="_blank">
+                    <a class="button sponsor" href="https://github.com/sponsors/dermatz" target="_blank" rel="noopener noreferrer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 13.572l-7.5 7.428l-7.5 -7.428m0 0a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
                         Sponsor this Project
                     </a>
-                    <a class="button secondary" href="${changelogUrl}" target="_blank">
+                    <a class="button secondary" href="${changelogUrl}" target="_blank" rel="noopener noreferrer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/><path d="M9 3h6a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2v0a2 2 0 0 1 2 -2z"/><path d="M9 12l2 2l4 -4"/></svg>
                         Full Changelog
                     </a>
-                    <a class="button secondary" href="${repoUrl}" target="_blank">
+                    <a class="button secondary" href="${repoUrl}" target="_blank" rel="noopener noreferrer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"/></svg>
                         GitHub
                     </a>
@@ -190,18 +190,18 @@ async function getHtmlForPanel(context: vscode.ExtensionContext, webview: vscode
             </div>
 
             <div class="whats-new-intro">
-                All changes to ${packageJson.displayName} are documented here. If you have questions, feature requests or problems with this extension, please create an <a href="${issuesUrl}" target="_blank">issue on GitHub</a>.
+                All changes to ${packageJson.displayName} are documented here. If you have questions, feature requests or problems with this extension, please create an <a href="${issuesUrl}" target="_blank" rel="noopener noreferrer">issue on GitHub</a>.
             </div>
 
             ${renderVersionSections(versionChanges)}
 
             <footer class="whats-new-footer">
                 <div class="whats-new-footer-actions">
-                    <a class="support-link" href="https://github.com/sponsors/dermatz" target="_blank">
+                    <a class="support-link" href="https://github.com/sponsors/dermatz" target="_blank" rel="noopener noreferrer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 13.572l-7.5 7.428l-7.5 -7.428m0 0a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
                         Support this Project
                     </a>
-                    <a class="support-link" href="${issuesUrl}" target="_blank">
+                    <a class="support-link" href="${issuesUrl}" target="_blank" rel="noopener noreferrer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9.5 11l5 0"/><path d="M9.5 15l3.5 0"/><path d="M9.5 7l5 0"/><path d="M4 20h12a4 4 0 0 0 4 -4v-9a4 4 0 0 0 -4 -4h-6.161a4 4 0 0 0 -3.233 1.64l-1.68 2.282a4 4 0 0 1 -3.233 1.64h-.663a2 2 0 0 0 -2 2v2.143a2 2 0 0 0 2 2z"/></svg>
                         Report an Issue
                     </a>

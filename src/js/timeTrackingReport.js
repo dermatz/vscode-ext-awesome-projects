@@ -1,8 +1,6 @@
-const vscode = acquireVsCodeApi();
+/* global document, window, acquireVsCodeApi, sessionsMeta, reportPeriod, reportGroupBy */
 
-function setPeriod(period) {
-    vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: period });
-}
+const vscode = acquireVsCodeApi();
 
 function isValidDateInput(value) {
     if (!value || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) {
@@ -53,62 +51,123 @@ function applyCustomRange() {
     vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: 'custom', customStartDate: start, customEndDate: end });
 }
 
-function exportCsv(period, customStartDate, customEndDate) {
-    vscode.postMessage({
-        command: 'exportTimeTrackingCsv',
-        reportPeriod: period,
-        customStartDate: customStartDate || undefined,
-        customEndDate: customEndDate || undefined
+function createLabel(forId, text) {
+    const label = document.createElement('label');
+    label.htmlFor = forId;
+    label.textContent = text;
+    return label;
+}
+
+function createTextField(id, label, value, placeholder) {
+    const field = document.createElement('div');
+    field.className = 'field';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = id;
+    input.value = value || '';
+    input.placeholder = placeholder || '';
+    field.appendChild(createLabel(id, label));
+    field.appendChild(input);
+    return field;
+}
+
+function createTextareaField(id, label, value, placeholder) {
+    const field = document.createElement('div');
+    field.className = 'field';
+    const textarea = document.createElement('textarea');
+    textarea.id = id;
+    textarea.rows = 2;
+    textarea.placeholder = placeholder || '';
+    textarea.value = value || '';
+    field.appendChild(createLabel(id, label));
+    field.appendChild(textarea);
+    return field;
+}
+
+function createDateTimeField(id, label, value) {
+    const field = document.createElement('div');
+    field.className = 'field';
+    const input = document.createElement('input');
+    input.type = 'datetime-local';
+    input.id = id;
+    input.value = value || '';
+    field.appendChild(createLabel(id, label));
+    field.appendChild(input);
+    return field;
+}
+
+function createNumberField(id, label, value, placeholder) {
+    const field = document.createElement('div');
+    field.className = 'field';
+    field.style.maxWidth = '120px';
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = id;
+    input.value = value || '';
+    input.placeholder = placeholder || '';
+    field.appendChild(createLabel(id, label));
+    field.appendChild(input);
+    return field;
+}
+
+function createActionButton(label, action, dataset) {
+    const button = document.createElement('button');
+    button.className = 'button mini' + (action === 'cancelEdit' ? ' secondary' : '');
+    button.textContent = label;
+    button.dataset.action = action;
+    Object.entries(dataset).forEach(([key, value]) => {
+        button.dataset[key] = value;
     });
+    return button;
 }
 
-function stopActiveTimer(event) {
-    if (event) {
-        event.stopPropagation();
-        event.preventDefault();
-    }
-    vscode.postMessage({ command: 'stopTimeTracking' });
-}
-
-
-function editSession(sessionId) {
-    const row = document.getElementById('session-row-' + sessionId);
+function readSessionForEdit(sessionId) {
     const titleEl = document.getElementById('session-title-' + sessionId);
     const descEl = document.getElementById('session-desc-' + sessionId);
     const durationEl = document.getElementById('session-duration-' + sessionId);
-    const title = titleEl ? titleEl.textContent : '';
-    const description = descEl ? descEl.textContent : '';
-    const duration = durationEl ? durationEl.dataset.seconds : '0';
     const session = sessionsMeta.find(s => s.id === sessionId);
+    return {
+        title: titleEl ? titleEl.textContent : '',
+        description: descEl ? descEl.textContent : '',
+        duration: durationEl ? durationEl.dataset.seconds : '0',
+        startTime: session ? session.startTime.slice(0, 16) : '',
+        endTime: session && session.endTime ? session.endTime.slice(0, 16) : ''
+    };
+}
 
-    row.innerHTML = '<td colspan="6"><div class="inline-edit">' +
-        '<div class="field">' +
-            '<label for="edit-title-' + sessionId + '">Title</label>' +
-            '<input type="text" id="edit-title-' + sessionId + '" value="' + (title || '').replace(/"/g, '&quot;') + '" placeholder="Session title">' +
-        '</div>' +
-        '<div class="field">' +
-            '<label for="edit-desc-' + sessionId + '">Description</label>' +
-            '<textarea id="edit-desc-' + sessionId + '" rows="2" placeholder="Optional description">' + (description || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>' +
-        '</div>' +
-        '<div class="inline-edit-row">' +
-            '<div class="field">' +
-                '<label for="edit-start-' + sessionId + '">Start</label>' +
-                '<input type="datetime-local" id="edit-start-' + sessionId + '" value="' + (session ? session.startTime.slice(0, 16) : '') + '">' +
-            '</div>' +
-            '<div class="field">' +
-                '<label for="edit-end-' + sessionId + '">End</label>' +
-                '<input type="datetime-local" id="edit-end-' + sessionId + '" value="' + (session && session.endTime ? session.endTime.slice(0, 16) : '') + '">' +
-            '</div>' +
-            '<div class="field" style="max-width: 120px;">' +
-                '<label for="edit-duration-' + sessionId + '">Duration (s)</label>' +
-                '<input type="number" id="edit-duration-' + sessionId + '" value="' + duration + '" placeholder="Ignored when start and end are set">' +
-            '</div>' +
-        '</div>' +
-        '<div class="inline-edit-actions">' +
-            '<button class="button mini" data-action="saveSession" data-session-id="' + sessionId + '">Save</button>' +
-            '<button class="button mini secondary" data-action="cancelEdit" data-period="' + reportPeriod + '">Cancel</button>' +
-        '</div>' +
-    '</div></td>';
+function buildEditForm(sessionId, data) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'inline-edit';
+
+    const row = document.createElement('div');
+    row.className = 'inline-edit-row';
+    row.appendChild(createDateTimeField('edit-start-' + sessionId, 'Start', data.startTime));
+    row.appendChild(createDateTimeField('edit-end-' + sessionId, 'End', data.endTime));
+    row.appendChild(createNumberField('edit-duration-' + sessionId, 'Duration (s)', data.duration, 'Ignored when start and end are set'));
+
+    const actions = document.createElement('div');
+    actions.className = 'inline-edit-actions';
+    actions.appendChild(createActionButton('Save', 'saveSession', { sessionId: sessionId }));
+    actions.appendChild(createActionButton('Cancel', 'cancelEdit', { period: reportPeriod }));
+
+    wrapper.appendChild(createTextField('edit-title-' + sessionId, 'Title', data.title, 'Session title'));
+    wrapper.appendChild(createTextareaField('edit-desc-' + sessionId, 'Description', data.description, 'Optional description'));
+    wrapper.appendChild(row);
+    wrapper.appendChild(actions);
+    return wrapper;
+}
+
+function editSession(sessionId) {
+    const row = document.getElementById('session-row-' + sessionId);
+    if (!row) {
+        return;
+    }
+    const data = readSessionForEdit(sessionId);
+    const cell = document.createElement('td');
+    cell.colSpan = 6;
+    cell.appendChild(buildEditForm(sessionId, data));
+    row.innerHTML = '';
+    row.appendChild(cell);
 }
 
 function localDateTimeToIso(localValue) {
@@ -166,7 +225,6 @@ function validateSessionForm(titleId, startId, endId, durationId) {
 }
 
 function saveSession(sessionId) {
-    const session = sessionsMeta.find(s => s.id === sessionId);
     const validation = validateSessionForm(
         'edit-title-' + sessionId,
         'edit-start-' + sessionId,
@@ -238,14 +296,6 @@ function cancelAddSession() {
 let currentSort = { column: 'date', direction: 'desc' };
 
 let currentGroupBy = reportGroupBy;
-
-
-function getSessionBranch(session) {
-    if (!session.branchLog || session.branchLog.length === 0) {
-        return 'Unknown, no GIT branch found';
-    }
-    return session.branchLog[session.branchLog.length - 1].branch;
-}
 
 function isGrouped() {
     return currentGroupBy !== 'none';

@@ -252,7 +252,7 @@ function renderActiveBanner(activeSession: TimeTrackingSession): string {
                 <span class="report-active-title">${escHtml(activeSession.title)}</span>
             </div>
             <span class="report-active-time" data-active-session-id="${escAttr(activeSession.id)}">${formatDuration(activeSession.durationSeconds)}</span>
-            <button class="button mini" data-action="stopActiveTimer" onclick="stopActiveTimer(event)">Stop</button>
+            <button class="button mini" data-action="stopActiveTimer">Stop</button>
         </div>
     `;
 }

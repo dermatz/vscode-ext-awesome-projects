@@ -1,4 +1,4 @@
-export const getDropdownToggleScript = (): string => {
+function getQuickMenuScript(): string {
     return `
         (function() {
             let activeQuickMenu = null;
@@ -63,7 +63,11 @@ export const getDropdownToggleScript = (): string => {
                 }
             });
         })();
+    `;
+}
 
+function getToggleDropdownScript(): string {
+    return `
         function toggleDropdown(event, targetId, type) {
             if (type === 'info' && event.target.closest('.project-settings')) {
                 return;
@@ -105,4 +109,8 @@ export const getDropdownToggleScript = (): string => {
             }
         }
     `;
+}
+
+export const getDropdownToggleScript = (): string => {
+    return getQuickMenuScript() + getToggleDropdownScript();
 };

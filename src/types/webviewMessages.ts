@@ -20,6 +20,7 @@ export interface WebviewMessage {
     groupName?: string;
     isCollapsed?: boolean;
     project?: { path: string; name: string };
+    iconName?: string;
     sessionId?: string;
     sessionTitle?: string;
     sessionDescription?: string;

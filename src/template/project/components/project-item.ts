@@ -43,32 +43,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const missingClass = pathExists || isRemote ? '' : 'missing';
 
     if (!pathExists && !isRemote) {
-        const projectId = getProjectId(project);
-        return `
-        <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${escAttr(projectId)}">
-            <div class="project-item" style="--bg-color: var(--vscode-inputValidation-errorBorder, #f44)">
-                <span class="project-icon">⚠️</span>
-                <div class="project-info">
-                    <div class="project-name">${escHtml(project.name)}</div>
-                    <div class="project-path missing-hint">Folder not found</div>
-                </div>
-                <div class="project-settings">
-                    <button class="button mini relocate" onclick="window.vscodeApi.postMessage({ command: 'relocateProject', projectId: '${escOnclickArg(projectId)}' })">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M3 7v13h18V7M3 7l9-4 9 4M9 21V11h6v10"/>
-                        </svg>
-                        Relocate
-                    </button>
-                    <button class="button mini remove" onclick="handleDeleteProject('${escOnclickArg(projectId)}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
-                        </svg>
-                        Remove
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
+        return renderMissingProjectItem(project, index, currentProjectClass, missingClass);
     }
 
     const iconHtml = getProjectIconHtml(context, project, useFavicons);
@@ -80,7 +55,7 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const timeTrackingHtml = getTimeTrackingDropdownHtml(project, todaySeconds, sessions, isTimerActive, activeSession);
 
     const activeBadge = isCurrentProject ? '<span class="current-project-badge" title="Current workspace"></span>' : '';
-    const timerIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="M11 7v4l2 2"/><path d="M15 21h6v-6"/><path d="M15 17l2-2 1 1 2-2"/></svg>';
+    const TIMER_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="M11 7v4l2 2"/><path d="M15 21h6v-6"/><path d="M15 17l2-2 1 1 2-2"/></svg>';
     const timeSpentHtml = todaySeconds > 0 || isTimerActive
         ? `<span class="project-time-spent${isTimerActive ? ' active' : ''}" data-project-id="${escAttr(projectId)}">${formatDuration(todaySeconds)}</span>`
         : '';
@@ -103,7 +78,23 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                     ${timeSpentHtml}
                 </div>
                 <div class="project-settings">
-                    ${isRemote ? `
+                    ${renderQuickActionButtons(project, projectId, isTimerActive, TIMER_ICON_SVG)}
+                    ${renderQuickMenu(project, projectId, workspaceFile)}
+                </div>
+            </div>
+            ${projectInfoHtml}
+            ${timeTrackingHtml}
+            ${projectSettingsHtml}
+        </div>
+    `;
+}
+
+
+
+function renderQuickActionButtons(project: Project, projectId: string, isTimerActive: boolean, timerIcon: string): string {
+    const isRemote = project.isRemote === true;
+    const timerClass = isTimerActive ? ' time-tracking-toggle active' : ' time-tracking-toggle';
+    return `${isRemote ? `
                     <button type="button" class="button mini quick-action-button" onclick="openRemoteProject('${escOnclickArg(project.remoteUrl!)}')" title="Open remote repository">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                             <path d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -119,13 +110,17 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                             <path d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                         </svg>
                     </button>`}
-                    <button type="button" class="button mini quick-action-button time-tracking-toggle${isTimerActive ? ' active' : ''}" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'timeTracking')" title="Time tracking">
+                    <button type="button" class="button mini quick-action-button${timerClass}" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'timeTracking')" title="Time tracking">
                         ${timerIcon}
-                    </button>
-                    <div class="quick-menu-wrapper">
+                    </button>`;
+}
+
+function renderQuickMenu(project: Project, projectId: string, workspaceFile: string | undefined): string {
+    const isRemote = project.isRemote === true;
+    return `<div class="quick-menu-wrapper">
                         <button type="button" class="button mini quick-menu-toggle" onclick="toggleQuickMenu(event, '${escOnclickArg(projectId)}')" title="Project actions">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
+                                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296 .07 2.572-1.065z"/>
                                 <path d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0"/>
                             </svg>
                         </button>
@@ -173,18 +168,39 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                             <button class="quick-menu-item" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'settings')">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke="none" d="M0 0h24v24H0z"/>
-                                    <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
+                                    <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296 .07 2.572-1.065z"/>
                                     <path d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0"/>
                                 </svg>
                                 Edit
                             </button>
                         </div>
-                    </div>
+                    </div>`;
+}
+function renderMissingProjectItem(project: Project, index: number, currentProjectClass: string, missingClass: string): string {
+    const projectId = getProjectId(project);
+    return `
+        <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${escAttr(projectId)}">
+            <div class="project-item" style="--bg-color: var(--vscode-inputValidation-errorBorder, #f44)">
+                <span class="project-icon">⚠️</span>
+                <div class="project-info">
+                    <div class="project-name">${escHtml(project.name)}</div>
+                    <div class="project-path missing-hint">Folder not found</div>
+                </div>
+                <div class="project-settings">
+                    <button class="button mini relocate" onclick="window.vscodeApi.postMessage({ command: 'relocateProject', projectId: '${escOnclickArg(projectId)}' })">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 7v13h18V7M3 7l9-4 9 4M9 21V11h6v10"/>
+                        </svg>
+                        Relocate
+                    </button>
+                    <button class="button mini remove" onclick="handleDeleteProject('${escOnclickArg(projectId)}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                        </svg>
+                        Remove
+                    </button>
                 </div>
             </div>
-            ${projectInfoHtml}
-            ${timeTrackingHtml}
-            ${projectSettingsHtml}
         </div>
     `;
 }
