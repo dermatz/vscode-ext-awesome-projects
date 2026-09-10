@@ -64,7 +64,7 @@ function renderConnectionAccordion(project: Project, escapedId: string, inputs: 
     `;
 }
 
-function getIconPreviewHtml(iconPreviewHtml: string, projectId: string): string {
+function getIconPreviewHtml(iconPreviewHtml: string): string {
     return iconPreviewHtml
         ? iconPreviewHtml.replace(/<span class="icon-preview">|<\/span>/g, '')
         : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 12h.01"/></svg>';
@@ -102,7 +102,7 @@ function renderAppearanceAccordion(
                     <p class="hint">Leave empty and add a Production URL or Icon URL to use the website's favicon automatically.</p>
                     <div class="icon-input-row">
                         <input type="text" placeholder="brand-github" value="${escAttr(project.icon || '')}" data-field="icon" data-initial-value="${escAttr(project.icon || '')}" oninput="handleIconInput(event, '${escapedId}')">
-                        <span class="icon-preview" id="icon-preview-${projectId}">${getIconPreviewHtml(iconPreviewHtml, projectId)}</span>
+                        <span class="icon-preview" id="icon-preview-${projectId}">${getIconPreviewHtml(iconPreviewHtml)}</span>
                     </div>
                 </div>
                 <div class="settings-item appearance-section">

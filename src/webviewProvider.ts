@@ -130,11 +130,11 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
             const loadDelay = this._getLoadDelay();
 
             setTimeout(async () => {
-                webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
+                webviewView.webview.html = await this._getHtmlForWebview();
                 this._isFirstLoad = false;
             }, loadDelay);
         } else {
-            webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
+            webviewView.webview.html = await this._getHtmlForWebview();
         }
 
         this._setupWebviewListeners(webviewView);
@@ -576,7 +576,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
     public async refresh() {
         if (this._view) {
-            this._view.webview.html = await this._getHtmlForWebview(this._view.webview);
+            this._view.webview.html = await this._getHtmlForWebview();
         }
     }
 
@@ -595,7 +595,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
 
         if (activeSessionId !== this._lastActiveSessionId) {
             this._lastActiveSessionId = activeSessionId;
-            this._view.webview.html = await this._getHtmlForWebview(this._view.webview);
+            this._view.webview.html = await this._getHtmlForWebview();
             return;
         }
 
@@ -791,7 +791,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         ].join('\n');
     }
 
-    private async _getHtmlForWebview(_webview: vscode.Webview): Promise<string> {
+    private async _getHtmlForWebview(): Promise<string> {
         await this._loadStaticResources();
 
         const currentWorkspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
