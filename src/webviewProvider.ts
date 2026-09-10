@@ -67,58 +67,7 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         return this._view;
     }
 
-    public async resolveWebviewView(
-        webviewView: vscode.WebviewView,
-        _context: vscode.WebviewViewResolveContext,
-        _token: vscode.CancellationToken,
-    ) {
-        this._view = webviewView;
-        webviewView.webview.options = {
-            enableScripts: true,
-            localResourceRoots: [this._extensionUri]
-        };
-
-    // Preload static resources (CSS, header, footer) so that CSS is loaded at least once during initialization.
-    // This also ensures tests observing CSS load count during resolveWebviewView can detect the initial load.
-    await this._loadStaticResources();
-
-        // Initially show an exciting loading view that already includes the brand header
-        if (this._isFirstLoad) {
-            webviewView.webview.html = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>${this._cachedCss}</style>
-                </head>
-                <body class="loading-view">
-                    ${this._cachedHeaderHtml}
-                    <main class="loading-content">
-                        <div class="loading-brand"></div>
-                        <div class="loading-title">Loading projects<span class="loading-dots"></span></div>
-                        <div class="loading-skeletons">
-                            <div class="loading-skeleton"></div>
-                            <div class="loading-skeleton"></div>
-                            <div class="loading-skeleton"></div>
-                        </div>
-                    </main>
-                </body>
-                </html>
-            `;
-
-            // Delay loading the full content (extendable via env var for development)
-            const debugDelay = process.env.AWESOME_PROJECTS_DEBUG_SLOW_LOAD
-                ? parseInt(process.env.AWESOME_PROJECTS_DEBUG_SLOW_LOAD, 10)
-                : 100;
-            const loadDelay = isNaN(debugDelay) ? 100 : Math.max(100, debugDelay);
-
-            setTimeout(async () => {
-                webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
-                this._isFirstLoad = false;
-            }, loadDelay);
-        } else {
-            webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
-        }
-
+    private _setupWebviewListeners(webviewView: vscode.WebviewView): void {
         webviewView.webview.onDidReceiveMessage(message => {
             this._handleWebviewMessage(message);
         });
@@ -131,224 +80,217 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         });
     }
 
+    private _getLoadDelay(): number {
+        const debugDelay = process.env.AWESOME_PROJECTS_DEBUG_SLOW_LOAD
+            ? parseInt(process.env.AWESOME_PROJECTS_DEBUG_SLOW_LOAD, 10)
+            : 100;
+        return isNaN(debugDelay) ? 100 : Math.max(100, debugDelay);
+    }
+
+    private _getLoadingHtml(): string {
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>${this._cachedCss}</style>
+            </head>
+            <body class="loading-view">
+                ${this._cachedHeaderHtml}
+                <main class="loading-content">
+                    <div class="loading-brand"></div>
+                    <div class="loading-title">Loading projects<span class="loading-dots"></span></div>
+                    <div class="loading-skeletons">
+                        <div class="loading-skeleton"></div>
+                        <div class="loading-skeleton"></div>
+                        <div class="loading-skeleton"></div>
+                    </div>
+                </main>
+            </body>
+            </html>
+        `;
+    }
+
+    public async resolveWebviewView(
+        webviewView: vscode.WebviewView,
+        _context: vscode.WebviewViewResolveContext,
+        _token: vscode.CancellationToken,
+    ): Promise<void> {
+        this._view = webviewView;
+        webviewView.webview.options = {
+            enableScripts: true,
+            localResourceRoots: [this._extensionUri]
+        };
+
+        // Preload static resources (CSS, header, footer) so that CSS is loaded at least once during initialization.
+        // This also ensures tests observing CSS load count during resolveWebviewView can detect the initial load.
+        await this._loadStaticResources();
+
+        if (this._isFirstLoad) {
+            webviewView.webview.html = this._getLoadingHtml();
+            const loadDelay = this._getLoadDelay();
+
+            setTimeout(async () => {
+                webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
+                this._isFirstLoad = false;
+            }, loadDelay);
+        } else {
+            webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
+        }
+
+        this._setupWebviewListeners(webviewView);
+    }
+
 
     private _handleWebviewMessage(message: WebviewMessage): void {
         // Forward all messages to message handlers first
         this.handleMessage(message);
 
-        switch (message.command) {
-            case 'addProject':
-                this._handleProjectLifecycleMessage(message);
-                break;
-            case 'addRemoteProject':
-                this._handleProjectLifecycleMessage(message);
-                break;
-            case 'updateProject':
-                this._handleProjectLifecycleMessage(message);
-                break;
-            case 'previewIcon':
-                this._handleProjectLifecycleMessage(message);
-                break;
-            case 'relocateProject':
-                this._handleProjectLifecycleMessage(message);
-                break;
-            case 'sortProjects':
-                this._handleProjectLifecycleMessage(message);
-                break;
-            case 'scanProjects':
-                this._handleProjectLifecycleMessage(message);
-                break;
-            case 'openProject':
-                this._handleProjectOpenMessage(message);
-                break;
-            case 'openProjectNewWindow':
-                this._handleProjectOpenMessage(message);
-                break;
-            case 'openRemoteProject':
-                this._handleProjectOpenMessage(message);
-                break;
-            case 'openWorkspace':
-                this._handleProjectOpenMessage(message);
-                break;
-            case 'projectSelected':
-                this._handleProjectOpenMessage(message);
-                break;
-            case 'showInFileManager':
-                this._handleProjectOpenMessage(message);
-                break;
-            case 'openInTerminal':
-                this._handleProjectOpenMessage(message);
-                break;
-            case 'openUrl':
-                this._handleProjectOpenMessage(message);
-                break;
-            case 'startTimeTracking':
-                this._handleTimeTrackingSessionMessage(message);
-                break;
-            case 'stopTimeTracking':
-                this._handleTimeTrackingSessionMessage(message);
-                break;
-            case 'getTimeTrackingState':
-                this._handleTimeTrackingSessionMessage(message);
-                break;
-            case 'openTimeTrackingReport':
-                this._handleTimeTrackingSessionMessage(message);
-                break;
-            case 'updateTimeTrackingSession':
-                this._handleTimeTrackingEditMessage(message);
-                break;
-            case 'confirmDeleteTimeTrackingSession':
-                this._handleTimeTrackingEditMessage(message);
-                break;
-            case 'deleteTimeTrackingSession':
-                this._handleTimeTrackingEditMessage(message);
-                break;
-            case 'clearTimeTracking':
-                this._handleTimeTrackingEditMessage(message);
-                break;
-            case 'toggleGroupCollapse':
-                this._handleGroupMessage(message);
-                break;
+        const handler = this._messageHandlerMap.get(message.command);
+        if (handler) {
+            handler.call(this, message);
+        }
+    }
+
+    private readonly _messageHandlerMap = new Map<string, (message: WebviewMessage) => void | Promise<void>>([
+        ['addProject', this._handleProjectLifecycleMessage],
+        ['addRemoteProject', this._handleProjectLifecycleMessage],
+        ['updateProject', this._handleProjectLifecycleMessage],
+        ['previewIcon', this._handleProjectLifecycleMessage],
+        ['relocateProject', this._handleProjectLifecycleMessage],
+        ['sortProjects', this._handleProjectLifecycleMessage],
+        ['scanProjects', this._handleProjectLifecycleMessage],
+        ['openProject', this._handleProjectOpenMessage],
+        ['openProjectNewWindow', this._handleProjectOpenMessage],
+        ['openRemoteProject', this._handleProjectOpenMessage],
+        ['openWorkspace', this._handleProjectOpenMessage],
+        ['projectSelected', this._handleProjectOpenMessage],
+        ['showInFileManager', this._handleProjectOpenMessage],
+        ['openInTerminal', this._handleProjectOpenMessage],
+        ['openUrl', this._handleProjectOpenMessage],
+        ['startTimeTracking', this._handleTimeTrackingSessionMessage],
+        ['stopTimeTracking', this._handleTimeTrackingSessionMessage],
+        ['getTimeTrackingState', this._handleTimeTrackingSessionMessage],
+        ['openTimeTrackingReport', this._handleTimeTrackingSessionMessage],
+        ['updateTimeTrackingSession', this._handleTimeTrackingEditMessage],
+        ['confirmDeleteTimeTrackingSession', this._handleTimeTrackingEditMessage],
+        ['deleteTimeTrackingSession', this._handleTimeTrackingEditMessage],
+        ['clearTimeTracking', this._handleTimeTrackingEditMessage],
+        ['toggleGroupCollapse', this._handleGroupMessage]
+    ]);
+
+    private async _addProjectFromDialog(): Promise<void> {
+        const folderUri = await vscode.window.showOpenDialog({ canSelectFolders: true, canSelectMany: false });
+        if (!folderUri || !folderUri[0]) {
+            return;
+        }
+        try {
+            const projectPath = folderUri[0].fsPath;
+            const configuration = this.getCachedConfiguration();
+            const projects: Project[] = configuration.get('projects') || [];
+
+            const name = await vscode.window.showInputBox({
+                prompt: 'Enter project name',
+                value: path.basename(projectPath)
+            }) || path.basename(projectPath) || '';
+
+            const newProject: Project = {
+                id: getProjectId({ path: projectPath, name, color: null } as Project),
+                path: projectPath,
+                name,
+                color: null
+            };
+
+            await configuration.update(
+                'projects',
+                [...projects, newProject],
+                vscode.ConfigurationTarget.Global
+            );
+
+            // Invalidate cache after update
+            this._configurationLoaded = false;
+            this._cachedConfiguration = undefined;
+            const updatedProjects = this.getCachedConfiguration().get<Project[]>('projects');
+            if (updatedProjects?.some(p => p.path === newProject.path)) {
+                this.refresh();
+            } else {
+                throw new Error('Failed to save project to settings');
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to add project: ${error}`);
+        }
+    }
+
+    private async _scanProjectsFromDialog(): Promise<void> {
+        const folderUri = await vscode.window.showOpenDialog({
+            canSelectFolders: true,
+            canSelectMany: false,
+            title: 'Select folder to scan for Git projects'
+        });
+        if (!folderUri || !folderUri[0]) {
+            return;
+        }
+        try {
+            this._setLoading(true);
+            const config = this.getCachedConfiguration();
+            const scanDepth = config.get<number>('scan.depth', 5);
+            const excludePatterns = config.get<string[]>('scan.excludePatterns', ['node_modules', 'vendor', 'dist', 'build']);
+            const projects = await scanForGitProjects(folderUri[0].fsPath, scanDepth, excludePatterns);
+            await addScannedProjects(projects);
+            this.refresh();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to scan for projects: ${error}`);
+        } finally {
+            this._setLoading(false);
         }
     }
 
     private async _handleProjectLifecycleMessage(message: WebviewMessage): Promise<void> {
         switch (message.command) {
-                        case 'addProject':
-                                vscode.window.showOpenDialog({
-                                    canSelectFolders: true,
-                                    canSelectMany: false
-                                }).then(async folderUri => {
-                                    if (folderUri && folderUri[0]) {
-                                        try {
-                                            const projectPath = folderUri[0].fsPath;
-                                            const configuration = this.getCachedConfiguration();
-                                            const projects: Project[] = configuration.get('projects') || [];
-
-                                            const name = await vscode.window.showInputBox({
-                                                prompt: 'Enter project name',
-                                                value: path.basename(projectPath)
-                                            }) || path.basename(projectPath) || '';
-
-                                            const newProject: Project = {
-                                                id: getProjectId({ path: projectPath, name, color: null } as Project),
-                                                path: projectPath,
-                                                name,
-                                                color: null
-                                            };
-
-                                            await configuration.update(
-                                                'projects',
-                                                [...projects, newProject],
-                                                vscode.ConfigurationTarget.Global
-                                            );
-
-                                            // Invalidate cache after update
-                                            this._configurationLoaded = false;
-                                            this._cachedConfiguration = undefined;
-                                            const updatedProjects = this.getCachedConfiguration().get<Project[]>('projects');
-                                            if (updatedProjects?.some(p => p.path === newProject.path)) {
-                                                this.refresh();
-                                            } else {
-                                                throw new Error('Failed to save project to settings');
-                                            }
-                                        } catch (error) {
-                                            vscode.window.showErrorMessage(`Failed to add project: ${error}`);
-                                        }
-                                    }
-                                });
-                                break;
-                            case 'addRemoteProject':
-                                vscode.commands.executeCommand('awesome-projects.addRemoteProject');
-                                break;
-                            case 'updateProject':
-                                if (message.projectId !== undefined && message.updates !== undefined) {
-                                    this._updateProject(message.projectId, message.updates);
-                                }
-                                break;
-                            case 'previewIcon':
-                                if (message.projectId !== undefined && message.iconName !== undefined) {
-                                    this._previewIcon(message.projectId, message.iconName);
-                                }
-                                break;
-                            case 'relocateProject':
-                                this._relocateProject(message.projectId!);
-                                break;
-                            case 'sortProjects':
-                                if (message.sortedProjectIds !== undefined) {
-                                    this._sortProjectsByIds(message.sortedProjectIds);
-                                }
-                                break;
-                            case 'scanProjects':
-                                vscode.window.showOpenDialog({
-                                    canSelectFolders: true,
-                                    canSelectMany: false,
-                                    title: 'Select folder to scan for Git projects'
-                                }).then(async folderUri => {
-                                    if (folderUri && folderUri[0]) {
-                                        try {
-                                            this._setLoading(true);
-                                            const config = this.getCachedConfiguration();
-                                            const scanDepth = config.get<number>('scan.depth', 5);
-                                            const excludePatterns = config.get<string[]>('scan.excludePatterns', ['node_modules', 'vendor', 'dist', 'build']);
-                                            const projects = await scanForGitProjects(folderUri[0].fsPath, scanDepth, excludePatterns);
-                                            await addScannedProjects(projects);
-                                            this.refresh();
-                                        } catch (error) {
-                                            vscode.window.showErrorMessage(`Failed to scan for projects: ${error}`);
-                                        } finally {
-                                            this._setLoading(false);
-                                        }
-                                    }
-                                });
-                                break;
+            case 'addProject':
+                await this._addProjectFromDialog();
+                break;
+            case 'addRemoteProject':
+                vscode.commands.executeCommand('awesome-projects.addRemoteProject');
+                break;
+            case 'updateProject':
+                if (message.projectId !== undefined && message.updates !== undefined) {
+                    this._updateProject(message.projectId, message.updates);
+                }
+                break;
+            case 'previewIcon':
+                if (message.projectId !== undefined && message.iconName !== undefined) {
+                    this._previewIcon(message.projectId, message.iconName);
+                }
+                break;
+            case 'relocateProject':
+                this._relocateProject(message.projectId!);
+                break;
+            case 'sortProjects':
+                if (message.sortedProjectIds !== undefined) {
+                    this._sortProjectsByIds(message.sortedProjectIds);
+                }
+                break;
+            case 'scanProjects':
+                await this._scanProjectsFromDialog();
+                break;
         }
     }
 
+    private readonly _openMessageHandlers = new Map<string, (message: WebviewMessage) => void>([
+        ['openProject', m => { if (m.projectPath !== undefined) { openProjectInNewWindow(m.projectPath); } }],
+        ['openProjectNewWindow', m => { if (m.projectPath !== undefined) { openProjectInNewWindow(m.projectPath, true); } }],
+        ['openRemoteProject', m => { if (m.remoteUrl !== undefined) { openRemoteProject(m.remoteUrl, m.forceNewWindow ?? false); } }],
+        ['openWorkspace', m => { if (m.projectPath !== undefined) { openProjectInNewWindow(m.projectPath); } }],
+        ['projectSelected', m => { vscode.window.showInformationMessage(`Project selected: ${m.path}`); }],
+        ['showInFileManager', m => { if (m.project?.path) { vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(m.project.path)); } }],
+        ['openInTerminal', m => { if (m.projectPath !== undefined) { const terminal = vscode.window.createTerminal({ cwd: m.projectPath, name: path.basename(m.projectPath) }); terminal.show(); } }],
+        ['openUrl', m => { if (m.url !== undefined) { openUrl(m.url); } }]
+    ]);
+
     private _handleProjectOpenMessage(message: WebviewMessage): void {
-        switch (message.command) {
-                        case 'openProject':
-                                if (message.projectPath !== undefined) {
-                                    openProjectInNewWindow(message.projectPath);
-                                }
-                                break;
-                            case 'openProjectNewWindow':
-                                if (message.projectPath !== undefined) {
-                                    openProjectInNewWindow(message.projectPath, true);
-                                }
-                                break;
-                            case 'openRemoteProject':
-                                if (message.remoteUrl !== undefined) {
-                                    openRemoteProject(message.remoteUrl, message.forceNewWindow ?? false);
-                                }
-                                break;
-                            case 'openWorkspace':
-                                if (message.projectPath !== undefined) {
-                                    openProjectInNewWindow(message.projectPath);
-                                }
-                                break;
-                            case 'projectSelected':
-                                vscode.window.showInformationMessage(`Project selected: ${message.path}`);
-                                break;
-                            case 'showInFileManager':
-                                if (message.project?.path) {
-                                    vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(message.project.path));
-                                }
-                                break;
-                            case 'openInTerminal':
-                                if (message.projectPath !== undefined) {
-                                    const terminal = vscode.window.createTerminal({
-                                        cwd: message.projectPath,
-                                        name: path.basename(message.projectPath)
-                                    });
-                                    terminal.show();
-                                }
-                                break;
-                            case 'openUrl':
-                                if (message.url !== undefined) {
-                                    openUrl(message.url);
-                                }
-                                break;
+        const handler = this._openMessageHandlers.get(message.command);
+        if (handler) {
+            handler(message);
         }
     }
 
@@ -394,93 +336,98 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async _handleTimeTrackingEditMessage(message: WebviewMessage): Promise<void> {
-        switch (message.command) {
-                        case 'updateTimeTrackingSession':
-                                if (message.sessionId) {
-                                    try {
-                                        await this.timeTrackingService.updateSession(message.sessionId, {
-                                            title: message.sessionTitle,
-                                            description: message.sessionDescription,
-                                            startTime: message.sessionStartTime,
-                                            endTime: message.sessionEndTime,
-                                            durationSeconds: message.sessionDurationSeconds
-                                        });
-                                        this.refresh();
-                                    } catch (error) {
-                                        vscode.window.showErrorMessage(`Failed to update session: ${error}`);
-                                    }
-                                }
-                                break;
-                            case 'confirmDeleteTimeTrackingSession':
-                                if (message.sessionId) {
-                                    try {
-                                        const state = this.timeTrackingService.getState();
-                                        const sessionToDelete = Object.values(state.sessionsByProject)
-                                            .flat()
-                                            .find(s => s.id === message.sessionId);
+    private readonly _editMessageHandlers = new Map<string, (message: WebviewMessage) => Promise<void>>([
+        ['updateTimeTrackingSession', async m => {
+            if (m.sessionId) {
+                try {
+                    await this.timeTrackingService.updateSession(m.sessionId, {
+                        title: m.sessionTitle,
+                        description: m.sessionDescription,
+                        startTime: m.sessionStartTime,
+                        endTime: m.sessionEndTime,
+                        durationSeconds: m.sessionDurationSeconds
+                    });
+                    this.refresh();
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to update session: ${error}`);
+                }
+            }
+        }],
+        ['confirmDeleteTimeTrackingSession', async m => {
+            if (m.sessionId) {
+                try {
+                    const state = this.timeTrackingService.getState();
+                    const sessionToDelete = Object.values(state.sessionsByProject)
+                        .flat()
+                        .find(s => s.id === m.sessionId);
 
-                                        const title = sessionToDelete?.title || 'this session';
-                                        const confirm = await vscode.window.showWarningMessage(
-                                            `Delete session "${title}"? This cannot be undone.`,
-                                            { modal: true },
-                                            'Delete'
-                                        );
-                                        if (confirm === 'Delete') {
-                                            this.handleMessage({ command: 'deleteTimeTrackingSession', sessionId: message.sessionId });
-                                        }
-                                    } catch (error) {
-                                        vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
-                                    }
-                                }
-                                break;
-                            case 'deleteTimeTrackingSession':
-                                if (message.sessionId) {
-                                    try {
-                                        const deleted = await this.timeTrackingService.deleteSession(message.sessionId);
-                                        if (deleted) {
-                                            this.refresh();
-                                            const undo = 'Undo';
-                                            const selection = await vscode.window.showInformationMessage(
-                                                `Deleted session: ${deleted.title}`,
-                                                undo
-                                            );
-                                            if (selection === undo) {
-                                                await this.timeTrackingService.addSession(deleted.projectId, {
-                                                    title: deleted.title,
-                                                    description: deleted.description,
-                                                    startTime: deleted.startTime,
-                                                    endTime: deleted.endTime,
-                                                    durationSeconds: deleted.durationSeconds,
-                                                    branch: deleted.branchLog.map(b => b.branch).join(' → ')
-                                                });
-                                                this.refresh();
-                                            }
-                                        }
-                                    } catch (error) {
-                                        vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
-                                    }
-                                }
-                                break;
-                            case 'clearTimeTracking':
-                                if (message.projectId) {
-                                    try {
-                                        const confirm = 'Delete all';
-                                        const selection = await vscode.window.showWarningMessage(
-                                            `Delete all time tracking sessions for this project? This cannot be undone.`,
-                                            { modal: true },
-                                            confirm
-                                        );
-                                        if (selection === confirm) {
-                                            const clearedCount = await this.timeTrackingService.clearAllSessions(message.projectId);
-                                            vscode.window.showInformationMessage(`Cleared ${clearedCount} time tracking sessions.`);
-                                            this.refresh();
-                                        }
-                                    } catch (error) {
-                                        vscode.window.showErrorMessage(`Failed to clear sessions: ${error}`);
-                                    }
-                                }
-                                break;
+                    const title = sessionToDelete?.title || 'this session';
+                    const confirm = await vscode.window.showWarningMessage(
+                        `Delete session "${title}"? This cannot be undone.`,
+                        { modal: true },
+                        'Delete'
+                    );
+                    if (confirm === 'Delete') {
+                        this.handleMessage({ command: 'deleteTimeTrackingSession', sessionId: m.sessionId });
+                    }
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
+                }
+            }
+        }],
+        ['deleteTimeTrackingSession', async m => {
+            if (m.sessionId) {
+                try {
+                    const deleted = await this.timeTrackingService.deleteSession(m.sessionId);
+                    if (deleted) {
+                        this.refresh();
+                        const undo = 'Undo';
+                        const selection = await vscode.window.showInformationMessage(
+                            `Deleted session: ${deleted.title}`,
+                            undo
+                        );
+                        if (selection === undo) {
+                            await this.timeTrackingService.addSession(deleted.projectId, {
+                                title: deleted.title,
+                                description: deleted.description,
+                                startTime: deleted.startTime,
+                                endTime: deleted.endTime,
+                                durationSeconds: deleted.durationSeconds,
+                                branch: deleted.branchLog.map(b => b.branch).join(' → ')
+                            });
+                            this.refresh();
+                        }
+                    }
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
+                }
+            }
+        }],
+        ['clearTimeTracking', async m => {
+            if (m.projectId) {
+                try {
+                    const confirm = 'Delete all';
+                    const selection = await vscode.window.showWarningMessage(
+                        `Delete all time tracking sessions for this project? This cannot be undone.`,
+                        { modal: true },
+                        confirm
+                    );
+                    if (selection === confirm) {
+                        const clearedCount = await this.timeTrackingService.clearAllSessions(m.projectId);
+                        vscode.window.showInformationMessage(`Cleared ${clearedCount} time tracking sessions.`);
+                        this.refresh();
+                    }
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to clear sessions: ${error}`);
+                }
+            }
+        }]
+    ]);
+
+    private async _handleTimeTrackingEditMessage(message: WebviewMessage): Promise<void> {
+        const handler = this._editMessageHandlers.get(message.command);
+        if (handler) {
+            await handler.call(this, message);
         }
     }
 
@@ -731,94 +678,141 @@ export class ProjectsWebviewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async _getHtmlForWebview(_webview: vscode.Webview) {
-        // Load static resources only once
-        await this._loadStaticResources();
-
-        // Get current workspace folder path
-        const currentWorkspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
-
-        // Only generate the project list HTML each time, as it changes frequently
-        const collapsedGroups = this._context.globalState.get<Record<string, boolean>>('collapsedGroups', {});
-        const projectListHtml = await getProjectListHtml(this._context, currentWorkspace, this.getCachedConfiguration(), collapsedGroups, this.timeTrackingService);
+    private async _getBodyClass(): Promise<string> {
         const config = this.getCachedConfiguration();
         const quickActionDisplay = config.get<string>('appearance.quickActionButtonDisplay')
             ?? config.get<string>('quickActionButtonDisplay', 'hover');
-        const bodyClass = quickActionDisplay === 'hidden'
-            ? ' hide-quick-action-buttons'
+        return quickActionDisplay === 'hidden'
+            ? 'hide-quick-action-buttons'
             : quickActionDisplay === 'hover'
-                ? ' hover-quick-action-buttons'
+                ? 'hover-quick-action-buttons'
                 : '';
+    }
+
+    private _getVsCodeApiScript(): string {
+        return `
+            const vscode = acquireVsCodeApi();
+            window.vscodeApi = vscode;
+        `;
+    }
+
+    private _getThemeColorScript(): string {
+        return `
+            function applyThemeColorInputs() {
+                document.querySelectorAll('.project-color-input').forEach(input => {
+                    if (input.getAttribute('data-uses-theme-color') === 'true') {
+                        const themeColor = getComputedStyle(document.documentElement)
+                            .getPropertyValue('--vscode-list-activeSelectionBackground')
+                            .trim();
+                        if (themeColor.startsWith('rgb')) {
+                            const rgb = themeColor.match(/\d+/g);
+                            if (rgb && rgb.length === 3) {
+                                const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+                                input.value = hex;
+                            }
+                        } else if (themeColor.startsWith('#')) {
+                            input.value = themeColor;
+                        }
+                    }
+                });
+            }
+        `;
+    }
+
+    private _getDropdownBehaviorScript(): string {
+        return `
+            function setupDropdownBehavior() {
+                document.addEventListener('click', (event) => {
+                    if (!event.target.closest('.project-item-wrapper')) {
+                        document.querySelectorAll('.settings-dropdown.show').forEach(el => {
+                            el.classList.remove('show');
+                            el.previousElementSibling.classList.remove('active');
+                        });
+                    }
+                });
+
+                document.querySelectorAll('.settings-dropdown').forEach(dropdown => {
+                    dropdown.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                    });
+                });
+            }
+        `;
+    }
+
+    private _getWindowMessageScript(): string {
+        return `
+            function handleWindowMessage(event, loadingSpinner, loadingBackdrop) {
+                const message = event.data;
+                if (message.command === 'setLoading') {
+                    if (message.isLoading) {
+                        loadingBackdrop?.classList.remove('hidden');
+                        loadingSpinner?.classList.remove('hidden');
+                    } else {
+                        loadingBackdrop?.classList.add('hidden');
+                        loadingSpinner?.classList.add('hidden');
+                    }
+                } else if (message.command === 'updateIconPreview') {
+                    if (typeof updateIconPreview === 'function') {
+                        updateIconPreview(message.projectId, message.iconHtml);
+                    }
+                } else if (message.command === 'timeTrackingState') {
+                    if (typeof updateTimeTrackingDisplay === 'function') {
+                        updateTimeTrackingDisplay(message);
+                    }
+                }
+            }
+        `;
+    }
+
+    private _getDomReadyScript(): string {
+        return `
+            document.addEventListener('DOMContentLoaded', () => {
+                const loadingSpinner = document.getElementById('loading-spinner');
+                const loadingBackdrop = document.getElementById('loading-backdrop');
+
+                applyThemeColorInputs();
+                setupDropdownBehavior();
+
+                window.addEventListener('message', event => {
+                    handleWindowMessage(event, loadingSpinner, loadingBackdrop);
+                });
+            });
+        `;
+    }
+
+    private _getClientScript(): string {
+        return [
+            this._getVsCodeApiScript(),
+            this._getThemeColorScript(),
+            this._getDropdownBehaviorScript(),
+            this._getWindowMessageScript(),
+            this._getDomReadyScript()
+        ].join('\n');
+    }
+
+    private async _getHtmlForWebview(_webview: vscode.Webview): Promise<string> {
+        await this._loadStaticResources();
+
+        const currentWorkspace = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+        const collapsedGroups = this._context.globalState.get<Record<string, boolean>>('collapsedGroups', {});
+        const projectListHtml = await getProjectListHtml(
+            this._context,
+            currentWorkspace,
+            this.getCachedConfiguration(),
+            collapsedGroups,
+            this.timeTrackingService
+        );
+        const bodyClass = await this._getBodyClass();
+        const clientScript = this._getClientScript();
+
         return `<!DOCTYPE html>
             <html>
             <head>
                 <style>${this._cachedCss}</style>
-                <script>
-                    const vscode = acquireVsCodeApi();
-                    // Make vscode globally available for other scripts
-                    window.vscodeApi = vscode;
-
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const loadingSpinner = document.getElementById('loading-spinner');
-                        const loadingBackdrop = document.getElementById('loading-backdrop');
-
-                        // Setup event listeners
-                        document.querySelectorAll('.project-color-input').forEach(input => {
-                            if (input.getAttribute('data-uses-theme-color') === 'true') {
-                                const themeColor = getComputedStyle(document.documentElement)
-                                .getPropertyValue('--vscode-list-activeSelectionBackground')
-                                .trim();
-                                if (themeColor.startsWith('rgb')) {
-                                const rgb = themeColor.match(/\d+/g);
-                                if (rgb && rgb.length === 3) {
-                                    const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-                                    input.value = hex;
-                                }
-                                } else if (themeColor.startsWith('#')) {
-                                input.value = themeColor;
-                                }
-                            }
-                        });
-
-                        document.addEventListener('click', (event) => {
-                            if (!event.target.closest('.project-item-wrapper')) {
-                            document.querySelectorAll('.settings-dropdown.show').forEach(el => {
-                                el.classList.remove('show');
-                                el.previousElementSibling.classList.remove('active');
-                            });
-                            }
-                        });
-
-                        document.querySelectorAll('.settings-dropdown').forEach(dropdown => {
-                            dropdown.addEventListener('click', (event) => {
-                            event.stopPropagation();
-                            });
-                        });
-
-                        window.addEventListener('message', event => {
-                            const message = event.data;
-                            if (message.command === 'setLoading') {
-                            if (message.isLoading) {
-                                loadingBackdrop?.classList.remove('hidden');
-                                loadingSpinner?.classList.remove('hidden');
-                            } else {
-                                loadingBackdrop?.classList.add('hidden');
-                                loadingSpinner?.classList.add('hidden');
-                            }
-                            } else if (message.command === 'updateIconPreview') {
-                                if (typeof updateIconPreview === 'function') {
-                                    updateIconPreview(message.projectId, message.iconHtml);
-                                }
-                            } else if (message.command === 'timeTrackingState') {
-                                if (typeof updateTimeTrackingDisplay === 'function') {
-                                    updateTimeTrackingDisplay(message);
-                                }
-                            }
-                        });
-                    });
-                </script>
+                <script>${clientScript}</script>
             </head>
-            <body class="${bodyClass.trim()}">
+            <body class="${bodyClass}">
                 ${this._cachedHeaderHtml}
                 <div class="projects-wrapper">
                     <div id="loading-backdrop" class="loading-backdrop hidden">
