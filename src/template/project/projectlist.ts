@@ -99,11 +99,20 @@ function getSortedGroupChildren(node: GroupTreeNode, sortOrder: string): [string
     return entries;
 }
 
-function getGroupTimeTrackingState(timeTrackingService?: TimeTrackingService): {
+interface RenderContext {
+    context: vscode.ExtensionContext;
+    useFavicons: boolean;
+    currentWorkspace: string;
+    existsMap: Map<string, boolean>;
+}
+
+interface TimeTrackingRenderState {
     sessionsByProject: Record<string, TimeTrackingSession[]>;
     activeSession: ActiveSession | undefined;
     activeSessionFull: TimeTrackingSession | undefined;
-} {
+}
+
+function getTimeTrackingRenderState(timeTrackingService?: TimeTrackingService): TimeTrackingRenderState {
     const state = timeTrackingService?.getState();
     const sessionsByProject = state?.sessionsByProject || {};
     const activeSession = state?.activeSession;
@@ -113,29 +122,36 @@ function getGroupTimeTrackingState(timeTrackingService?: TimeTrackingService): {
     return { sessionsByProject, activeSession, activeSessionFull };
 }
 
+function getProjectItemProps(
+    project: Project,
+    index: number,
+    renderContext: RenderContext,
+    timeTrackingState: TimeTrackingRenderState
+) {
+    const { sessionsByProject, activeSession, activeSessionFull } = timeTrackingState;
+    const projectId = project.id ?? project.path;
+    const sessions = sessionsByProject[projectId] || [];
+    return {
+        project,
+        index,
+        useFavicons: renderContext.useFavicons,
+        currentWorkspace: renderContext.currentWorkspace,
+        pathExists: renderContext.existsMap.get(project.path) ?? true,
+        todaySeconds: getTodaySecondsForProject(projectId, sessions, activeSession),
+        isTimerActive: activeSession?.projectId === projectId,
+        sessions,
+        activeSession: activeSession?.projectId === projectId ? activeSessionFull : undefined
+    };
+}
+
 async function renderGroupItemsHtml(
     node: GroupTreeNode,
-    context: vscode.ExtensionContext,
-    useFavicons: boolean,
-    currentWorkspace: string,
-    existsMap: Map<string, boolean>,
-    sessionsByProject: Record<string, TimeTrackingSession[]>,
-    activeSession: ActiveSession | undefined,
-    activeSessionFull: TimeTrackingSession | undefined
+    renderContext: RenderContext,
+    timeTrackingState: TimeTrackingRenderState
 ): Promise<string> {
     return (await Promise.all(
         node.items.map(({ project, index }) =>
-            getProjectItemHtml(context, {
-                project,
-                index,
-                useFavicons,
-                currentWorkspace,
-                pathExists: existsMap.get(project.path) ?? true,
-                todaySeconds: getTodaySecondsForProject(project.id ?? project.path, sessionsByProject[project.id ?? project.path] || [], activeSession),
-                isTimerActive: activeSession?.projectId === (project.id ?? project.path),
-                sessions: sessionsByProject[project.id ?? project.path] || [],
-                activeSession: activeSession && activeSession.projectId === (project.id ?? project.path) ? activeSessionFull : undefined
-            })
+            getProjectItemHtml(renderContext.context, getProjectItemProps(project, index, renderContext, timeTrackingState))
         )
     )).join('');
 }
@@ -143,48 +159,42 @@ async function renderGroupItemsHtml(
 async function renderGroupChildrenHtml(
     node: GroupTreeNode,
     groupKey: string,
-    context: vscode.ExtensionContext,
-    useFavicons: boolean,
-    currentWorkspace: string,
-    existsMap: Map<string, boolean>,
+    renderContext: RenderContext,
     groupSortOrder: string,
     collapsedGroups: Record<string, boolean>,
     timeTrackingService?: TimeTrackingService
 ): Promise<string> {
     return (await Promise.all(
         getSortedGroupChildren(node, groupSortOrder).map(([childName, childNode]) =>
-            renderGroupNode(
-                childName,
-                `${groupKey}/${childName}`,
-                childNode,
-                context,
-                useFavicons,
-                currentWorkspace,
-                existsMap,
+            renderGroupNode({
+                name: childName,
+                groupKey: `${groupKey}/${childName}`,
+                node: childNode,
+                renderContext,
                 groupSortOrder,
                 collapsedGroups,
                 timeTrackingService
-            )
+            })
         )
     )).join('');
 }
 
 /** Recursively render a single group node and all its nested children. */
-async function renderGroupNode(
-    name: string,
-    groupKey: string,
-    node: GroupTreeNode,
-    context: vscode.ExtensionContext,
-    useFavicons: boolean,
-    currentWorkspace: string,
-    existsMap: Map<string, boolean>,
-    groupSortOrder: string,
-    collapsedGroups: Record<string, boolean>,
-    timeTrackingService?: TimeTrackingService
-): Promise<string> {
-    const { sessionsByProject, activeSession, activeSessionFull } = getGroupTimeTrackingState(timeTrackingService);
-    const itemsHtml = await renderGroupItemsHtml(node, context, useFavicons, currentWorkspace, existsMap, sessionsByProject, activeSession, activeSessionFull);
-    const childrenHtml = await renderGroupChildrenHtml(node, groupKey, context, useFavicons, currentWorkspace, existsMap, groupSortOrder, collapsedGroups, timeTrackingService);
+interface RenderGroupNodeArgs {
+    name: string;
+    groupKey: string;
+    node: GroupTreeNode;
+    renderContext: RenderContext;
+    groupSortOrder: string;
+    collapsedGroups: Record<string, boolean>;
+    timeTrackingService?: TimeTrackingService;
+}
+
+async function renderGroupNode(args: RenderGroupNodeArgs): Promise<string> {
+    const { name, groupKey, node, renderContext, groupSortOrder, collapsedGroups, timeTrackingService } = args;
+    const timeTrackingState = getTimeTrackingRenderState(timeTrackingService);
+    const itemsHtml = await renderGroupItemsHtml(node, renderContext, timeTrackingState);
+    const childrenHtml = await renderGroupChildrenHtml(node, groupKey, renderContext, groupSortOrder, collapsedGroups, timeTrackingService);
 
     return `
                 <div class="project-group${collapsedGroups[groupKey] ? ' collapsed' : ''}" data-group="${escAttr(groupKey)}">
@@ -324,22 +334,12 @@ async function renderUngroupedItems(
     existsMap: Map<string, boolean>,
     timeTrackingService?: TimeTrackingService
 ): Promise<string> {
-    const state = timeTrackingService?.getState();
-    const sessionsByProject = state?.sessionsByProject || {};
-    const activeSession = state?.activeSession;
+    const renderContext: RenderContext = { context, useFavicons: config.useFavicons, currentWorkspace, existsMap };
+    const timeTrackingState = getTimeTrackingRenderState(timeTrackingService);
 
     return (await Promise.all(
         rootNode.items.map(({ project, index }) =>
-            getProjectItemHtml(context, {
-                project,
-                index,
-                useFavicons: config.useFavicons,
-                currentWorkspace,
-                pathExists: existsMap.get(project.path) ?? true,
-                todaySeconds: getTodaySecondsForProject(project.id ?? project.path, sessionsByProject[project.id ?? project.path] || [], activeSession),
-                isTimerActive: activeSession?.projectId === (project.id ?? project.path),
-                sessions: sessionsByProject[project.id ?? project.path] || []
-            })
+            getProjectItemHtml(context, getProjectItemProps(project, index, renderContext, timeTrackingState))
         )
     )).join('');
 }
@@ -353,9 +353,18 @@ async function renderGroupedItems(
     collapsedGroups: Record<string, boolean>,
     timeTrackingService?: TimeTrackingService
 ): Promise<string> {
+    const renderContext: RenderContext = { context, useFavicons: config.useFavicons, currentWorkspace, existsMap };
     return (await Promise.all(
         getSortedGroupChildren(rootNode, config.groupSortOrder).map(([name, node]) =>
-            renderGroupNode(name, name, node, context, config.useFavicons, currentWorkspace, existsMap, config.groupSortOrder, collapsedGroups, timeTrackingService)
+            renderGroupNode({
+                name,
+                groupKey: name,
+                node,
+                renderContext,
+                groupSortOrder: config.groupSortOrder,
+                collapsedGroups,
+                timeTrackingService
+            })
         )
     )).join('');
 }
