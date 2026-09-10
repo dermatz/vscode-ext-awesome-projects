@@ -397,7 +397,7 @@ function handleClickSetPeriod(target) {
 vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: target.dataset.period });
 }
 
-function handleClickApplyCustomRange(target) {
+function handleClickApplyCustomRange() {
 applyCustomRange();
 }
 
@@ -410,7 +410,7 @@ vscode.postMessage({
             });
 }
 
-function handleClickStopActiveTimer(target) {
+function handleClickStopActiveTimer() {
 vscode.postMessage({ command: 'stopTimeTracking' });
 }
 
@@ -434,19 +434,19 @@ function handleClickCancelEdit(target) {
 vscode.postMessage({ command: 'openTimeTrackingReport', reportPeriod: target.dataset.period });
 }
 
-function handleClickAddSession(target) {
+function handleClickAddSession() {
 addSession();
 }
 
-function handleClickSaveNewSession(target) {
+function handleClickSaveNewSession() {
 saveNewSession();
 }
 
-function handleClickCancelAddSession(target) {
+function handleClickCancelAddSession() {
 cancelAddSession();
 }
 
-function handleClickDeleteAllSessions(target) {
+function handleClickDeleteAllSessions() {
 vscode.postMessage({ command: 'confirmDeleteAllTimeTrackingSessions' });
 }
 
