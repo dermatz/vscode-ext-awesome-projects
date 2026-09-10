@@ -2,7 +2,7 @@
   "name": "awesome-projects",
   "displayName": "Awesome Projects",
   "description": "Manage and organize your VS Code projects with ease. Quick access to project URLs, custom colors, and project shortcuts.",
-  "version": "0.30.0",
+  "version": "0.31.0",
   "publisher": "MathiasElle",
   "icon": "resources/logo.png",
   "license": "GNU General Public License v3.0",
@@ -458,7 +458,10 @@
           },
           "awesomeProjects.timeTracking.weekStartsOn": {
             "type": "string",
-            "enum": ["sunday", "monday"],
+            "enum": [
+              "sunday",
+              "monday"
+            ],
             "default": "sunday",
             "description": "First day of the week used for the 'This Week' report"
           },
