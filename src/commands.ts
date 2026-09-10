@@ -3,6 +3,7 @@ import { Project } from './extension';
 import { ProjectsWebviewProvider } from './webviewProvider';
 import { getProjectId } from './template/project/utils/project-id';
 import { showWhatsNewPanel } from './whatsNewPanel';
+import { TimeTrackingPanel } from './timeTrackingPanel';
 
 export const Commands = {
     ADD_PROJECT: 'awesome-projects.addProject',
@@ -13,7 +14,12 @@ export const Commands = {
     DELETE_PROJECT: 'awesome-projects.deleteProject',
     SHOW_WHATS_NEW: 'awesome-projects.showWhatsNew',
     HIDE_MISSING_PROJECTS: 'awesome-projects.hideMissingProjects',
-    SHOW_MISSING_PROJECTS: 'awesome-projects.showMissingProjects'
+    SHOW_MISSING_PROJECTS: 'awesome-projects.showMissingProjects',
+    START_TIME_TRACKING: 'awesome-projects.startTimeTracking',
+    STOP_TIME_TRACKING: 'awesome-projects.stopTimeTracking',
+    CONTINUE_TIME_TRACKING: 'awesome-projects.continueTimeTracking',
+    OPEN_TIME_TRACKING_REPORT: 'awesome-projects.openTimeTrackingReport',
+    OPEN_TIME_TRACKING_MENU: 'awesome-projects.openTimeTrackingMenu'
 };
 
 export const registerCommands = (context: vscode.ExtensionContext, projectsProvider: ProjectsWebviewProvider): void => {
@@ -224,6 +230,95 @@ export const registerCommands = (context: vscode.ExtensionContext, projectsProvi
 
         vscode.commands.registerCommand(Commands.SHOW_WHATS_NEW, async () => {
             await showWhatsNewPanel(context);
+        }),
+
+        vscode.commands.registerCommand(Commands.START_TIME_TRACKING, async (args?: { projectId?: string; projectPath?: string }) => {
+            const config = vscode.workspace.getConfiguration('awesomeProjects');
+            if (!config.get<boolean>('timeTracking.enabled', true)) {
+                vscode.window.showWarningMessage('Time tracking is disabled in settings.');
+                return;
+            }
+
+            let projectId = args?.projectId;
+            let projectPath = args?.projectPath;
+
+            if (!projectId) {
+                const projects = config.get<Project[]>('projects') || [];
+                const pick = await vscode.window.showQuickPick(
+                    projects.map(p => ({ label: p.name, description: p.path, id: p.id })),
+                    { placeHolder: 'Select a project to track time for' }
+                );
+                if (!pick || !pick.id) {
+                    return;
+                }
+                projectId = pick.id;
+                projectPath = pick.description;
+            }
+
+            if (!projectId || !projectPath) {
+                return;
+            }
+
+            try {
+                await projectsProvider.timeTrackingService.startSession(projectId, projectPath);
+                vscode.window.showInformationMessage('Timer started');
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to start timer: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand(Commands.STOP_TIME_TRACKING, async () => {
+            try {
+                const stopped = await projectsProvider.timeTrackingService.stopSession();
+                if (stopped) {
+                    const minutes = Math.ceil(stopped.durationSeconds / 60);
+                    vscode.window.showInformationMessage(`Timer stopped: ${minutes} min on ${stopped.title}`);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to stop timer: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand(Commands.CONTINUE_TIME_TRACKING, async (args?: { sessionId?: string }) => {
+            if (!args?.sessionId) {
+                return;
+            }
+            try {
+                const continued = await projectsProvider.timeTrackingService.continueSession({ sessionId: args.sessionId });
+                if (continued) {
+                    vscode.window.showInformationMessage(`Timer continued: ${continued.title}`);
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to continue timer: ${error}`);
+            }
+        }),
+
+        vscode.commands.registerCommand(Commands.OPEN_TIME_TRACKING_MENU, async () => {
+            const active = projectsProvider.timeTrackingService.getActiveSession();
+            const items: { label: string; command: string }[] = [
+                { label: '$(folder) Open Awesome Projects', command: 'workbench.view.extension.awesomeProjects' }
+            ];
+            if (active) {
+                items.unshift({ label: '$(debug-pause) Stop Timer', command: Commands.STOP_TIME_TRACKING });
+                items.unshift({ label: '$(graph) Open Time Tracking Report', command: Commands.OPEN_TIME_TRACKING_REPORT });
+            } else {
+                items.unshift({ label: '$(play) Start Timer', command: Commands.START_TIME_TRACKING });
+            }
+            const pick = await vscode.window.showQuickPick(items, { placeHolder: 'Time Tracking' });
+            if (pick) {
+                await vscode.commands.executeCommand(pick.command);
+            }
+        }),
+
+        vscode.commands.registerCommand(Commands.OPEN_TIME_TRACKING_REPORT, async (args?: { reportPeriod?: 'today' | 'week' | 'month' | 'lastMonth' | 'all' | 'custom'; customStartDate?: string; customEndDate?: string }) => {
+            await TimeTrackingPanel.createOrShow(
+                context.extensionUri,
+                context,
+                projectsProvider.timeTrackingService,
+                args?.reportPeriod,
+                args?.customStartDate,
+                args?.customEndDate
+            );
         })
     );
 };

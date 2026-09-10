@@ -4,9 +4,12 @@ import * as path from 'path';
 import { Project } from '../../../extension';
 import { getSettingsDropdownHtml } from './dropdowns/dropdownSettings';
 import { getProjectInfoDropdownHtml } from './dropdowns/dropdownProjectInfo';
+import { getTimeTrackingDropdownHtml } from './dropdowns/dropdownTimeTracking';
 import { getProjectId } from '../utils/project-id';
-import { getTablerIconSvg } from '../utils/tablerIcons';
-import { escHtml, escAttr, escOnclickArg, sanitizeCssColor, safeUrl } from '../../utils/escaping';
+import { getProjectIconHtml } from '../utils/projectIcon';
+import { escHtml, escAttr, escOnclickArg, sanitizeCssColor } from '../../utils/escaping';
+import { TimeTrackingSession } from '../../../types/timeTracking';
+import { formatDuration } from '../../utils/formatDuration';
 
 async function findWorkspaceFile(projectPath: string): Promise<string | null> {
     try {
@@ -24,10 +27,14 @@ interface ProjectItemProps {
     useFavicons: boolean;
     currentWorkspace?: string;
     pathExists?: boolean;
+    todaySeconds?: number;
+    isTimerActive?: boolean;
+    sessions?: TimeTrackingSession[];
+    activeSession?: TimeTrackingSession;
 }
 
 export async function getProjectItemHtml(context: vscode.ExtensionContext, props: ProjectItemProps): Promise<string> {
-    const { project, index, useFavicons, currentWorkspace, pathExists = true } = props;
+    const { project, index, useFavicons, currentWorkspace, pathExists = true, todaySeconds = 0, isTimerActive = false, sessions = [], activeSession } = props;
     const bgColor = project.color || "var(--vscode-list-activeSelectionBackground)";
 
     const isRemote = !!project.isRemote;
@@ -36,79 +43,22 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
     const missingClass = pathExists || isRemote ? '' : 'missing';
 
     if (!pathExists && !isRemote) {
-        const projectId = getProjectId(project);
-        return `
-        <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${escAttr(projectId)}">
-            <div class="project-item" style="--bg-color: var(--vscode-inputValidation-errorBorder, #f44)">
-                <span class="project-icon">⚠️</span>
-                <div class="project-info">
-                    <div class="project-name">${escHtml(project.name)}</div>
-                    <div class="project-path missing-hint">Folder not found</div>
-                </div>
-                <div class="project-settings">
-                    <button class="button mini relocate" onclick="window.vscodeApi.postMessage({ command: 'relocateProject', projectId: '${escOnclickArg(projectId)}' })">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M3 7v13h18V7M3 7l9-4 9 4M9 21V11h6v10"/>
-                        </svg>
-                        Relocate
-                    </button>
-                    <button class="button mini remove" onclick="handleDeleteProject('${escOnclickArg(projectId)}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
-                        </svg>
-                        Remove
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
+        return renderMissingProjectItem(project, index, currentProjectClass, missingClass);
     }
 
-    const getBaseUrl = (url?: string) => {
-        if (!url) { return null; }
-        try {
-            const urlObj = new URL(url);
-            return urlObj.protocol + "//" + urlObj.hostname;
-        } catch (e) {
-            return null;
-        }
-    };
-
-    const isDirectIconUrl = (url?: string): boolean => {
-        if (!url) { return false; }
-        try {
-            const parsed = new URL(url);
-            return /\.(ico|png|jpg|jpeg|svg|webp|gif|bmp)(\?.*)?$/i.test(parsed.pathname);
-        } catch {
-            return false;
-        }
-    };
-
-    let iconHtml: string;
-    if (project.icon) {
-        const tablerIcon = getTablerIconSvg(context, project.icon);
-        iconHtml = tablerIcon || escHtml(project.icon);
-    } else {
-        const iconUrl = useFavicons ? project.iconUrl : undefined;
-        const baseUrl = useFavicons && !iconUrl
-            ? getBaseUrl(project.productionUrl) || getBaseUrl(project.stagingUrl) || getBaseUrl(project.devUrl) || getBaseUrl(project.managementUrl)
-            : null;
-        const faviconUrl = iconUrl
-            ? (isDirectIconUrl(iconUrl) ? safeUrl(iconUrl) : `https://www.google.com/s2/favicons?domain=${escAttr(getBaseUrl(iconUrl) || iconUrl)}`)
-            : baseUrl && useFavicons
-                ? `https://www.google.com/s2/favicons?domain=${escAttr(baseUrl)}`
-                : null;
-        iconHtml = faviconUrl
-            ? `<img loading="lazy" src="${faviconUrl}" onerror="this.parentElement.textContent='${isRemote ? '\u{1F310}' : '\u{1F4C1}'}'">`
-            : (isRemote ? "🌐" : "📁");
-    }
+    const iconHtml = getProjectIconHtml(context, project, useFavicons);
 
     const workspaceFile = isRemote ? undefined : (await findWorkspaceFile(project.path) ?? undefined);
-    const projectSettingsHtml = getSettingsDropdownHtml(context, project);
-    const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor, workspaceFile);
     const projectId = getProjectId(project);
+    const projectSettingsHtml = getSettingsDropdownHtml(context, project);
+    const projectInfoHtml = await getProjectInfoDropdownHtml(project, bgColor, workspaceFile, todaySeconds, isTimerActive);
+    const timeTrackingHtml = getTimeTrackingDropdownHtml(project, todaySeconds, sessions, isTimerActive, activeSession);
 
     const activeBadge = isCurrentProject ? '<span class="current-project-badge" title="Current workspace"></span>' : '';
+    const TIMER_ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="M11 7v4l2 2"/><path d="M15 21h6v-6"/><path d="M15 17l2-2 1 1 2-2"/></svg>';
+    const timeSpentHtml = todaySeconds > 0 || isTimerActive
+        ? `<span class="project-time-spent${isTimerActive ? ' active' : ''}" data-project-id="${escAttr(projectId)}">${formatDuration(todaySeconds)}</span>`
+        : '';
 
     return `
         <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${escAttr(projectId)}"
@@ -125,9 +75,26 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                         ondblclick="startInlineRename(event, '${escOnclickArg(projectId)}', '${escOnclickArg(project.name)}')"
                         title="Double-click to rename"
                     >${escHtml(project.name)}</div>
+                    ${timeSpentHtml}
                 </div>
                 <div class="project-settings">
-                    ${isRemote ? `
+                    ${renderQuickActionButtons(project, projectId, isTimerActive, TIMER_ICON_SVG)}
+                    ${renderQuickMenu(project, projectId, workspaceFile)}
+                </div>
+            </div>
+            ${projectInfoHtml}
+            ${timeTrackingHtml}
+            ${projectSettingsHtml}
+        </div>
+    `;
+}
+
+
+
+function renderQuickActionButtons(project: Project, projectId: string, isTimerActive: boolean, timerIcon: string): string {
+    const isRemote = project.isRemote === true;
+    const timerClass = isTimerActive ? ' time-tracking-toggle active' : ' time-tracking-toggle';
+    return `${isRemote ? `
                     <button type="button" class="button mini quick-action-button" onclick="openRemoteProject('${escOnclickArg(project.remoteUrl!)}')" title="Open remote repository">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                             <path d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -143,10 +110,17 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                             <path d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                         </svg>
                     </button>`}
-                    <div class="quick-menu-wrapper">
+                    <button type="button" class="button mini quick-action-button${timerClass}" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'timeTracking')" title="Time tracking">
+                        ${timerIcon}
+                    </button>`;
+}
+
+function renderQuickMenu(project: Project, projectId: string, workspaceFile: string | undefined): string {
+    const isRemote = project.isRemote === true;
+    return `<div class="quick-menu-wrapper">
                         <button type="button" class="button mini quick-menu-toggle" onclick="toggleQuickMenu(event, '${escOnclickArg(projectId)}')" title="Project actions">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
+                                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296 .07 2.572-1.065z"/>
                                 <path d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0"/>
                             </svg>
                         </button>
@@ -194,17 +168,39 @@ export async function getProjectItemHtml(context: vscode.ExtensionContext, props
                             <button class="quick-menu-item" onclick="toggleDropdown(event, '${escOnclickArg(projectId)}', 'settings')">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke="none" d="M0 0h24v24H0z"/>
-                                    <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065z"/>
+                                    <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296 .07 2.572-1.065z"/>
                                     <path d="M9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0"/>
                                 </svg>
                                 Edit
                             </button>
                         </div>
-                    </div>
+                    </div>`;
+}
+function renderMissingProjectItem(project: Project, index: number, currentProjectClass: string, missingClass: string): string {
+    const projectId = getProjectId(project);
+    return `
+        <div class="project-item-wrapper ${currentProjectClass} ${missingClass}" draggable="true" data-index="${index}" data-project-id="${escAttr(projectId)}">
+            <div class="project-item" style="--bg-color: var(--vscode-inputValidation-errorBorder, #f44)">
+                <span class="project-icon">⚠️</span>
+                <div class="project-info">
+                    <div class="project-name">${escHtml(project.name)}</div>
+                    <div class="project-path missing-hint">Folder not found</div>
+                </div>
+                <div class="project-settings">
+                    <button class="button mini relocate" onclick="window.vscodeApi.postMessage({ command: 'relocateProject', projectId: '${escOnclickArg(projectId)}' })">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 7v13h18V7M3 7l9-4 9 4M9 21V11h6v10"/>
+                        </svg>
+                        Relocate
+                    </button>
+                    <button class="button mini remove" onclick="handleDeleteProject('${escOnclickArg(projectId)}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                        </svg>
+                        Remove
+                    </button>
                 </div>
             </div>
-            ${projectInfoHtml}
-            ${projectSettingsHtml}
         </div>
     `;
 }

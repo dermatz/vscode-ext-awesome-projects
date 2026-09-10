@@ -53,6 +53,10 @@ const extensionConfig = {
           to: 'css'
         },
         {
+          from: 'src/js',
+          to: 'js'
+        },
+        {
           from: 'node_modules/@tabler/icons/tabler-nodes-outline.json',
           to: 'tabler-nodes-outline.json'
         },

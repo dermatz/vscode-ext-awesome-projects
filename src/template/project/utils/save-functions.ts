@@ -218,5 +218,168 @@ export function getSaveFunctionsScript(): string {
             input.addEventListener('blur', commit);
             input.addEventListener('click', function(e) { e.stopPropagation(); });
         }
+
+        function formatDuration(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            if (hours > 0) {
+                return hours + 'h ' + minutes.toString().padStart(2, '0') + 'm ' + seconds.toString().padStart(2, '0') + 's';
+            }
+            if (minutes > 0) {
+                return minutes + 'm ' + seconds.toString().padStart(2, '0') + 's';
+            }
+            return seconds + 's';
+        }
+
+        function toggleTimeTracking(projectId, projectPath) {
+            const isActive = window.activeTimeTrackingProjectId === projectId;
+            if (isActive) {
+                window.vscodeApi.postMessage({
+                    command: 'stopTimeTracking'
+                });
+            } else {
+                window.vscodeApi.postMessage({
+                    command: 'startTimeTracking',
+                    projectId: projectId,
+                    projectPath: projectPath
+                });
+            }
+        }
+
+        function updateTimeTrackingButtons(activeSession) {
+            window.activeTimeTrackingProjectId = activeSession ? activeSession.projectId : undefined;
+
+            document.querySelectorAll('.time-tracking-toggle').forEach(button => {
+                const projectId = button.getAttribute('data-project-id');
+                const isActive = activeSession && activeSession.projectId === projectId;
+                button.classList.toggle('active', !!isActive);
+                button.title = 'Time tracking';
+                button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="M11 7v4l2 2"/><path d="M15 21h6v-6"/><path d="M15 17l2-2 1 1 2-2"/></svg>';
+            });
+
+            document.querySelectorAll('.time-tracking-action-button').forEach(button => {
+                const projectId = button.getAttribute('data-project-id');
+                const isActive = activeSession && activeSession.projectId === projectId;
+                button.classList.toggle('active', !!isActive);
+                button.classList.toggle('secondary', !!isActive);
+                button.textContent = isActive ? 'Stop Timer' : 'Start Timer';
+            });
+        }
+
+        function getRunningDurationSeconds(activeSession) {
+            if (!activeSession) { return 0; }
+            const lastTickAt = typeof activeSession.lastTickAt === 'number' ? activeSession.lastTickAt : Date.now();
+            const durationSeconds = typeof activeSession.durationSeconds === 'number' ? activeSession.durationSeconds : 0;
+            const elapsedSinceLastTick = Math.max(0, Math.floor((Date.now() - lastTickAt) / 1000));
+            return durationSeconds + elapsedSinceLastTick;
+        }
+
+        function updateTimeTrackingDropdown(activeSession) {
+            const dropdown = document.querySelector('.time-tracking-dropdown.show');
+            if (!dropdown) { return; }
+            const projectId = dropdown.id.replace('time-tracking-', '');
+            const sessionsContainer = dropdown.querySelector('.time-tracking-sessions');
+            if (!sessionsContainer) { return; }
+
+            const isThisProjectActive = activeSession && activeSession.projectId === projectId;
+            if (!isThisProjectActive) {
+                sessionsContainer.querySelectorAll('.time-tracking-session-active').forEach(el => el.remove());
+                return;
+            }
+
+            const active = activeSession;
+            const durationSeconds = getRunningDurationSeconds(active);
+            const durationText = formatDuration(durationSeconds) + ' · ' + new Date(active.startTime).toLocaleDateString();
+            let activeCard = sessionsContainer.querySelector('.time-tracking-session-active');
+
+            if (!activeCard) {
+                activeCard = document.createElement('div');
+                activeCard.className = 'time-tracking-session time-tracking-session-active';
+
+                const row = document.createElement('div');
+                row.className = 'session-row';
+
+                const meta = document.createElement('div');
+                meta.className = 'session-meta';
+                meta.textContent = durationText;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'session-delete';
+                deleteBtn.title = 'Delete session';
+                deleteBtn.setAttribute('onclick', "deleteTimeTrackingSession('" + active.id + "')");
+                deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>';
+
+                row.appendChild(meta);
+                row.appendChild(deleteBtn);
+
+                const titleBtn = document.createElement('button');
+                titleBtn.type = 'button';
+                titleBtn.className = 'session-title-edit';
+                titleBtn.title = 'Edit session';
+                titleBtn.setAttribute('onclick', "editTimeTrackingSessionInline('" + active.id + "')");
+
+                const liveIndicator = document.createElement('span');
+                liveIndicator.className = 'session-live-indicator';
+                liveIndicator.title = 'Running';
+                liveIndicator.innerHTML = '<span class="session-live-dot"></span>Running';
+
+                const titleText = document.createElement('span');
+                titleText.className = 'session-title-text';
+                const strong = document.createElement('strong');
+                strong.textContent = active.title || 'Untitled';
+                titleText.appendChild(strong);
+
+                const editIcon = document.createElement('span');
+                editIcon.className = 'session-edit-icon';
+                editIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+
+                titleBtn.appendChild(liveIndicator);
+                titleBtn.appendChild(titleText);
+                titleBtn.appendChild(editIcon);
+
+                activeCard.appendChild(row);
+                activeCard.appendChild(titleBtn);
+                sessionsContainer.insertBefore(activeCard, sessionsContainer.firstChild);
+            } else {
+                const meta = activeCard.querySelector('.session-meta');
+                if (meta) { meta.textContent = durationText; }
+                const titleEl = activeCard.querySelector('.session-title-text strong');
+                if (titleEl) { titleEl.textContent = active.title || 'Untitled'; }
+            }
+        }
+
+        function updateTimeTrackingDisplay(message) {
+            updateTimeTrackingButtons(message.activeSession);
+            updateTimeTrackingDropdown(message.activeSession);
+            if (message.activeSession) {
+                const active = message.activeSession;
+                const elapsed = getRunningDurationSeconds(active);
+                document.querySelectorAll('.project-time-spent').forEach(el => {
+                    const projectId = el.getAttribute('data-project-id');
+                    if (active.projectId === projectId) {
+                        el.classList.add('active');
+                        el.textContent = formatDuration(elapsed);
+                    } else {
+                        el.classList.remove('active');
+                    }
+                });
+            } else {
+                document.querySelectorAll('.project-time-spent').forEach(el => el.classList.remove('active'));
+            }
+        }
+
+        function deleteTimeTrackingSession(sessionId) {
+            window.vscodeApi.postMessage({ command: 'deleteTimeTrackingSession', sessionId: sessionId });
+        }
+
+        function confirmDeleteTimeTrackingSession(sessionId) {
+            window.vscodeApi.postMessage({ command: 'confirmDeleteTimeTrackingSession', sessionId: sessionId });
+        }
+
+        function editTimeTrackingSessionInline(sessionId) {
+            window.vscodeApi.postMessage({ command: 'openTimeTrackingReport', reportPeriod: 'week' });
+        }
     `;
 }

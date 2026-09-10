@@ -8,6 +8,8 @@ import { getDropdownToggleScript } from './utils/dropdownUtils';
 import { getDragDropScript } from './utils/dragAndDrop';
 import { getSaveFunctionsScript } from './utils/save-functions';
 import { escHtml, escAttr } from '../utils/escaping';
+import { TimeTrackingService } from '../../timeTrackingService';
+import { ActiveSession, TimeTrackingSession } from '../../types/timeTracking';
 
 /**
  * Find the common root directory shared by all project paths.
@@ -46,6 +48,46 @@ interface GroupTreeNode {
     items: { project: Project; index: number }[];
 }
 
+function toUtcDate(date: Date): { year: number; month: number; day: number } {
+    return {
+        year: date.getUTCFullYear(),
+        month: date.getUTCMonth(),
+        day: date.getUTCDate()
+    };
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+    const ua = toUtcDate(a);
+    const ub = toUtcDate(b);
+    return ua.year === ub.year && ua.month === ub.month && ua.day === ub.day;
+}
+
+function getTodaySecondsForProject(
+    projectId: string,
+    sessions: TimeTrackingSession[],
+    activeSession?: { sessionId?: string; projectId: string; accumulatedSeconds: number; lastTickAt: number }
+): number {
+    const today = new Date();
+    let seconds = 0;
+    for (const session of sessions) {
+        if (session.projectId !== projectId) {
+            continue;
+        }
+        if (activeSession?.sessionId === session.id) {
+            continue;
+        }
+        if (!isSameDay(new Date(session.startTime), today)) {
+            continue;
+        }
+        seconds += session.durationSeconds;
+    }
+    if (activeSession && activeSession.projectId === projectId) {
+        const elapsedSinceLastTick = Math.max(0, Math.floor((Date.now() - activeSession.lastTickAt) / 1000));
+        seconds += activeSession.accumulatedSeconds + elapsedSinceLastTick;
+    }
+    return seconds;
+}
+
 /** Return the children of a group node in the requested sort order. */
 function getSortedGroupChildren(node: GroupTreeNode, sortOrder: string): [string, GroupTreeNode][] {
     const entries = Array.from(node.children.entries());
@@ -57,39 +99,102 @@ function getSortedGroupChildren(node: GroupTreeNode, sortOrder: string): [string
     return entries;
 }
 
-/** Recursively render a single group node and all its nested children. */
-async function renderGroupNode(
-    name: string,
-    groupKey: string,
-    node: GroupTreeNode,
-    context: vscode.ExtensionContext,
-    useFavicons: boolean,
-    currentWorkspace: string,
-    existsMap: Map<string, boolean>,
-    groupSortOrder: string,
-    collapsedGroups: Record<string, boolean>
-): Promise<string> {
-    const itemsHtml = (await Promise.all(
-        node.items.map(({ project, index }) =>
-            getProjectItemHtml(context, { project, index, useFavicons, currentWorkspace, pathExists: existsMap.get(project.path) ?? true })
-        )
-    )).join('');
+interface RenderContext {
+    context: vscode.ExtensionContext;
+    useFavicons: boolean;
+    currentWorkspace: string;
+    existsMap: Map<string, boolean>;
+}
 
-    const childrenHtml = (await Promise.all(
-        getSortedGroupChildren(node, groupSortOrder).map(([childName, childNode]) =>
-            renderGroupNode(
-                childName,
-                `${groupKey}/${childName}`,
-                childNode,
-                context,
-                useFavicons,
-                currentWorkspace,
-                existsMap,
-                groupSortOrder,
-                collapsedGroups
-            )
+interface TimeTrackingRenderState {
+    sessionsByProject: Record<string, TimeTrackingSession[]>;
+    activeSession: ActiveSession | undefined;
+    activeSessionFull: TimeTrackingSession | undefined;
+}
+
+function getTimeTrackingRenderState(timeTrackingService?: TimeTrackingService): TimeTrackingRenderState {
+    const state = timeTrackingService?.getState();
+    const sessionsByProject = state?.sessionsByProject || {};
+    const activeSession = state?.activeSession;
+    const activeSessionFull = activeSession
+        ? (sessionsByProject[activeSession.projectId] || []).find(s => s.id === activeSession.sessionId)
+        : undefined;
+    return { sessionsByProject, activeSession, activeSessionFull };
+}
+
+function getProjectItemProps(
+    project: Project,
+    index: number,
+    renderContext: RenderContext,
+    timeTrackingState: TimeTrackingRenderState
+) {
+    const { sessionsByProject, activeSession, activeSessionFull } = timeTrackingState;
+    const projectId = project.id ?? project.path;
+    const sessions = sessionsByProject[projectId] || [];
+    return {
+        project,
+        index,
+        useFavicons: renderContext.useFavicons,
+        currentWorkspace: renderContext.currentWorkspace,
+        pathExists: renderContext.existsMap.get(project.path) ?? true,
+        todaySeconds: getTodaySecondsForProject(projectId, sessions, activeSession),
+        isTimerActive: activeSession?.projectId === projectId,
+        sessions,
+        activeSession: activeSession?.projectId === projectId ? activeSessionFull : undefined
+    };
+}
+
+async function renderGroupItemsHtml(
+    node: GroupTreeNode,
+    renderContext: RenderContext,
+    timeTrackingState: TimeTrackingRenderState
+): Promise<string> {
+    return (await Promise.all(
+        node.items.map(({ project, index }) =>
+            getProjectItemHtml(renderContext.context, getProjectItemProps(project, index, renderContext, timeTrackingState))
         )
     )).join('');
+}
+
+async function renderGroupChildrenHtml(
+    node: GroupTreeNode,
+    groupKey: string,
+    renderContext: RenderContext,
+    groupSortOrder: string,
+    collapsedGroups: Record<string, boolean>,
+    timeTrackingService?: TimeTrackingService
+): Promise<string> {
+    return (await Promise.all(
+        getSortedGroupChildren(node, groupSortOrder).map(([childName, childNode]) =>
+            renderGroupNode({
+                name: childName,
+                groupKey: `${groupKey}/${childName}`,
+                node: childNode,
+                renderContext,
+                groupSortOrder,
+                collapsedGroups,
+                timeTrackingService
+            })
+        )
+    )).join('');
+}
+
+/** Recursively render a single group node and all its nested children. */
+interface RenderGroupNodeArgs {
+    name: string;
+    groupKey: string;
+    node: GroupTreeNode;
+    renderContext: RenderContext;
+    groupSortOrder: string;
+    collapsedGroups: Record<string, boolean>;
+    timeTrackingService?: TimeTrackingService;
+}
+
+async function renderGroupNode(args: RenderGroupNodeArgs): Promise<string> {
+    const { name, groupKey, node, renderContext, groupSortOrder, collapsedGroups, timeTrackingService } = args;
+    const timeTrackingState = getTimeTrackingRenderState(timeTrackingService);
+    const itemsHtml = await renderGroupItemsHtml(node, renderContext, timeTrackingState);
+    const childrenHtml = await renderGroupChildrenHtml(node, groupKey, renderContext, groupSortOrder, collapsedGroups, timeTrackingService);
 
     return `
                 <div class="project-group${collapsedGroups[groupKey] ? ' collapsed' : ''}" data-group="${escAttr(groupKey)}">
@@ -114,21 +219,47 @@ export async function getProjectListHtml(
     context: vscode.ExtensionContext,
     currentWorkspace: string = '',
     configuration?: vscode.WorkspaceConfiguration,
-    collapsedGroups: Record<string, boolean> = {}
+    collapsedGroups: Record<string, boolean> = {},
+    timeTrackingService?: TimeTrackingService
 ): Promise<string> {
-    const config = configuration || vscode.workspace.getConfiguration('awesomeProjects');
-    const rawProjects = config.get<Project[]>('projects') || [];
-    const useFavicons = config.get<boolean>('appearance.useFavicons')
-        ?? config.get<boolean>('useFavicons')
-        ?? true;
-    const groupSortOrder = config.get<string>('groups.sortOrder')
-        ?? config.get<string>('groupSortOrder')
-        ?? 'alphabetical';
-    const groupBy = config.get<string>('groups.groupBy') ?? 'auto';
-    const hideMissing = config.get<boolean>('projects.hideMissing') ?? false;
+    const config = loadProjectListConfig(configuration);
+    const projects = deduplicateProjects(config.rawProjects);
+    const existsMap = await buildExistsMap(projects);
+    const visibleProjects = filterVisibleProjects(projects, existsMap, config.hideMissing);
+    const rootNode = buildGroupTree(visibleProjects, config.groupBy);
 
-    // Deduplicate by path: if the same path appears multiple times, keep the
-    // entry that has an explicit group set (it contains more information).
+    const [ungroupedHtml, groupedHtml] = await Promise.all([
+        renderUngroupedItems(rootNode, context, config, currentWorkspace, existsMap, timeTrackingService),
+        renderGroupedItems(rootNode, context, config, currentWorkspace, existsMap, collapsedGroups, timeTrackingService)
+    ]);
+
+    return renderProjectListShell(ungroupedHtml, groupedHtml);
+}
+
+interface ProjectListConfig {
+    rawProjects: Project[];
+    useFavicons: boolean;
+    groupSortOrder: string;
+    groupBy: string;
+    hideMissing: boolean;
+}
+
+function loadProjectListConfig(configuration?: vscode.WorkspaceConfiguration): ProjectListConfig {
+    const config = configuration || vscode.workspace.getConfiguration('awesomeProjects');
+    return {
+        rawProjects: config.get<Project[]>('projects') || [],
+        useFavicons: config.get<boolean>('appearance.useFavicons')
+            ?? config.get<boolean>('useFavicons')
+            ?? true,
+        groupSortOrder: config.get<string>('groups.sortOrder')
+            ?? config.get<string>('groupSortOrder')
+            ?? 'alphabetical',
+        groupBy: config.get<string>('groups.groupBy') ?? 'auto',
+        hideMissing: config.get<boolean>('projects.hideMissing') ?? false
+    };
+}
+
+function deduplicateProjects(rawProjects: Project[]): Project[] {
     const seen = new Map<string, Project>();
     for (const project of rawProjects) {
         const existing = seen.get(project.path);
@@ -136,10 +267,10 @@ export async function getProjectListHtml(
             seen.set(project.path, project);
         }
     }
-    const projects = Array.from(seen.values());
+    return Array.from(seen.values());
+}
 
-    // Check which paths still exist on disk (parallel). Remote projects are
-    // always treated as available since they are opened via a remote workflow.
+async function buildExistsMap(projects: Project[]): Promise<Map<string, boolean>> {
     const existsMap = new Map<string, boolean>();
     await Promise.all(
         projects.map(async p => {
@@ -155,22 +286,19 @@ export async function getProjectListHtml(
             }
         })
     );
+    return existsMap;
+}
 
-    // Filter out missing local projects when the user chose to hide them.
-    const visibleProjects = hideMissing
+function filterVisibleProjects(projects: Project[], existsMap: Map<string, boolean>, hideMissing: boolean): Project[] {
+    return hideMissing
         ? projects.filter(p => p.isRemote || (existsMap.get(p.path) ?? false))
         : projects;
+}
 
-    // Only local project paths participate in common-root grouping. Remote
-    // repositories use their explicit group or appear ungrouped.
+function buildGroupTree(visibleProjects: Project[], groupBy: string): GroupTreeNode {
     const localPaths = visibleProjects.filter(p => !p.isRemote).map(p => p.path);
     const commonRoot = findCommonRoot(localPaths);
 
-    // Build a nested group tree based on the selected grouping mode.
-    // auto: explicit group field → single flat level; path-based inference → multi-level;
-    //       remote projects without an explicit group are collected under "Remote".
-    // group-field: only projects with an explicit group field are grouped.
-    // flat: no grouping at all.
     const rootNode: GroupTreeNode = { children: new Map(), items: [] };
     visibleProjects.forEach((project, index) => {
         const explicitGroup = project.group?.trim();
@@ -195,21 +323,146 @@ export async function getProjectListHtml(
         }
         node.items.push({ project, index });
     });
+    return rootNode;
+}
 
-    // Render ungrouped items (items at the root of the tree)
-    const ungroupedHtml = (await Promise.all(
+async function renderUngroupedItems(
+    rootNode: GroupTreeNode,
+    context: vscode.ExtensionContext,
+    config: ProjectListConfig,
+    currentWorkspace: string,
+    existsMap: Map<string, boolean>,
+    timeTrackingService?: TimeTrackingService
+): Promise<string> {
+    const renderContext: RenderContext = { context, useFavicons: config.useFavicons, currentWorkspace, existsMap };
+    const timeTrackingState = getTimeTrackingRenderState(timeTrackingService);
+
+    return (await Promise.all(
         rootNode.items.map(({ project, index }) =>
-            getProjectItemHtml(context, { project, index, useFavicons, currentWorkspace, pathExists: existsMap.get(project.path) ?? true })
+            getProjectItemHtml(context, getProjectItemProps(project, index, renderContext, timeTrackingState))
         )
     )).join('');
+}
 
-    // Render top-level groups (and their nested children) recursively
-    const groupedHtml = (await Promise.all(
-        getSortedGroupChildren(rootNode, groupSortOrder).map(([name, node]) =>
-            renderGroupNode(name, name, node, context, useFavicons, currentWorkspace, existsMap, groupSortOrder, collapsedGroups)
+async function renderGroupedItems(
+    rootNode: GroupTreeNode,
+    context: vscode.ExtensionContext,
+    config: ProjectListConfig,
+    currentWorkspace: string,
+    existsMap: Map<string, boolean>,
+    collapsedGroups: Record<string, boolean>,
+    timeTrackingService?: TimeTrackingService
+): Promise<string> {
+    const renderContext: RenderContext = { context, useFavicons: config.useFavicons, currentWorkspace, existsMap };
+    return (await Promise.all(
+        getSortedGroupChildren(rootNode, config.groupSortOrder).map(([name, node]) =>
+            renderGroupNode({
+                name,
+                groupKey: name,
+                node,
+                renderContext,
+                groupSortOrder: config.groupSortOrder,
+                collapsedGroups,
+                timeTrackingService
+            })
         )
     )).join('');
+}
 
+function getGroupToggleScript(): string {
+    return `
+        (function() {
+            window.toggleGroup = function(header) {
+                const group = header.closest('.project-group');
+                const name = group.getAttribute('data-group');
+                const isCollapsed = group.classList.toggle('collapsed');
+                if (window.vscodeApi) {
+                    window.vscodeApi.postMessage({
+                        command: 'toggleGroupCollapse',
+                        groupName: name,
+                        isCollapsed: isCollapsed
+                    });
+                }
+            };
+        })();
+    `;
+}
+
+function getSaveCollapsedStateScript(): string {
+    return `
+        function saveCollapsedState(query) {
+            if (query !== '' && preSearchCollapsedGroups === null) {
+                preSearchCollapsedGroups = new Set();
+                projectsList.querySelectorAll('.project-group.collapsed').forEach(group => {
+                    preSearchCollapsedGroups.add(group.getAttribute('data-group'));
+                    group.classList.remove('collapsed');
+                });
+            } else if (query === '' && preSearchCollapsedGroups !== null) {
+                projectsList.querySelectorAll('.project-group').forEach(group => {
+                    if (preSearchCollapsedGroups.has(group.getAttribute('data-group'))) {
+                        group.classList.add('collapsed');
+                    }
+                });
+                preSearchCollapsedGroups = null;
+            }
+        }
+    `;
+}
+
+function getFilterItemsScript(): string {
+    return `
+        function filterItems(query) {
+            const items = projectsList.querySelectorAll('.project-item-wrapper');
+            items.forEach(item => {
+                const nameEl = item.querySelector('.project-name');
+                const name = nameEl ? nameEl.textContent.toLowerCase() : '';
+                item.style.display = (query === '' || name.includes(query)) ? '' : 'none';
+            });
+        }
+    `;
+}
+
+function getUpdateGroupVisibilityScript(): string {
+    return `
+        function updateGroupVisibility(query) {
+            const groups = Array.from(projectsList.querySelectorAll('.project-group')).reverse();
+            groups.forEach(group => {
+                if (query === '') {
+                    group.style.display = '';
+                    return;
+                }
+                const hasVisibleItems = group.querySelectorAll('.project-item-wrapper:not([style*="display: none"])').length > 0;
+                const hasVisibleChildGroups = group.querySelectorAll('.project-group:not([style*="display: none"])').length > 0;
+                group.style.display = (hasVisibleItems || hasVisibleChildGroups) ? '' : 'none';
+            });
+        }
+    `;
+}
+
+function getLiveSearchScript(): string {
+    return `
+        (function() {
+            const searchInput = document.getElementById('project-search');
+            const projectsList = document.getElementById('projects-list');
+            if (!searchInput || !projectsList) { return; }
+
+            let preSearchCollapsedGroups = null;
+
+            ${getSaveCollapsedStateScript()}
+            ${getFilterItemsScript()}
+            ${getUpdateGroupVisibilityScript()}
+
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                saveCollapsedState(query);
+                filterItems(query);
+                updateGroupVisibility(query);
+            });
+        })();
+    `;
+}
+
+async function renderProjectListShell(ungroupedHtml: string, groupedHtml: string): Promise<string> {
     return `
         <section id="a">
             <div id="projects-list" class="draggable-list">
@@ -225,69 +478,8 @@ export async function getProjectListHtml(
             ${getSaveFunctionsScript()}
             ${getDragDropScript()}
             ${getDropdownToggleScript()}
-
-            // Group collapse/expand with persistence via extension globalState
-            (function() {
-                window.toggleGroup = function(header) {
-                    const group = header.closest('.project-group');
-                    const name = group.getAttribute('data-group');
-                    const isCollapsed = group.classList.toggle('collapsed');
-                    if (window.vscodeApi) {
-                        window.vscodeApi.postMessage({
-                            command: 'toggleGroupCollapse',
-                            groupName: name,
-                            isCollapsed: isCollapsed
-                        });
-                    }
-                };
-            })();
-
-            // Live project search: filter tiles by name and hide empty groups
-            (function() {
-                const searchInput = document.getElementById('project-search');
-                const projectsList = document.getElementById('projects-list');
-                if (!searchInput || !projectsList) { return; }
-
-                let preSearchCollapsedGroups = null;
-
-                searchInput.addEventListener('input', function() {
-                    const query = this.value.trim().toLowerCase();
-
-                    if (query !== '' && preSearchCollapsedGroups === null) {
-                        preSearchCollapsedGroups = new Set();
-                        projectsList.querySelectorAll('.project-group.collapsed').forEach(group => {
-                            preSearchCollapsedGroups.add(group.getAttribute('data-group'));
-                            group.classList.remove('collapsed');
-                        });
-                    } else if (query === '' && preSearchCollapsedGroups !== null) {
-                        projectsList.querySelectorAll('.project-group').forEach(group => {
-                            if (preSearchCollapsedGroups.has(group.getAttribute('data-group'))) {
-                                group.classList.add('collapsed');
-                            }
-                        });
-                        preSearchCollapsedGroups = null;
-                    }
-
-                    const items = projectsList.querySelectorAll('.project-item-wrapper');
-                    items.forEach(item => {
-                        const nameEl = item.querySelector('.project-name');
-                        const name = nameEl ? nameEl.textContent.toLowerCase() : '';
-                        item.style.display = (query === '' || name.includes(query)) ? '' : 'none';
-                    });
-
-                    // Process groups bottom-up so parents stay visible when children match
-                    const groups = Array.from(projectsList.querySelectorAll('.project-group')).reverse();
-                    groups.forEach(group => {
-                        if (query === '') {
-                            group.style.display = '';
-                            return;
-                        }
-                        const hasVisibleItems = group.querySelectorAll('.project-item-wrapper:not([style*="display: none"])').length > 0;
-                        const hasVisibleChildGroups = group.querySelectorAll('.project-group:not([style*="display: none"])').length > 0;
-                        group.style.display = (hasVisibleItems || hasVisibleChildGroups) ? '' : 'none';
-                    });
-                });
-            })();
+            ${getGroupToggleScript()}
+            ${getLiveSearchScript()}
         </script>
     `;
 }

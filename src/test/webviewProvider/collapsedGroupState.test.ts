@@ -6,6 +6,8 @@ import * as projectListModule from '../../template/project/projectlist';
 
 type ProjectListHtmlFn = typeof projectListModule.getProjectListHtml;
 
+const mockGetProjectListHtml: ProjectListHtmlFn = async () => '<div>Mock Project List</div>';
+
 const ASYNC_HANDLER_TIMEOUT_MS = 50;
 
 suite('WebviewProvider Collapsed Group State Tests', () => {
@@ -67,7 +69,7 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
         // Mock project list to avoid actual rendering
         const mutableProjectList1 = projectListModule as unknown as { getProjectListHtml: ProjectListHtmlFn };
         const originalGetProjectListHtml = mutableProjectList1.getProjectListHtml;
-        mutableProjectList1.getProjectListHtml = async () => '<div>Mock Project List</div>';
+        mutableProjectList1.getProjectListHtml = mockGetProjectListHtml;
 
         try {
             await provider.resolveWebviewView(mockWebviewView, { state: undefined } as unknown as vscode.WebviewViewResolveContext<undefined>, {} as unknown as vscode.CancellationToken);
@@ -101,7 +103,7 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
 
         const mutableProjectList2 = projectListModule as unknown as { getProjectListHtml: ProjectListHtmlFn };
         const originalGetProjectListHtml = mutableProjectList2.getProjectListHtml;
-        mutableProjectList2.getProjectListHtml = async () => '<div>Mock Project List</div>';
+        mutableProjectList2.getProjectListHtml = mockGetProjectListHtml;
 
         try {
             await provider.resolveWebviewView(mockWebviewView, { state: undefined } as unknown as vscode.WebviewViewResolveContext<undefined>, {} as unknown as vscode.CancellationToken);
@@ -135,10 +137,11 @@ suite('WebviewProvider Collapsed Group State Tests', () => {
 
         const mutableProjectList3 = projectListModule as unknown as { getProjectListHtml: ProjectListHtmlFn };
         const originalGetProjectListHtml = mutableProjectList3.getProjectListHtml;
-        mutableProjectList3.getProjectListHtml = async (_ctx: vscode.ExtensionContext, _ws?: string, _cfg?: vscode.WorkspaceConfiguration, collapsedGroups: Record<string, boolean> = {}) => {
+        const captureMock: ProjectListHtmlFn = async (_ctx, _ws, _cfg, collapsedGroups = {}) => {
             capturedCollapsedGroups = collapsedGroups;
             return '<div>Mock Project List</div>';
         };
+        mutableProjectList3.getProjectListHtml = captureMock;
 
         try {
             const provider = new ProjectsWebviewProvider(mockContext.extensionUri, mockContext);

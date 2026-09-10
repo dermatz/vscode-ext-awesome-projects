@@ -87,6 +87,29 @@
         "icon": "$(feedback)"
       },
       {
+        "command": "awesome-projects.startTimeTracking",
+        "title": "Start Time Tracking",
+        "category": "Awesome Projects",
+        "icon": "$(play)"
+      },
+      {
+        "command": "awesome-projects.stopTimeTracking",
+        "title": "Stop Time Tracking",
+        "category": "Awesome Projects",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "awesome-projects.openTimeTrackingReport",
+        "title": "Open Time Tracking Report",
+        "category": "Awesome Projects",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "awesome-projects.openTimeTrackingMenu",
+        "title": "Time Tracking Menu",
+        "category": "Awesome Projects"
+      },
+      {
         "command": "awesome-projects.hideMissingProjects",
         "title": "Hide Missing Projects",
         "category": "Awesome Projects",
@@ -211,6 +234,11 @@
                 "managementUrl": {
                   "type": "string",
                   "description": "Management URL of the project"
+                },
+                "timeSpentSeconds": {
+                  "type": "number",
+                  "default": 0,
+                  "description": "Total time spent on this project in seconds, accumulated from tracked sessions"
                 },
                 "iconUrl": {
                   "type": "string",
@@ -380,6 +408,68 @@
             "deprecationMessage": "Use the awesomeProjects.updates.showUpdateNotification setting instead."
           }
         }
+      },
+      {
+        "title": "Time Tracking",
+        "properties": {
+          "awesomeProjects.timeTracking.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable the built-in time tracking feature"
+          },
+          "awesomeProjects.timeTracking.autoStart": {
+            "type": "boolean",
+            "default": false,
+            "description": "Automatically start tracking time when a registered workspace is opened"
+          },
+          "awesomeProjects.timeTracking.tickIntervalSeconds": {
+            "type": "number",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 300,
+            "description": "How often the running timer and branch changes are checked (in seconds)"
+          },
+          "awesomeProjects.timeTracking.statusBarEnabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Show the active timer in the status bar"
+          },
+          "awesomeProjects.timeTracking.badgeEnabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Show a badge on the extension icon when a timer is running"
+          },
+          "awesomeProjects.timeTracking.retentionDays": {
+            "type": "number",
+            "default": 90,
+            "minimum": 1,
+            "maximum": 3650,
+            "description": "Number of days individual sessions are kept in history before being aggregated"
+          },
+          "awesomeProjects.timeTracking.extractTicketIdFromBranch": {
+            "type": "boolean",
+            "default": true,
+            "description": "Try to extract a ticket ID (e.g. JIRA-123) from the branch name and use it as session title"
+          },
+          "awesomeProjects.timeTracking.ticketIdPattern": {
+            "type": "string",
+            "default": "[A-Z]{2,}-\\d+",
+            "description": "Regular expression used to find ticket IDs in branch names"
+          },
+          "awesomeProjects.timeTracking.weekStartsOn": {
+            "type": "string",
+            "enum": ["sunday", "monday"],
+            "default": "sunday",
+            "description": "First day of the week used for the 'This Week' report"
+          },
+          "awesomeProjects.timeTracking.maxReportSessions": {
+            "type": "number",
+            "default": 500,
+            "minimum": 50,
+            "maximum": 5000,
+            "description": "Maximum number of sessions rendered in the Time Tracking Report"
+          }
+        }
       }
     ]
   },
@@ -407,8 +497,8 @@
     "@types/vscode": "^1.96.0",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
     "@typescript-eslint/parser": "^8.17.0",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.4.1",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.1.0",
     "copy-webpack-plugin": "^14.0.0",
     "eslint": "^9.16.0",
     "ts-loader": "^9.5.1",

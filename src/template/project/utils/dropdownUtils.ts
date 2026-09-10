@@ -1,4 +1,4 @@
-export const getDropdownToggleScript = (): string => {
+function getQuickMenuScript(): string {
     return `
         (function() {
             let activeQuickMenu = null;
@@ -50,9 +50,24 @@ export const getDropdownToggleScript = (): string => {
                         }
                     });
                 }
+                if (!event.target.closest('.time-tracking-dropdown') && !event.target.closest('.time-tracking-menu')) {
+                    document.querySelectorAll('.time-tracking-dropdown.show').forEach(function(el) {
+                        el.classList.remove('show');
+                        const projectId = el.id.replace('time-tracking-', '');
+                        const wrapper = document.querySelector('[data-project-id="' + projectId + '"]');
+                        if (wrapper) {
+                            const item = wrapper.querySelector('.project-item');
+                            if (item) { item.classList.remove('active'); }
+                        }
+                    });
+                }
             });
         })();
+    `;
+}
 
+function getToggleDropdownScript(): string {
+    return `
         function toggleDropdown(event, targetId, type) {
             if (type === 'info' && event.target.closest('.project-settings')) {
                 return;
@@ -66,15 +81,17 @@ export const getDropdownToggleScript = (): string => {
             // Get the target dropdown and its state
             const targetDropdown = type === 'settings'
                 ? document.querySelector('[data-settings-id="' + targetId + '"]')
-                : document.getElementById('info-' + targetId);
+                : type === 'timeTracking'
+                    ? document.getElementById('time-tracking-' + targetId)
+                    : document.getElementById('info-' + targetId);
             const isTargetOpen = targetDropdown?.classList.contains('show');
 
-            // Close ALL dropdowns first (both types)
-            document.querySelectorAll('.settings-dropdown.show, .project-info-dropdown.show').forEach(el => {
+            // Close ALL dropdowns first (all types)
+            document.querySelectorAll('.settings-dropdown.show, .project-info-dropdown.show, .time-tracking-dropdown.show').forEach(el => {
                 el.classList.remove('show');
                 const dropdownProjectId = el.classList.contains('settings-dropdown')
                     ? el.getAttribute('data-settings-id')
-                    : el.id.replace('info-', '');
+                    : el.id.replace('info-', '').replace('time-tracking-', '');
 
                 const relatedWrapper = document.querySelector('[data-project-id="' + dropdownProjectId + '"]');
                 if (relatedWrapper) {
@@ -92,4 +109,8 @@ export const getDropdownToggleScript = (): string => {
             }
         }
     `;
+}
+
+export const getDropdownToggleScript = (): string => {
+    return getQuickMenuScript() + getToggleDropdownScript();
 };
