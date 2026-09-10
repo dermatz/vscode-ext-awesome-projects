@@ -9,6 +9,15 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 * mark `awesomeProjects.projects` as machine-scoped so the project list is no longer synced across devices
 * add support for remote repositories via "Connect to Repository"
 
+## [0.31.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.30.0...awesome-projects-v0.31.0) (2026-09-10)
+
+
+### Features
+
+* add icon Url support for projects (see Apperance) ([008f405](https://github.com/dermatz/vscode-ext-awesome-projects/commit/008f4054722b08c50d01eb6bf9b99272ddcdd1d2))
+* add time tracking suite ([#94](https://github.com/dermatz/vscode-ext-awesome-projects/issues/94)) ([51ec773](https://github.com/dermatz/vscode-ext-awesome-projects/commit/51ec7731b731fd27723e1b730069f6c54ae27ead))
+* update project description and enhance README with new features ([bbf0833](https://github.com/dermatz/vscode-ext-awesome-projects/commit/bbf0833032696819c334b69533abfebb6136fdda))
+
 ## [0.30.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.29.0...awesome-projects-v0.30.0) (2026-09-07)
 
 
