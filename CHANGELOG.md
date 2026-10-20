@@ -9,6 +9,14 @@ All notable changes to the "magento-log-viewer" extension will be documented in 
 * mark `awesomeProjects.projects` as machine-scoped so the project list is no longer synced across devices
 * add support for remote repositories via "Connect to Repository"
 
+## [0.31.1](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.31.0...awesome-projects-v0.31.1) (2026-10-20)
+
+
+### Maintenance
+
+* **deps-dev:** bump brace-expansion from 1.1.18 to 1.1.21 ([#96](https://github.com/dermatz/vscode-ext-awesome-projects/issues/96)) ([82a9a16](https://github.com/dermatz/vscode-ext-awesome-projects/commit/82a9a168a8c410b0821e0b186d0d6707a77b4001))
+* **deps:** bump serialize-javascript from 7.1.1 to 7.1.2 ([#95](https://github.com/dermatz/vscode-ext-awesome-projects/issues/95)) ([e897302](https://github.com/dermatz/vscode-ext-awesome-projects/commit/e897302ffd836fa79a30450f032fbf504da6c2cd))
+
 ## [0.31.0](https://github.com/dermatz/vscode-ext-awesome-projects/compare/awesome-projects-v0.30.0...awesome-projects-v0.31.0) (2026-09-10)
 
 
